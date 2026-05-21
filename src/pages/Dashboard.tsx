@@ -1078,40 +1078,126 @@ export function Dashboard() {
                 )}
 
                 {/* COMERCIAL */}
-                {page==='comercial'&&(
+                {page==='comercial'&&(()=>{
+                  const stands=expositores.filter(e=>e.category==='comercial'||(!e.category&&e.stand_type!=='food_truck'))
+                  const foodtrucks=expositores.filter(e=>e.category==='foodtruck'||e.stand_type==='food_truck')
+                  const STANDS_DISPONIBLES=['AA01','A02','A03','A04','A05','AA06','AA07','A08','A09','A10','A11','AA12','AAA13','AA14','AA15','AA16','AA17','AA18','AA19','AA20','AA21','AA22','AA23','AAA24','AA25','A26','A27','A28','A29','AA30','AA31','A32','A33','A34','A35','AA36']
+                  const FT_DISPONIBLES=['FT1','FT2','FT3','FT4','FT5','FT6','FT7','FT8']
+                  const STAND_INFO:Record<string,{precio:string;frentes:string}> = {
+                    'AA01':{precio:'$600.000',frentes:'Dos frentes'},'A02':{precio:'$500.000',frentes:'Un frente'},'A03':{precio:'$500.000',frentes:'Un frente'},'A04':{precio:'$500.000',frentes:'Un frente'},'A05':{precio:'$500.000',frentes:'Un frente'},'AA06':{precio:'$600.000',frentes:'Dos frentes'},'AA07':{precio:'$600.000',frentes:'Dos frentes'},'A08':{precio:'$500.000',frentes:'Un frente'},'A09':{precio:'$500.000',frentes:'Un frente'},'A10':{precio:'$500.000',frentes:'Un frente'},'A11':{precio:'$500.000',frentes:'Un frente'},'AA12':{precio:'$600.000',frentes:'Dos frentes'},'AAA13':{precio:'$800.000',frentes:'Tres frentes'},'AA14':{precio:'$600.000',frentes:'Dos frentes'},'AA15':{precio:'$600.000',frentes:'Dos frentes'},'AA16':{precio:'$600.000',frentes:'Dos frentes'},'AA17':{precio:'$600.000',frentes:'Dos frentes'},'AA18':{precio:'$600.000',frentes:'Dos frentes'},'AA19':{precio:'$600.000',frentes:'Dos frentes'},'AA20':{precio:'$600.000',frentes:'Dos frentes'},'AA21':{precio:'$600.000',frentes:'Dos frentes'},'AA22':{precio:'$600.000',frentes:'Dos frentes'},'AA23':{precio:'$600.000',frentes:'Dos frentes'},'AAA24':{precio:'$800.000',frentes:'Tres frentes'},'AA25':{precio:'$600.000',frentes:'Dos frentes'},'A26':{precio:'$500.000',frentes:'Un frente'},'A27':{precio:'$500.000',frentes:'Un frente'},'A28':{precio:'$500.000',frentes:'Un frente'},'A29':{precio:'$500.000',frentes:'Un frente'},'AA30':{precio:'$600.000',frentes:'Dos frentes'},'AA31':{precio:'$600.000',frentes:'Dos frentes'},'A32':{precio:'$500.000',frentes:'Un frente'},'A33':{precio:'$500.000',frentes:'Un frente'},'A34':{precio:'$500.000',frentes:'Un frente'},'A35':{precio:'$500.000',frentes:'Un frente'},'AA36':{precio:'$600.000',frentes:'Dos frentes'}
+                  }
+                  const ftOcupados=foodtrucks.map(e=>e.stand_id).filter(Boolean)
+                  const standsLibres=STANDS_DISPONIBLES.filter(s=>!standsOcupados.includes(s))
+                  const ftLibres=FT_DISPONIBLES.filter(s=>!ftOcupados.includes(s))
+                  return (
                   <div>
                     <div className="flex items-center justify-between mb-5">
                       <div><h1 className="text-2xl font-black" style={{color:tp}}>🏪 Comercial</h1><p className="text-sm" style={{color:ts}}>Stands · Food Trucks · Toldos</p></div>
                       <div className="flex items-center gap-2">
                         <span className="px-3 py-1 rounded-xl text-xs font-bold" style={{background:'rgba(16,185,129,0.15)',color:'#10b981'}}>{[...expositores,...toldos].filter(r=>isOk(r.status)).length} ✅</span>
                         <span className="px-3 py-1 rounded-xl text-xs font-bold" style={{background:'rgba(245,158,11,0.15)',color:'#f59e0b'}}>{[...expositores,...toldos].filter(r=>r.status==='pending_payment').length} ⏳</span>
-                        <AddBtn label={comTab==='toldo'?'Nuevo toldo':'Nuevo stand'} onClick={()=>setCreateM(
+                        <AddBtn label={comTab==='toldo'?'Nuevo toldo':comTab==='foodtruck'?'Nuevo FT':'Nuevo stand'} onClick={()=>setCreateM(
                           comTab==='toldo'
                             ?{table:'toldos_reservations',fields:[{key:'brand_name',label:'Marca',required:true},{key:'responsible_name',label:'Responsable',required:true},{key:'email',label:'Email',type:'email',required:true},{key:'phone',label:'Teléfono'},{key:'quantity',label:'Cantidad',type:'number'},{key:'product_type',label:'Tipo producto'},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo toldo gastronómico',defaults:{status:'pending_payment',quantity:1}}
-                            :{table:'expositor_reservations',fields:[{key:'brand_name',label:'Marca',required:true},{key:'responsible_name',label:'Responsable',required:true},{key:'email',label:'Email',type:'email',required:true},{key:'phone',label:'Teléfono'},{key:'stand_type',label:'Tipo stand',options:['A','B','C']},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo stand / food truck',defaults:{status:'pending_payment',category:'comercial'}}
+                            :comTab==='foodtruck'
+                            ?{table:'expositor_reservations',fields:[{key:'brand_name',label:'Marca',required:true},{key:'responsible_name',label:'Responsable',required:true},{key:'email',label:'Email',type:'email',required:true},{key:'phone',label:'Teléfono'},{key:'stand_id',label:'Spot FT',options:ftLibres.length?ftLibres:FT_DISPONIBLES},{key:'vehicle_width_m',label:'Ancho vehículo (m)',type:'number'},{key:'vehicle_length_m',label:'Largo vehículo (m)',type:'number'},{key:'product_type',label:'Producto'},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo Food Truck',defaults:{status:'pending_payment',category:'foodtruck'}}
+                            :{table:'expositor_reservations',fields:[{key:'brand_name',label:'Marca',required:true},{key:'responsible_name',label:'Responsable',required:true},{key:'email',label:'Email',type:'email',required:true},{key:'phone',label:'Teléfono'},{key:'stand_id',label:'Stand',options:standsLibres.length?standsLibres:STANDS_DISPONIBLES},{key:'stand_type',label:'Tipo',options:['AAA','AA','A']},{key:'description',label:'Descripción productos'},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo stand comercial',defaults:{status:'pending_payment',category:'comercial'}}
                         )}/>
                       </div>
                     </div>
-                    <Tabs value={comTab} onChange={v=>setComTab(v as any)} options={[{id:'stand',label:'🏪 Stands',count:expositores.length},{id:'foodtruck',label:'🚚 Food Trucks'},{id:'toldo',label:'⛺ Toldos',count:toldos.length}]}/>
-                    {comTab!=='toldo'?(
-                      <DTable headers={['Marca','Responsable','Stand','Estado','Monto','Docs','Contrato','']} empty={!expositores.length}>
-                        {expositores.map(e=>(
+
+                    {/* Resumen disponibilidad */}
+                    <div className="grid grid-cols-3 gap-3 mb-5">
+                      <div className="rounded-xl p-3" style={{background:card,border:`1px solid ${br}`}}>
+                        <div className="text-xs mb-1" style={{color:ts}}>🏪 Stands comerciales</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-black text-emerald-400">{standsLibres.length}</span>
+                          <span className="text-xs" style={{color:ts}}>libres de {STANDS_DISPONIBLES.length}</span>
+                        </div>
+                        <div className="flex gap-1 flex-wrap mt-1">
+                          {STANDS_DISPONIBLES.map(s=>(
+                            <span key={s} title={STAND_INFO[s]?`${STAND_INFO[s].precio} · ${STAND_INFO[s].frentes}`:''}
+                              className="text-xs px-1.5 py-0.5 rounded font-mono font-bold cursor-default"
+                              style={{background:standsOcupados.includes(s)?'rgba(239,68,68,0.15)':'rgba(16,185,129,0.15)',color:standsOcupados.includes(s)?'#f87171':'#10b981'}}>
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-xl p-3" style={{background:card,border:`1px solid ${br}`}}>
+                        <div className="text-xs mb-1" style={{color:ts}}>🚚 Food Trucks</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-black text-emerald-400">{ftLibres.length}</span>
+                          <span className="text-xs" style={{color:ts}}>libres de {FT_DISPONIBLES.length}</span>
+                        </div>
+                        <div className="flex gap-1 flex-wrap mt-1">
+                          {FT_DISPONIBLES.map(s=>(
+                            <span key={s} className="text-xs px-1.5 py-0.5 rounded font-mono font-bold"
+                              style={{background:ftOcupados.includes(s)?'rgba(239,68,68,0.15)':'rgba(16,185,129,0.15)',color:ftOcupados.includes(s)?'#f87171':'#10b981'}}>
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-xl p-3" style={{background:card,border:`1px solid ${br}`}}>
+                        <div className="text-xs mb-1" style={{color:ts}}>⛺ Toldos</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-black" style={{color:tp}}>{toldos.length}</span>
+                          <span className="text-xs" style={{color:ts}}>registrados</span>
+                        </div>
+                        <div className="text-xs mt-1" style={{color:ts}}>{toldos.filter(t=>isOk(t.status)).length} aprobados · {toldos.filter(t=>t.status==='pending_payment').length} pendientes</div>
+                      </div>
+                    </div>
+
+                    <Tabs value={comTab} onChange={v=>setComTab(v as any)} options={[
+                      {id:'stand',label:'🏪 Stands',count:stands.length},
+                      {id:'foodtruck',label:'🚚 Food Trucks',count:foodtrucks.length},
+                      {id:'toldo',label:'⛺ Toldos',count:toldos.length}
+                    ]}/>
+
+                    {comTab==='stand'&&(
+                      <DTable headers={['Stand','Marca','Responsable','Tipo','Estado','Monto','Docs','Contrato','']} empty={!stands.length}>
+                        {stands.map(e=>(
                           <TR key={e.id}>
+                            <TD><span className="font-mono font-black text-sm px-2 py-1 rounded-lg" style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>{e.stand_id||'—'}</span></TD>
                             <TD cls="font-bold">{e.brand_name}</TD>
-                            <TD><div className="font-medium">{e.responsible_name}</div><div className="text-xs" style={{color:ts}}>{e.email}</div></TD>
-                            <TD cls="text-xs">{e.stand_id||e.stand_type||'—'}</TD>
+                            <TD><div className="font-medium">{e.responsible_name||e.contact_name}</div><div className="text-xs" style={{color:ts}}>{e.email}</div></TD>
+                            <TD cls="text-xs uppercase font-bold" style={{color:ts}}>{e.stand_type||'—'}</TD>
                             <TD><div className="flex items-center gap-1 flex-wrap"><Badge status={e.status}/>{!isOk(e.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:e,table:'expositor_reservations'})}/>}</div></TD>
-                            <TD cls="text-xs font-bold text-emerald-400">{e.amount_cents?fmtCOP(e.amount_cents):'—'}</TD>
+                            <TD cls="text-xs font-bold text-emerald-400">{e.amount_cents?fmtCOP(e.amount_cents):e.total_amount?fmtCOP(e.total_amount):'—'}</TD>
                             <TD><div className="flex gap-1"><DocBadge ok={!!e.cedula_url} label="CC" url={e.cedula_url}/><DocBadge ok={!!e.rut_url} label="RUT" url={e.rut_url}/></div></TD>
-                            <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name,email:e.email})}/>}</TD>
+                            <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:e,table:'expositor_reservations'})}/>
-                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
+                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Stand',options:STANDS_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'contact_name',label:'Contacto empresa'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'stand_type',label:'Tipo',options:['AAA','AA','A']},{key:'description',label:'Descripción'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
                             </div></TD>
                           </TR>
                         ))}
                       </DTable>
-                    ):(
+                    )}
+
+                    {comTab==='foodtruck'&&(
+                      <DTable headers={['Spot','Marca','Responsable','Dimensiones','Estado','Monto','Docs','Contrato','']} empty={!foodtrucks.length}>
+                        {foodtrucks.map(e=>(
+                          <TR key={e.id}>
+                            <TD><span className="font-mono font-black text-sm px-2 py-1 rounded-lg" style={{background:'rgba(245,158,11,0.15)',color:'#f59e0b'}}>{e.stand_id||'—'}</span></TD>
+                            <TD cls="font-bold">{e.brand_name}</TD>
+                            <TD><div className="font-medium">{e.responsible_name||e.contact_name}</div><div className="text-xs" style={{color:ts}}>{e.email}</div></TD>
+                            <TD cls="text-xs" style={{color:ts}}>{(e as any).ft_width_m&&(e as any).ft_length_m?`${(e as any).ft_width_m}×${(e as any).ft_length_m}m`:'—'}</TD>
+                            <TD><div className="flex items-center gap-1 flex-wrap"><Badge status={e.status}/>{!isOk(e.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:e,table:'expositor_reservations'})}/>}</div></TD>
+                            <TD cls="text-xs font-bold text-emerald-400">{e.amount_cents?fmtCOP(e.amount_cents):e.total_amount?fmtCOP(e.total_amount):'—'}</TD>
+                            <TD><div className="flex gap-1"><DocBadge ok={!!e.cedula_url} label="CC" url={e.cedula_url}/><DocBadge ok={!!e.rut_url} label="RUT" url={e.rut_url}/></div></TD>
+                            <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
+                            <TD><div className="flex gap-1">
+                              <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:e,table:'expositor_reservations'})}/>
+                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Spot FT',options:FT_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'product_type',label:'Producto'},{key:'ft_width_m',label:'Ancho (m)'},{key:'ft_length_m',label:'Largo (m)'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'}]})}/>
+                            </div></TD>
+                          </TR>
+                        ))}
+                      </DTable>
+                    )}
+
+                    {comTab==='toldo'&&(
                       <DTable headers={['Marca','Responsable','Cant','Estado','Monto','Docs','Contrato','']} empty={!toldos.length}>
                         {toldos.map(t=>(
                           <TR key={t.id}>
@@ -1131,7 +1217,8 @@ export function Dashboard() {
                       </DTable>
                     )}
                   </div>
-                )}
+                  )
+                })()}
 
                 {/* DEPORTES */}
                 {page==='deportes'&&(
