@@ -943,7 +943,7 @@ export function Dashboard() {
                       const emojiS = Math.round(24 * scale)
                       return (
                         <div className="relative mb-6 rounded-2xl flex items-center justify-center"
-                          style={{height:'calc(100vh - 280px)',minHeight:520,background:dark?'linear-gradient(135deg,#0d0d1f,#0a0a14)':'linear-gradient(135deg,#f0fdf4,#ecfdf5)',border:`1px solid ${br}`,overflow:'hidden'}}>
+                          style={{height:'calc(100vh - 340px)',minHeight:460,maxHeight:580,background:dark?'linear-gradient(135deg,#0d0d1f,#0a0a14)':'linear-gradient(135deg,#f0fdf4,#ecfdf5)',border:`1px solid ${br}`,overflow:'hidden'}}>
                           <div className="absolute inset-0 pointer-events-none" style={{background:'radial-gradient(circle at 50% 50%,rgba(5,150,105,0.12),transparent 65%)'}}/>
                           {[dynR*2,dynR*2.9].map((size,i)=>(
                             <motion.div key={i} animate={{rotate:i%2===0?360:-360}} transition={{duration:i===0?80:120,repeat:Infinity,ease:'linear'}}
@@ -1086,6 +1086,7 @@ export function Dashboard() {
                   const STAND_INFO:Record<string,{precio:string;frentes:string}> = {
                     'AA01':{precio:'$600.000',frentes:'Dos frentes'},'A02':{precio:'$500.000',frentes:'Un frente'},'A03':{precio:'$500.000',frentes:'Un frente'},'A04':{precio:'$500.000',frentes:'Un frente'},'A05':{precio:'$500.000',frentes:'Un frente'},'AA06':{precio:'$600.000',frentes:'Dos frentes'},'AA07':{precio:'$600.000',frentes:'Dos frentes'},'A08':{precio:'$500.000',frentes:'Un frente'},'A09':{precio:'$500.000',frentes:'Un frente'},'A10':{precio:'$500.000',frentes:'Un frente'},'A11':{precio:'$500.000',frentes:'Un frente'},'AA12':{precio:'$600.000',frentes:'Dos frentes'},'AAA13':{precio:'$800.000',frentes:'Tres frentes'},'AA14':{precio:'$600.000',frentes:'Dos frentes'},'AA15':{precio:'$600.000',frentes:'Dos frentes'},'AA16':{precio:'$600.000',frentes:'Dos frentes'},'AA17':{precio:'$600.000',frentes:'Dos frentes'},'AA18':{precio:'$600.000',frentes:'Dos frentes'},'AA19':{precio:'$600.000',frentes:'Dos frentes'},'AA20':{precio:'$600.000',frentes:'Dos frentes'},'AA21':{precio:'$600.000',frentes:'Dos frentes'},'AA22':{precio:'$600.000',frentes:'Dos frentes'},'AA23':{precio:'$600.000',frentes:'Dos frentes'},'AAA24':{precio:'$800.000',frentes:'Tres frentes'},'AA25':{precio:'$600.000',frentes:'Dos frentes'},'A26':{precio:'$500.000',frentes:'Un frente'},'A27':{precio:'$500.000',frentes:'Un frente'},'A28':{precio:'$500.000',frentes:'Un frente'},'A29':{precio:'$500.000',frentes:'Un frente'},'AA30':{precio:'$600.000',frentes:'Dos frentes'},'AA31':{precio:'$600.000',frentes:'Dos frentes'},'A32':{precio:'$500.000',frentes:'Un frente'},'A33':{precio:'$500.000',frentes:'Un frente'},'A34':{precio:'$500.000',frentes:'Un frente'},'A35':{precio:'$500.000',frentes:'Un frente'},'AA36':{precio:'$600.000',frentes:'Dos frentes'}
                   }
+                  const standsOcupados=stands.map(e=>e.stand_id).filter(Boolean)
                   const ftOcupados=foodtrucks.map(e=>e.stand_id).filter(Boolean)
                   const standsLibres=STANDS_DISPONIBLES.filter(s=>!standsOcupados.includes(s))
                   const ftLibres=FT_DISPONIBLES.filter(s=>!ftOcupados.includes(s))
