@@ -635,6 +635,83 @@ function Tabs({options,value,onChange}:{options:{id:string;label:string;count?:n
   )
 }
 
+// ─── ORBITAL MENU — responsive con ResizeObserver ────────────────────────────
+function OrbitalMenu({dark,br,tp,orbNodes,onNavigate}:{dark:boolean;br:string;tp:string;ts?:string;orbNodes:any[];onNavigate:(p:string)=>void}) {
+  const containerRef=useRef<HTMLDivElement>(null)
+  const [size,setSize]=useState({w:800,h:500})
+
+  useEffect(()=>{
+    const el=containerRef.current; if(!el) return
+    const ro=new ResizeObserver(entries=>{
+      const e=entries[0]; if(e) setSize({w:e.contentRect.width,h:e.contentRect.height})
+    })
+    ro.observe(el)
+    setSize({w:el.offsetWidth,h:el.offsetHeight})
+    return()=>ro.disconnect()
+  },[])
+
+  // Radio máximo que cabe en el contenedor con margen para los nodos
+  const maxR=Math.min(size.w/2, size.h/2) - 100
+  const dynR=Math.max(100, Math.min(maxR, 240))
+  const scale=dynR/160
+  const logoS=Math.round(Math.min(130, 80*scale))
+  const logoImg=Math.round(Math.min(80, 50*scale))
+  const iconS=Math.round(Math.min(72, 44*scale))
+  const emojiS=Math.round(Math.min(30, 20*scale))
+  const nodeW=Math.round(Math.min(90, 60*scale))
+  const fontSize=Math.max(10, Math.round(12*scale))
+
+  return (
+    <div ref={containerRef} className="relative mb-6 rounded-2xl flex items-center justify-center"
+      style={{height:'calc(100vh - 340px)',minHeight:460,maxHeight:600,background:dark?'linear-gradient(135deg,#0d0d1f,#0a0a14)':'linear-gradient(135deg,#f0fdf4,#ecfdf5)',border:`1px solid ${br}`,overflow:'hidden'}}>
+      <div className="absolute inset-0 pointer-events-none" style={{background:'radial-gradient(circle at 50% 50%,rgba(5,150,105,0.12),transparent 65%)'}}/>
+      {[dynR*2,dynR*2.9].map((s,i)=>(
+        <motion.div key={i} animate={{rotate:i%2===0?360:-360}} transition={{duration:i===0?80:120,repeat:Infinity,ease:'linear'}}
+          className="absolute rounded-full pointer-events-none" style={{width:s,height:s,border:'1px dashed rgba(16,185,129,0.12)'}}/>
+      ))}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+        <defs><linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(16,185,129,0.5)"/><stop offset="100%" stopColor="rgba(16,185,129,0.03)"/></linearGradient></defs>
+        {orbNodes.map((n:any,i:number)=>{const r=(n.angle*Math.PI)/180;return <motion.line key={i} x1="50%" y1="50%" x2={`${50+Math.cos(r)*32}%`} y2={`${50+Math.sin(r)*38}%`} stroke="url(#lg1)" strokeWidth="1" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.3+i*0.1}}/>})}
+      </svg>
+      {/* Logo central */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+        <div className="absolute rounded-full blur-3xl" style={{inset:-40,background:'rgba(5,150,105,0.25)'}}/>
+        <motion.div animate={{y:[0,-8,0]}} transition={{duration:4,repeat:Infinity,ease:'easeInOut'}}>
+          <div className="rounded-full flex items-center justify-center" style={{width:logoS,height:logoS,background:'linear-gradient(135deg,#059669,#047857)',boxShadow:'0 0 60px rgba(5,150,105,0.6)'}}>
+            <img src="/Logo_latido_y_huella_ICONO_blanco.png" style={{width:logoImg,height:logoImg,objectFit:'contain'}} alt="" onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
+          </div>
+        </motion.div>
+      </div>
+      {/* Nodos orbitales */}
+      {orbNodes.map((n:any,i:number)=>{
+        const r=(n.angle*Math.PI)/180
+        const x=Math.cos(r)*dynR; const y=Math.sin(r)*dynR
+        const half=nodeW/2
+        return (
+          <motion.button key={i} onClick={()=>onNavigate(n.page)}
+            initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}}
+            transition={{type:'spring',stiffness:120,damping:12,delay:0.3+i*0.1}}
+            whileHover={{scale:1.15,y:-5}} whileTap={{scale:0.95}}
+            className="absolute flex flex-col items-center gap-1.5 group"
+            style={{left:`calc(50% + ${x}px - ${half+10}px)`,top:`calc(50% + ${y}px - ${half+16}px)`,width:nodeW+20,zIndex:10}}>
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 blur-xl transition-opacity" style={{background:'rgba(16,185,129,0.35)'}}/>
+              <div className="rounded-2xl flex items-center justify-center relative z-10"
+                style={{width:iconS,height:iconS,fontSize:emojiS,background:dark?'rgba(255,255,255,0.06)':'rgba(255,255,255,0.9)',border:`1px solid ${br}`,boxShadow:'0 4px 20px rgba(0,0,0,0.3)'}}>
+                {n.emoji}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="font-bold group-hover:text-emerald-400 transition-colors whitespace-nowrap" style={{color:tp,fontSize}}>{n.label}</div>
+              <div className="font-black mt-0.5 px-2 py-0.5 rounded-full" style={{background:'rgba(16,185,129,0.2)',color:'#10b981',fontSize:Math.max(9,fontSize-2)}}>{n.count}</div>
+            </div>
+          </motion.button>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 function LoginScreen({onLogin}:{onLogin:(u:{id:string;email:string;role:string;name:string})=>void}) {
   const [email,setEmail]=useState('');const [pass,setPass]=useState('');const [err,setErr]=useState('');const [loading,setLoading]=useState(false)
@@ -929,66 +1006,11 @@ export function Dashboard() {
                 {/* HOME */}
                 {page==='home'&&(
                   <div>
-                    <div className="mb-8">
+                    <div className="mb-6">
                       <h1 className="text-3xl font-black" style={{color:tp}}>Bienvenido, {authUser.name} 👋</h1>
                       <p className="text-sm mt-1" style={{color:ts}}>Panel de administración · Latido & Huella</p>
                     </div>
-                    {(()=>{
-                      const scale = 1.6
-                      const dynR = 210 * scale
-                      const logoS = Math.round(120 * scale)
-                      const logoImg = Math.round(72 * scale)
-                      const nodeW = Math.round(70 * scale)
-                      const iconS = Math.round(56 * scale)
-                      const emojiS = Math.round(24 * scale)
-                      return (
-                        <div className="relative mb-6 rounded-2xl flex items-center justify-center"
-                          style={{height:'calc(100vh - 340px)',minHeight:460,maxHeight:580,background:dark?'linear-gradient(135deg,#0d0d1f,#0a0a14)':'linear-gradient(135deg,#f0fdf4,#ecfdf5)',border:`1px solid ${br}`,overflow:'hidden'}}>
-                          <div className="absolute inset-0 pointer-events-none" style={{background:'radial-gradient(circle at 50% 50%,rgba(5,150,105,0.12),transparent 65%)'}}/>
-                          {[dynR*2,dynR*2.9].map((size,i)=>(
-                            <motion.div key={i} animate={{rotate:i%2===0?360:-360}} transition={{duration:i===0?80:120,repeat:Infinity,ease:'linear'}}
-                              className="absolute rounded-full pointer-events-none" style={{width:size,height:size,border:'1px dashed rgba(16,185,129,0.12)'}}/>
-                          ))}
-                          <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                            <defs><linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="rgba(16,185,129,0.5)"/><stop offset="100%" stopColor="rgba(16,185,129,0.03)"/></linearGradient></defs>
-                            {orbNodes.map((n,i)=>{const r=(n.angle*Math.PI)/180;return <motion.line key={i} x1="50%" y1="50%" x2={`${50+Math.cos(r)*32}%`} y2={`${50+Math.sin(r)*38}%`} stroke="url(#lg1)" strokeWidth="1" initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.3+i*0.1}}/>})}
-                          </svg>
-                          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                            <div className="absolute rounded-full blur-3xl" style={{inset:-50,background:'rgba(5,150,105,0.25)'}}/>
-                            <motion.div animate={{y:[0,-12,0]}} transition={{duration:4,repeat:Infinity,ease:'easeInOut'}}>
-                              <div className="rounded-full flex items-center justify-center" style={{width:logoS,height:logoS,background:'linear-gradient(135deg,#059669,#047857)',boxShadow:'0 0 80px rgba(5,150,105,0.6)'}}>
-                                <img src="/Logo_latido_y_huella_ICONO_blanco.png" style={{width:logoImg,height:logoImg}} className="object-contain" alt="" onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-                              </div>
-                            </motion.div>
-                          </div>
-                          {orbNodes.map((n,i)=>{
-                            const r=(n.angle*Math.PI)/180
-                            const x=Math.cos(r)*dynR; const y=Math.sin(r)*dynR
-                            const half=nodeW/2
-                            return (
-                              <motion.button key={i} onClick={()=>setPage(n.page as Page)}
-                                initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}}
-                                transition={{type:'spring',stiffness:120,damping:12,delay:0.3+i*0.1}}
-                                whileHover={{scale:1.15,y:-6}} whileTap={{scale:0.95}}
-                                className="absolute flex flex-col items-center gap-2 group"
-                                style={{left:`calc(50% + ${x}px - ${half+12}px)`,top:`calc(50% + ${y}px - ${half+18}px)`,width:nodeW+24,zIndex:10}}>
-                                <div className="relative">
-                                  <div className="absolute -inset-4 rounded-full opacity-0 group-hover:opacity-100 blur-xl transition-opacity" style={{background:'rgba(16,185,129,0.35)'}}/>
-                                  <div className="rounded-2xl flex items-center justify-center relative z-10"
-                                    style={{width:iconS,height:iconS,fontSize:emojiS,background:dark?'rgba(255,255,255,0.06)':'rgba(255,255,255,0.9)',border:`1px solid ${br}`,boxShadow:'0 4px 20px rgba(0,0,0,0.3)'}}>
-                                    {n.emoji}
-                                  </div>
-                                </div>
-                                <div className="text-center">
-                                  <div className="font-bold group-hover:text-emerald-400 transition-colors whitespace-nowrap" style={{color:tp,fontSize:13}}>{n.label}</div>
-                                  <div className="font-black mt-0.5 px-2 py-0.5 rounded-full" style={{background:'rgba(16,185,129,0.2)',color:'#10b981',fontSize:11}}>{n.count}</div>
-                                </div>
-                              </motion.button>
-                            )
-                          })}
-                        </div>
-                      )
-                    })()}
+                    <OrbitalMenu dark={dark} br={br} tp={tp} ts={ts} orbNodes={orbNodes} onNavigate={p=>setPage(p as Page)}/>
                     <div className="grid grid-cols-5 gap-4 mb-0">
                       {[
                         {label:'Total inscritos',value:allR.length,icon:'👥',color:tp},
