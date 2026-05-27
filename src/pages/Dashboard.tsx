@@ -14,7 +14,7 @@ interface SportTeam { id:string;created_at:string;sport:string;category:string|n
 interface SportPlayer { id:string;team_id:string;player_index:number;is_captain:boolean;name:string;age:number|null;cedula:string|null;ti:string|null;email:string|null;phone:string|null;responsable_name:string|null;responsable_phone:string|null }
 interface AdminUser { id:string;created_at:string;full_name:string;email:string;password_hash:string;role:string;is_active:boolean }
 
-type Page = 'home'|'5k'|'mascotas'|'comercial'|'deportes'|'patrocinadores'|'marcas'|'pagos'|'admin'|'dev'
+type Page = 'home'|'5k'|'mascotas'|'comercial'|'deportes'|'patrocinadores'|'marcas'|'pagos'|'admin'|'dev'|'papelera'
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const PM = ['wompi','efectivo','transferencia']
@@ -635,7 +635,82 @@ function Tabs({options,value,onChange}:{options:{id:string;label:string;count?:n
   )
 }
 
-// ─── ORBITAL MENU — responsive con ResizeObserver ────────────────────────────
+// ─── DELETE MODAL — con fricción ─────────────────────────────────────────────
+function DeleteModal({record,table,onClose,onDeleted}:{record:any;table:string;onClose:()=>void;onDeleted:()=>void}) {
+  const [deleting,setDeleting]=useState(false);const [result,setResult]=useState<{ok:boolean;msg:string}|null>(null)
+  const name=record.full_name||record.responsible_name||record.brand_name||record.company_name||record.captain_name||record.name||'—'
+  const doDelete=async()=>{
+    setDeleting(true);setResult(null)
+    const {error}=await supabase.from(table).update({deleted_at:new Date().toISOString()}).eq('id',record.id)
+    setDeleting(false)
+    if(error){setResult({ok:false,msg:error.message})}
+    else{setResult({ok:true,msg:'✓ Movido a papelera'});onDeleted();setTimeout(onClose,800)}
+  }
+  return (
+    <Modal onClose={onClose}>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-base font-bold text-white">🗑️ Mover a papelera</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none">×</button>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-5">
+          <div className="text-sm font-bold text-white mb-1">{name}</div>
+          <div className="text-xs text-gray-400">Este registro será movido a la papelera. Podrás restaurarlo después.</div>
+        </div>
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-5 text-xs text-amber-400">
+          ⚠️ El registro desaparecerá de todas las vistas del dashboard pero NO se eliminará permanentemente.
+        </div>
+        {result&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${result.ok?'bg-emerald-500/15 text-emerald-400':'bg-red-500/15 text-red-400'}`}>{result.msg}</div>}
+        <div className="flex gap-2">
+          <button onClick={doDelete} disabled={deleting||result?.ok}
+            className="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm font-bold hover:bg-red-500 disabled:opacity-50">
+            {deleting?'Moviendo...':'🗑️ Sí, mover a papelera'}
+          </button>
+          <button onClick={onClose} className="px-4 border border-white/10 rounded-xl text-sm text-gray-400 hover:bg-white/5">Cancelar</button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ─── HARD DELETE MODAL — doble confirmación ───────────────────────────────────
+function HardDeleteModal({record,table,onClose,onDeleted}:{record:any;table:string;onClose:()=>void;onDeleted:()=>void}) {
+  const [confirm,setConfirm]=useState('');const [deleting,setDeleting]=useState(false)
+  const name=record.full_name||record.responsible_name||record.brand_name||record.company_name||record.captain_name||record.name||'—'
+  const doHardDelete=async()=>{
+    if(confirm!=='ELIMINAR')return
+    setDeleting(true)
+    await supabase.from(table).delete().eq('id',record.id)
+    setDeleting(false)
+    onDeleted();onClose()
+  }
+  return (
+    <Modal onClose={onClose}>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-base font-bold text-red-400">⛔ Eliminar permanentemente</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none">×</button>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4">
+          <div className="text-sm font-bold text-white mb-1">{name}</div>
+          <div className="text-xs text-red-400 font-bold">⛔ Esta acción es IRREVERSIBLE. El registro se eliminará para siempre.</div>
+        </div>
+        <label className="text-xs text-gray-400 mb-1.5 block">Escribe <span className="font-bold text-red-400">ELIMINAR</span> para confirmar</label>
+        <input className="w-full bg-white/5 border border-red-500/30 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 mb-5"
+          placeholder="ELIMINAR" value={confirm} onChange={e=>setConfirm(e.target.value)}/>
+        <div className="flex gap-2">
+          <button onClick={doHardDelete} disabled={confirm!=='ELIMINAR'||deleting}
+            className="flex-1 bg-red-700 text-white rounded-xl py-2.5 text-sm font-bold hover:bg-red-600 disabled:opacity-30">
+            {deleting?'Eliminando...':'⛔ Eliminar permanentemente'}
+          </button>
+          <button onClick={onClose} className="px-4 border border-white/10 rounded-xl text-sm text-gray-400 hover:bg-white/5">Cancelar</button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+
 function OrbitalMenu({dark,br,tp,orbNodes,onNavigate}:{dark:boolean;br:string;tp:string;ts?:string;orbNodes:any[];onNavigate:(p:string)=>void}) {
   const containerRef=useRef<HTMLDivElement>(null)
   const [size,setSize]=useState({w:800,h:500})
@@ -799,7 +874,8 @@ export function Dashboard() {
   const [profileM,setProfileM]=useState<{record:any;table:string}|null>(null)
   const [logoEditM,setLogoEditM]=useState<PublicSponsor|null>(null)
   const [teamM,setTeamM]=useState<SportTeam|null>(null)
-  const [createM,setCreateM]=useState<{table:string;fields:any[];title:string;defaults?:any}|null>(null)
+  const [deleteM,setDeleteM]=useState<{record:any;table:string}|null>(null)
+  const [hardDeleteM,setHardDeleteM]=useState<{record:any;table:string}|null>(null)
 
   const [sponsorTab,setSponsorTab]=useState<'empresarial'|'deportivo'|'espacios'>('empresarial')
   const [comTab,setComTab]=useState<'stand'|'foodtruck'|'toldo'>('stand')
@@ -827,15 +903,15 @@ export function Dashboard() {
   const fetchAll=useCallback(async()=>{
     setLoading(true)
     const [a,b,c,d,e,f,g,h,i,j]=await Promise.all([
-      supabase.from('registrations_5k').select('*').order('created_at',{ascending:false}),
-      supabase.from('registration_pets').select('*').order('created_at',{ascending:false}),
-      supabase.from('expositor_reservations').select('*').order('created_at',{ascending:false}),
-      supabase.from('toldos_reservations').select('*').order('created_at',{ascending:false}),
-      supabase.from('sponsor_inquiries').select('*').order('created_at',{ascending:false}),
+      supabase.from('registrations_5k').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
+      supabase.from('registration_pets').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
+      supabase.from('expositor_reservations').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
+      supabase.from('toldos_reservations').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
+      supabase.from('sponsor_inquiries').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
       supabase.from('sponsor_order_items').select('*'),
       supabase.from('public_sponsors').select('*').order('display_order'),
-      supabase.from('sports_team_registrations').select('*').order('created_at',{ascending:false}),
-      supabase.from('sports_team_players').select('*').order('player_index'),
+      supabase.from('sports_team_registrations').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
+      supabase.from('sports_team_players').select('*').is('deleted_at',null).order('player_index'),
       supabase.from('admin_users').select('*').order('created_at',{ascending:false}),
     ])
     if(a.data)setRegs5k(a.data);if(b.data)setPets(b.data);if(c.data)setExpositores(c.data)
@@ -897,6 +973,8 @@ export function Dashboard() {
     null,
     {id:'admin',icon:'👥',label:'Administración'},
     {id:'dev',icon:'⚙️',label:'Desarrolladores'},
+    null,
+    {id:'papelera',icon:'🗑️',label:'Papelera'},
   ]
 
   const orbitR=210
@@ -1063,6 +1141,7 @@ export function Dashboard() {
                           <TD><div className="flex gap-1">
                             <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
                             <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:r,table:'registrations_5k',fields:[{key:'full_name',label:'Nombre'},{key:'document_id',label:'Cédula'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'photo_url',label:'Foto de perfil'}]})}/>
+                            <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:r,table:'registrations_5k'})}/>
                           </div></TD>
                         </TR>
                       ))}
@@ -1273,6 +1352,7 @@ export function Dashboard() {
                             <TD><div className="flex gap-1">
                               <Btn icon="👥" label="Ver" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setTeamM(team)}/>
                               <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:team,table:'sports_team_registrations',fields:[{key:'captain_name',label:'Capitán'},{key:'captain_email',label:'Email'},{key:'captain_phone',label:'Teléfono'},{key:'team_name',label:'Nombre equipo'},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'payment_method',label:'Pago',options:PM}],title:'Editar equipo'})}/>
+                              <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:team,table:'sports_team_registrations'})}/>
                             </div></TD>
                           </TR>
                         )
@@ -1322,6 +1402,7 @@ export function Dashboard() {
                           <TD><div className="flex gap-1">
                             <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:s,table:'sponsor_inquiries'})}/>
                             <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:s,table:'sponsor_inquiries',fields:[{key:'company_name',label:'Empresa'},{key:'contact_name',label:'Contacto'},{key:'email',label:'Email'},{key:'plan_name',label:'Plan'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'comments',label:'Comentarios'},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
+                            <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:s,table:'sponsor_inquiries'})}/>
                           </div></TD>
                         </TR>
                       ))}
@@ -1598,13 +1679,86 @@ export function Dashboard() {
                   </div>
                 )}
 
-              </motion.div>
-            </AnimatePresence>
-          )}
-        </div>
-      </div>
+                {page==='papelera'&&(()=>{
+                  const [trashData,setTrashData]=useState<{records:any[];table:string;cat:string}[]>([])
+                  const [trashLoading,setTrashLoading]=useState(true)
+                  const [trashTab,setTrashTab]=useState('all')
 
-      {/* MODALS */}
+                  useEffect(()=>{
+                    const loadTrash=async()=>{
+                      setTrashLoading(true)
+                      const tables=[
+                        {table:'registrations_5k',cat:'🐾 Caminata 5K'},
+                        {table:'registration_pets',cat:'🐶 Mascotas'},
+                        {table:'expositor_reservations',cat:'🏪 Expositores'},
+                        {table:'toldos_reservations',cat:'⛺ Toldos'},
+                        {table:'sponsor_inquiries',cat:'⭐ Patrocinadores'},
+                        {table:'sports_team_registrations',cat:'⚽ Deportes'},
+                      ]
+                      const results=await Promise.all(tables.map(async t=>{
+                        const {data}=await supabase.from(t.table).select('*').not('deleted_at','is',null).order('deleted_at',{ascending:false})
+                        return{...t,records:data||[]}
+                      }))
+                      setTrashData(results)
+                      setTrashLoading(false)
+                    }
+                    loadTrash()
+                  },[])
+
+                  const allDeleted=trashData.flatMap(t=>t.records.map(r=>({...r,_cat:t.cat,_table:t.table})))
+                  const filtered=trashTab==='all'?allDeleted:allDeleted.filter(r=>r._table===trashTab)
+
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h1 className="text-2xl font-black" style={{color:tp}}>🗑️ Papelera</h1>
+                          <p className="text-sm mt-0.5" style={{color:ts}}>{allDeleted.length} registros eliminados</p>
+                        </div>
+                      </div>
+                      <Tabs value={trashTab} onChange={setTrashTab} options={[
+                        {id:'all',label:'Todos',count:allDeleted.length},
+                        {id:'registrations_5k',label:'🐾 5K',count:trashData.find(t=>t.table==='registrations_5k')?.records.length||0},
+                        {id:'expositor_reservations',label:'🏪 Stands',count:trashData.find(t=>t.table==='expositor_reservations')?.records.length||0},
+                        {id:'toldos_reservations',label:'⛺ Toldos',count:trashData.find(t=>t.table==='toldos_reservations')?.records.length||0},
+                        {id:'sports_team_registrations',label:'⚽ Deportes',count:trashData.find(t=>t.table==='sports_team_registrations')?.records.length||0},
+                      ]}/>
+                      {trashLoading
+                        ?<div className="text-center py-12 text-gray-500">Cargando papelera...</div>
+                        :!filtered.length
+                        ?<div className="text-center py-16 rounded-2xl" style={{background:card,border:`1px solid ${br}`}}>
+                          <div className="text-4xl mb-3">🗑️</div>
+                          <div className="text-sm font-bold" style={{color:tp}}>Papelera vacía</div>
+                          <div className="text-xs mt-1" style={{color:ts}}>No hay registros eliminados</div>
+                        </div>
+                        :<DTable headers={['Categoría','Nombre','Email','Eliminado el','']}>
+                          {filtered.map((r,i)=>{
+                            const name=r.full_name||r.responsible_name||r.brand_name||r.company_name||r.captain_name||r.name||'—'
+                            const email=r.email||r.captain_email||'—'
+                            return (
+                              <TR key={i}>
+                                <TD><span className="text-xs px-2 py-1 rounded-lg" style={{background:'rgba(255,255,255,0.06)'}}>{r._cat}</span></TD>
+                                <TD cls="font-semibold">{name}</TD>
+                                <TD cls="text-xs" style={{color:ts}}>{email}</TD>
+                                <TD cls="text-xs" style={{color:ts}}>{fmtDate(r.deleted_at)}</TD>
+                                <TD><div className="flex gap-1">
+                                  <Btn icon="♻️" label="Restaurar" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={async()=>{
+                                    await supabase.from(r._table).update({deleted_at:null}).eq('id',r.id)
+                                    fetchAll()
+                                    setTrashData(prev=>prev.map(t=>t.table===r._table?{...t,records:t.records.filter(rec=>rec.id!==r.id)}:t))
+                                  }}/>
+                                  <Btn icon="⛔" label="Eliminar" color="bg-red-500/15 text-red-400 hover:bg-red-500/25" onClick={()=>setHardDeleteM({record:r,table:r._table})}/>
+                                </div></TD>
+                              </TR>
+                            )
+                          })}
+                        </DTable>
+                      }
+                    </div>
+                  )
+                })()}
+
+
       <AnimatePresence>
         {contractM&&<ContractModal name={contractM.name} email={contractM.email} onClose={()=>setContractM(null)}/>}
         {editM&&<EditModal record={editM.record} table={editM.table} fields={editM.fields} title={editM.title} onClose={()=>setEditM(null)} onSaved={fetchAll}/>}
@@ -1627,6 +1781,8 @@ export function Dashboard() {
         {logoEditM&&<LogoEditModal logo={logoEditM} onClose={()=>setLogoEditM(null)} onSaved={fetchAll}/>}
         {teamM&&<TeamModal team={teamM} players={players.filter(p=>p.team_id===teamM.id)} onClose={()=>setTeamM(null)} onSaved={fetchAll}/>}
         {createM&&<CreateModal table={createM.table} fields={createM.fields} title={createM.title} defaults={createM.defaults} onClose={()=>setCreateM(null)} onSaved={fetchAll}/>}
+        {deleteM&&<DeleteModal record={deleteM.record} table={deleteM.table} onClose={()=>setDeleteM(null)} onDeleted={fetchAll}/>}
+        {hardDeleteM&&<HardDeleteModal record={hardDeleteM.record} table={hardDeleteM.table} onClose={()=>setHardDeleteM(null)} onDeleted={()=>{fetchAll();setHardDeleteM(null)}}/>}
       </AnimatePresence>
     </div>
   )
