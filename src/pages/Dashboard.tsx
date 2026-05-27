@@ -874,6 +874,7 @@ export function Dashboard() {
   const [profileM,setProfileM]=useState<{record:any;table:string}|null>(null)
   const [logoEditM,setLogoEditM]=useState<PublicSponsor|null>(null)
   const [teamM,setTeamM]=useState<SportTeam|null>(null)
+  const [createM,setCreateM]=useState<{table:string;fields:any[];title:string;defaults?:any}|null>(null)
   const [deleteM,setDeleteM]=useState<{record:any;table:string}|null>(null)
   const [hardDeleteM,setHardDeleteM]=useState<{record:any;table:string}|null>(null)
 
