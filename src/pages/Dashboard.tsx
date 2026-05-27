@@ -1758,7 +1758,13 @@ export function Dashboard() {
                   )
                 })()}
 
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
+      </div>
 
+      {/* MODALS */}
       <AnimatePresence>
         {contractM&&<ContractModal name={contractM.name} email={contractM.email} onClose={()=>setContractM(null)}/>}
         {editM&&<EditModal record={editM.record} table={editM.table} fields={editM.fields} title={editM.title} onClose={()=>setEditM(null)} onSaved={fetchAll}/>}
@@ -1770,7 +1776,6 @@ export function Dashboard() {
             onClose={()=>setProfileM(null)}
             onSaved={async()=>{
               await fetchAll()
-              // Refrescar el record del modal con los datos actualizados de Supabase
               const {data}=await supabase.from(profileM.table).select('*').eq('id',profileM.record.id).single()
               if(data) setProfileM(prev=>prev?{...prev,record:data}:null)
             }}
