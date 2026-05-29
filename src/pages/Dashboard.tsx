@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import ReactDOM from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 
@@ -715,6 +716,9 @@ function HardDeleteModal({record,table,onClose,onDeleted}:{record:any;table:stri
 function StandStatusBtn({record,table,onSaved}:{record:any;table:string;onSaved:()=>void}) {
   const [open,setOpen]=useState(false)
   const [saving,setSaving]=useState(false)
+  const [pos,setPos]=useState({top:0,left:0})
+  const btnRef=useRef<HTMLButtonElement>(null)
+
   const STAND_STATES=[
     {value:'available',label:'Disponible',color:'#10b981',bg:'rgba(16,185,129,0.15)'},
     {value:'pending_payment',label:'Reservado',color:'#f59e0b',bg:'rgba(245,158,11,0.15)'},
@@ -723,32 +727,45 @@ function StandStatusBtn({record,table,onSaved}:{record:any;table:string;onSaved:
     {value:'declined',label:'Rechazado',color:'#f87171',bg:'rgba(239,68,68,0.15)'},
   ]
   const current=STAND_STATES.find(s=>s.value===record.status)||STAND_STATES[1]
+
+  const handleOpen=()=>{
+    if(btnRef.current){
+      const rect=btnRef.current.getBoundingClientRect()
+      setPos({top:rect.bottom+window.scrollY+4,left:rect.left+window.scrollX})
+    }
+    setOpen(!open)
+  }
+
   const changeStatus=async(newStatus:string)=>{
     setSaving(true);setOpen(false)
     await supabase.from(table).update({status:newStatus}).eq('id',record.id)
     setSaving(false);onSaved()
   }
+
   return (
     <div className="relative">
-      <button onClick={()=>setOpen(!open)} disabled={saving}
+      <button ref={btnRef} onClick={handleOpen} disabled={saving}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all hover:opacity-80"
         style={{background:current.bg,color:current.color,border:`1px solid ${current.color}40`}}>
         {saving?'...':<>{current.label} ▾</>}
       </button>
-      {open&&(
-        <div className="absolute top-full left-0 mt-1 z-50 rounded-xl overflow-hidden shadow-2xl min-w-[130px]"
-          style={{background:'#12122a',border:'1px solid rgba(255,255,255,0.1)'}}>
-          {STAND_STATES.map(s=>(
-            <button key={s.value} onClick={()=>changeStatus(s.value)}
-              className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-white/10 transition-colors flex items-center gap-2"
-              style={{color:s.color}}>
-              <span className="w-3">{s.value===record.status?'✓':''}</span>
-              {s.label}
-            </button>
-          ))}
-        </div>
+      {open&&typeof document!=='undefined'&&ReactDOM.createPortal(
+        <>
+          <div className="fixed inset-0 z-[998]" onClick={()=>setOpen(false)}/>
+          <div className="fixed z-[999] rounded-xl overflow-hidden shadow-2xl min-w-[140px]"
+            style={{top:pos.top,left:pos.left,background:'#12122a',border:'1px solid rgba(255,255,255,0.15)'}}>
+            {STAND_STATES.map(s=>(
+              <button key={s.value} onClick={()=>changeStatus(s.value)}
+                className="w-full text-left px-3 py-2.5 text-xs font-bold hover:bg-white/10 transition-colors flex items-center gap-2"
+                style={{color:s.color}}>
+                <span className="w-3">{s.value===record.status?'✓':''}</span>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
       )}
-      {open&&<div className="fixed inset-0 z-40" onClick={()=>setOpen(false)}/>}
     </div>
   )
 }
