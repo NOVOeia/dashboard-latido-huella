@@ -24,9 +24,10 @@ const SC:Record<string,string> = {
   paid:'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
   pending_payment:'bg-amber-500/20 text-amber-400 border border-amber-500/30',
   declined:'bg-red-500/20 text-red-400 border border-red-500/30',
-  voided:'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+  voided:'bg-gray-500/20 text-gray-400 border border-gray-500/30',
+  expired:'bg-orange-500/20 text-orange-400 border border-orange-500/30'
 }
-const SL:Record<string,string> = {approved:'Aprobado',paid:'Pagado',pending_payment:'Pendiente',declined:'Rechazado',voided:'Anulado'}
+const SL:Record<string,string> = {approved:'Aprobado',paid:'Pagado',pending_payment:'Pendiente',declined:'Rechazado',voided:'Anulado',expired:'Expirado'}
 const TIERS = ['oro','plata','bronce','aliado','medios']
 const TC:Record<string,string> = {oro:'bg-yellow-500/20 text-yellow-400',plata:'bg-gray-400/20 text-gray-300',bronce:'bg-orange-500/20 text-orange-400',aliado:'bg-blue-500/20 text-blue-400',medios:'bg-purple-500/20 text-purple-400'}
 
