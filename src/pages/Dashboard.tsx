@@ -754,6 +754,7 @@ function StandStatusBtn({record,table,onSaved}:{record:any;table:string;onSaved:
 }
 
 // ─── ORBITAL MENU — responsive con ResizeObserver ────────────────────────────
+function OrbitalMenu({dark,br,tp,orbNodes,onNavigate}:{dark:boolean;br:string;tp:string;ts?:string;orbNodes:any[];onNavigate:(p:string)=>void}) {
   const containerRef=useRef<HTMLDivElement>(null)
   const [size,setSize]=useState({w:800,h:500})
 
