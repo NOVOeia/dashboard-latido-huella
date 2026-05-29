@@ -24,10 +24,9 @@ const SC:Record<string,string> = {
   paid:'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
   pending_payment:'bg-amber-500/20 text-amber-400 border border-amber-500/30',
   declined:'bg-red-500/20 text-red-400 border border-red-500/30',
-  voided:'bg-gray-500/20 text-gray-400 border border-gray-500/30',
-  expired:'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+  voided:'bg-gray-500/20 text-gray-400 border border-gray-500/30'
 }
-const SL:Record<string,string> = {approved:'Aprobado',paid:'Pagado',pending_payment:'Pendiente',declined:'Rechazado',voided:'Anulado',expired:'Expirado'}
+const SL:Record<string,string> = {approved:'Aprobado',paid:'Pagado',pending_payment:'Pendiente',declined:'Rechazado',voided:'Anulado'}
 const TIERS = ['oro','plata','bronce','aliado','medios']
 const TC:Record<string,string> = {oro:'bg-yellow-500/20 text-yellow-400',plata:'bg-gray-400/20 text-gray-300',bronce:'bg-orange-500/20 text-orange-400',aliado:'bg-blue-500/20 text-blue-400',medios:'bg-purple-500/20 text-purple-400'}
 
@@ -712,7 +711,49 @@ function HardDeleteModal({record,table,onClose,onDeleted}:{record:any;table:stri
 }
 
 
-function OrbitalMenu({dark,br,tp,orbNodes,onNavigate}:{dark:boolean;br:string;tp:string;ts?:string;orbNodes:any[];onNavigate:(p:string)=>void}) {
+// ─── STAND STATUS BTN — dropdown inline ──────────────────────────────────────
+function StandStatusBtn({record,table,onSaved}:{record:any;table:string;onSaved:()=>void}) {
+  const [open,setOpen]=useState(false)
+  const [saving,setSaving]=useState(false)
+  const STAND_STATES=[
+    {value:'available',label:'Disponible',color:'#10b981',bg:'rgba(16,185,129,0.15)'},
+    {value:'pending_payment',label:'Reservado',color:'#f59e0b',bg:'rgba(245,158,11,0.15)'},
+    {value:'approved',label:'Vendido',color:'#60a5fa',bg:'rgba(59,130,246,0.15)'},
+    {value:'expired',label:'Expirado',color:'#fb923c',bg:'rgba(249,115,22,0.15)'},
+    {value:'declined',label:'Rechazado',color:'#f87171',bg:'rgba(239,68,68,0.15)'},
+  ]
+  const current=STAND_STATES.find(s=>s.value===record.status)||STAND_STATES[1]
+  const changeStatus=async(newStatus:string)=>{
+    setSaving(true);setOpen(false)
+    await supabase.from(table).update({status:newStatus}).eq('id',record.id)
+    setSaving(false);onSaved()
+  }
+  return (
+    <div className="relative">
+      <button onClick={()=>setOpen(!open)} disabled={saving}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all hover:opacity-80"
+        style={{background:current.bg,color:current.color,border:`1px solid ${current.color}40`}}>
+        {saving?'...':<>{current.label} ▾</>}
+      </button>
+      {open&&(
+        <div className="absolute top-full left-0 mt-1 z-50 rounded-xl overflow-hidden shadow-2xl min-w-[130px]"
+          style={{background:'#12122a',border:'1px solid rgba(255,255,255,0.1)'}}>
+          {STAND_STATES.map(s=>(
+            <button key={s.value} onClick={()=>changeStatus(s.value)}
+              className="w-full text-left px-3 py-2 text-xs font-bold hover:bg-white/10 transition-colors flex items-center gap-2"
+              style={{color:s.color}}>
+              <span className="w-3">{s.value===record.status?'✓':''}</span>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {open&&<div className="fixed inset-0 z-40" onClick={()=>setOpen(false)}/>}
+    </div>
+  )
+}
+
+// ─── ORBITAL MENU — responsive con ResizeObserver ────────────────────────────
   const containerRef=useRef<HTMLDivElement>(null)
   const [size,setSize]=useState({w:800,h:500})
 
@@ -1347,7 +1388,7 @@ export function Dashboard() {
                             <TD cls="font-bold">{e.brand_name}</TD>
                             <TD><div className="font-medium">{e.responsible_name||e.contact_name}</div><div className="text-xs" style={{color:ts}}>{e.email}</div></TD>
                             <TD cls="text-xs uppercase font-bold" style={{color:ts}}>{e.stand_type||'—'}</TD>
-                            <TD><div className="flex items-center gap-1 flex-wrap"><Badge status={e.status}/>{!isOk(e.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:e,table:'expositor_reservations'})}/>}</div></TD>
+                            <TD><StandStatusBtn record={e} table="expositor_reservations" onSaved={fetchAll}/></TD>
                             <TD cls="text-xs font-bold text-emerald-400">{e.amount_cents?fmtCOP(e.amount_cents):e.total_amount?fmtCOP(e.total_amount):'—'}</TD>
                             <TD><div className="flex gap-1"><DocBadge ok={!!e.cedula_url} label="CC" url={e.cedula_url}/><DocBadge ok={!!e.rut_url} label="RUT" url={e.rut_url}/></div></TD>
                             <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
@@ -1369,7 +1410,7 @@ export function Dashboard() {
                             <TD cls="font-bold">{e.brand_name}</TD>
                             <TD><div className="font-medium">{e.responsible_name||e.contact_name}</div><div className="text-xs" style={{color:ts}}>{e.email}</div></TD>
                             <TD cls="text-xs" style={{color:ts}}>{(e as any).ft_width_m&&(e as any).ft_length_m?`${(e as any).ft_width_m}×${(e as any).ft_length_m}m`:'—'}</TD>
-                            <TD><div className="flex items-center gap-1 flex-wrap"><Badge status={e.status}/>{!isOk(e.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:e,table:'expositor_reservations'})}/>}</div></TD>
+                            <TD><StandStatusBtn record={e} table="expositor_reservations" onSaved={fetchAll}/></TD>
                             <TD cls="text-xs font-bold text-emerald-400">{e.amount_cents?fmtCOP(e.amount_cents):e.total_amount?fmtCOP(e.total_amount):'—'}</TD>
                             <TD><div className="flex gap-1"><DocBadge ok={!!e.cedula_url} label="CC" url={e.cedula_url}/><DocBadge ok={!!e.rut_url} label="RUT" url={e.rut_url}/></div></TD>
                             <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
@@ -1390,7 +1431,7 @@ export function Dashboard() {
                             <TD cls="font-bold">{t.brand_name}</TD>
                             <TD><div className="font-medium">{t.responsible_name}</div><div className="text-xs" style={{color:ts}}>{t.email}</div></TD>
                             <TD>{t.quantity}</TD>
-                            <TD><div className="flex items-center gap-1"><Badge status={t.status}/>{!isOk(t.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:t,table:'toldos_reservations'})}/>}</div></TD>
+                            <TD><StandStatusBtn record={t} table="toldos_reservations" onSaved={fetchAll}/></TD>
                             <TD cls="text-xs font-bold text-emerald-400">{t.amount_cents?fmtCOP(t.amount_cents):'—'}</TD>
                             <TD><div className="flex gap-1"><DocBadge ok={!!t.cedula_url} label="CC" url={t.cedula_url}/><DocBadge ok={!!t.rut_url} label="RUT" url={t.rut_url}/></div></TD>
                             <TD>{t.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:t.responsible_name,email:t.email})}/>}</TD>
