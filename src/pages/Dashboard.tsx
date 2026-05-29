@@ -603,7 +603,7 @@ function TeamModal({team,players,onClose,onSaved}:{team:SportTeam;players:SportP
 // ─── TABLA ────────────────────────────────────────────────────────────────────
 function DTable({headers,children,empty}:{headers:string[];children:React.ReactNode;empty?:boolean}) {
   return (
-    <div className="rounded-2xl overflow-hidden" style={{background:'#0b0b1a',border:'1px solid rgba(255,255,255,0.06)'}}>
+    <div className="rounded-2xl" style={{background:'#0b0b1a'}}>
       <div className="overflow-x-auto">
         <table className="w-full text-sm" style={{minWidth:600}}>
           <thead><tr style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
