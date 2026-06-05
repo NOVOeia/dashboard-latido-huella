@@ -1384,6 +1384,7 @@ export function Dashboard() {
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:a.email?regs5k.find(x=>x.email===a.email)||r:r,table:'registrations_5k'})}/>
                                 <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:a,table:'registration_attendees',fields:[{key:'full_name',label:'Nombre'},{key:'document_id',label:'Cédula'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'}],title:'Editar acompañante'})}/>
                                 <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:a,table:'registration_attendees'})}/>
                               </div></td>
@@ -1397,13 +1398,14 @@ export function Dashboard() {
                             <tr key={a.id} style={{borderTop:'1px solid rgba(255,255,255,0.04)',background:'rgba(255,255,255,0.015)'}}>
                               <td className="px-4 py-2"><div className="flex items-center gap-2 pl-4"><span>👶</span><div><div className="text-sm font-medium" style={{color:'#fbbf24'}}>{a.full_name}</div><div className="text-xs" style={{color:ts}}>{a.birthdate?`Nac: ${fmtDate(a.birthdate)}`:'Sin fecha nac.'}</div></div></div></td>
                               <td className="px-4 py-2 text-xs" style={{color:ts}}>↳ GRP-{grpId}</td>
-                              <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>Resp: {r.full_name}</td>
                               <td className="px-4 py-2 text-xs" style={{color:'#fbbf24'}}>Niño</td>
                               <td className="px-4 py-2"><Badge status={r.status}/></td>
                               <td className="px-4 py-2 text-xs font-bold" style={{color:'#fbbf24'}}>{fmtCOP(a.amount_cents)}</td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
                                 <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:a,table:'registration_attendees',fields:[{key:'full_name',label:'Nombre'},{key:'birthdate',label:'Fecha nacimiento',type:'date'}],title:'Editar niño'})}/>
                                 <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:a,table:'registration_attendees'})}/>
                               </div></td>
@@ -1420,13 +1422,14 @@ export function Dashboard() {
                                 <div><div className="text-sm text-gray-300">{p.name}</div><div className="text-xs" style={{color:ts}}>{p.breed} · {p.size}</div></div>
                               </div></td>
                               <td className="px-4 py-2 text-xs" style={{color:ts}}>↳ GRP-{grpId}</td>
-                              <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>Resp: {r.full_name}</td>
                               <td className="px-4 py-2 text-xs" style={{color:'#10b981'}}>Mascota</td>
                               <td className="px-4 py-2"><Badge status={r.status}/></td>
                               <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
                                 <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:p,table:'registration_pets',fields:[{key:'name',label:'Nombre'},{key:'breed',label:'Raza'},{key:'age',label:'Edad'},{key:'size',label:'Tamaño'},{key:'bio',label:'Bio'},{key:'photo_url',label:'Foto'}],title:`Editar ${p.name}`})}/>
                                 <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:p,table:'registration_pets'})}/>
                               </div></td>
@@ -1519,7 +1522,7 @@ export function Dashboard() {
                                 title={STAND_INFO[s]?`${STAND_INFO[s].precio} · ${STAND_INFO[s].frentes}${isReservado?' · Click para liberar':isLibre?' · Click para reservar temporalmente':''}` : ''}
                                 onClick={async()=>{
                                   if(isVendido) return // no tocar vendidos
-                                  if(isReservado&&existingRec?.brand_name==='RESERVADO'){
+                                  if(isReservado&&existingRec&&(existingRec.brand_name==='RESERVADO'||existingRec.source_tag==='reserva-temporal')){
                                     // Liberar reserva temporal
                                     await supabase.from('expositor_reservations').delete().eq('id',existingRec.id)
                                     fetchAll()
@@ -1556,7 +1559,7 @@ export function Dashboard() {
                               <span key={s}
                                 onClick={async()=>{
                                   if(isVendido) return
-                                  if(isReservado&&existingRec?.brand_name==='RESERVADO'){
+                                  if(isReservado&&existingRec&&(existingRec.brand_name==='RESERVADO'||existingRec.source_tag==='reserva-temporal')){
                                     await supabase.from('expositor_reservations').delete().eq('id',existingRec.id)
                                     fetchAll()
                                   } else if(isLibre){
@@ -1734,6 +1737,7 @@ export function Dashboard() {
                               <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
                               <td className="px-4 py-2 text-xs" style={{color:ts}}>{fmtDate(p.created_at)}</td>
                               <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:p.email?teams.find(t=>t.captain_email===p.email)||team:team,table:'sports_team_registrations'})}/>
                                 <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:p,table:'sports_team_players',fields:[{key:'name',label:'Nombre'},{key:'cedula',label:'Cédula'},{key:'ti',label:'TI (menores)'},{key:'age',label:'Edad',type:'number'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'responsable_name',label:'Responsable'},{key:'responsable_phone',label:'Tel. responsable'}],title:'Editar jugador'})}/>
                                 <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:p,table:'sports_team_players'})}/>
                               </div></td>
