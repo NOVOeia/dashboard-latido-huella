@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 interface Reg5k { id:string;created_at:string;full_name:string;email:string;phone:string;document_id:string;ticket_type:string;total_amount:number;amount_cents:number|null;status:string;payment_provider:string|null;payment_method:string|null;wompi_transaction_id:string|null;paid_at:string|null;accepted_agreement_at:string|null }
+interface Attendee { id:string;registration_id:string;attendee_index:number;is_primary:boolean;is_minor:boolean;full_name:string;email:string|null;phone:string|null;document_id:string|null;amount_cents:number;birthdate:string|null;photo_url:string|null;created_at:string }
 interface Pet { id:string;registration_id:string;name:string;breed:string;age:string;size:string;photo_url:string|null;is_primary:boolean;bio:string|null;amount_cents:number;approved_for_wall:boolean;created_at:string }
 interface Expositor { id:string;created_at:string;brand_name:string;responsible_name:string;email:string;phone:string;cedula:string|null;stand_id:string|null;stand_type:string|null;category:string;product_type:string|null;status:string;payment_method:string|null;amount_cents:number;cedula_url:string|null;rut_url:string|null;camara_comercio_url:string|null;accepted_contract_at:string|null;wompi_transaction_id:string|null;paid_at:string|null }
 interface Toldo { id:string;created_at:string;brand_name:string;responsible_name:string;email:string;phone:string;cedula:string|null;quantity:number;product_type:string|null;status:string;payment_method:string|null;amount_cents:number;cedula_url:string|null;rut_url:string|null;camara_comercio_url:string|null;accepted_contract_at:string|null;wompi_transaction_id:string|null;paid_at:string|null }
@@ -25,9 +26,11 @@ const SC:Record<string,string> = {
   paid:'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
   pending_payment:'bg-amber-500/20 text-amber-400 border border-amber-500/30',
   declined:'bg-red-500/20 text-red-400 border border-red-500/30',
-  voided:'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+  voided:'bg-gray-500/20 text-gray-400 border border-gray-500/30',
+  expired:'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+  available:'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
 }
-const SL:Record<string,string> = {approved:'Aprobado',paid:'Pagado',pending_payment:'Pendiente',declined:'Rechazado',voided:'Anulado'}
+const SL:Record<string,string> = {approved:'Pagado',paid:'Pagado',pending_payment:'Pendiente',declined:'Rechazado',voided:'Anulado',expired:'Expirado',available:'Disponible'}
 const TIERS = ['oro','plata','bronce','aliado','medios']
 const TC:Record<string,string> = {oro:'bg-yellow-500/20 text-yellow-400',plata:'bg-gray-400/20 text-gray-300',bronce:'bg-orange-500/20 text-orange-400',aliado:'bg-blue-500/20 text-blue-400',medios:'bg-purple-500/20 text-purple-400'}
 
@@ -201,7 +204,7 @@ function ApproveModal({record,table,onClose,onSaved}:{record:any;table:string;on
   const [saving,setSaving]=useState(false);const [result,setResult]=useState<{ok:boolean;msg:string}|null>(null)
   const approve=async()=>{
     setSaving(true);setResult(null)
-    const {error}=await supabase.from(table).update({status:'approved',payment_method:method,paid_at:new Date().toISOString()}).eq('id',record.id)
+    const {error}=await supabase.from(table).update({status:'paid',payment_method:method,paid_at:new Date().toISOString()}).eq('id',record.id)
     setSaving(false)
     if(error){setResult({ok:false,msg:'Error: '+error.message})}
     else{setResult({ok:true,msg:'✓ ¡Aprobado!'});onSaved();setTimeout(onClose,800)}
@@ -275,7 +278,7 @@ const CYAN='#00BCD4'; const NAVY='#0D1B6E'; const GREEN='#4CAF50'; const YELLOW=
 
 function ProfileModal({record,table,allData,onClose,onSaved,onApprove,onContract}:{
   record:any;table:string;
-  allData:{regs5k:Reg5k[];expositores:Expositor[];toldos:Toldo[];sponsors:Sponsor[];teams:SportTeam[];pets:Pet[]};
+  allData:{regs5k:Reg5k[];expositores:Expositor[];toldos:Toldo[];sponsors:Sponsor[];teams:SportTeam[];pets:Pet[];attendees:Attendee[]};
   onClose:()=>void;onSaved:()=>void;onApprove?:()=>void;onContract?:()=>void
 }) {
   const [activeSection,setActiveSection]=useState<string|null>(null)
@@ -334,7 +337,7 @@ function ProfileModal({record,table,allData,onClose,onSaved,onApprove,onContract
     ...(record.company_name!==undefined?[{key:'company_name',label:'Empresa'}]:[]),
     ...(record.captain_name!==undefined?[{key:'captain_name',label:'Capitán'}]:[]),
     {key:'email',label:'Email'},{key:'phone',label:'Teléfono'},
-    {key:'status',label:'Estado',options:['approved','pending_payment','declined']},
+    {key:'status',label:'Estado',options:['paid','pending_payment','declined']},
     {key:'payment_method',label:'Forma de pago',options:PM},
     {key:'photo_url',label:'Foto de perfil'},
     ...(record.cedula_url!==undefined?[{key:'cedula_url',label:'Cédula (CC)'}]:[]),
@@ -453,15 +456,74 @@ function ProfileModal({record,table,allData,onClose,onSaved,onApprove,onContract
                 </div>
                 {activeS.records.length===0
                   ?<div style={{padding:'14px',textAlign:'center',fontSize:12,color:'rgba(255,255,255,0.3)'}}>Sin registros</div>
-                  :activeS.records.map((r:any,i:number)=>(
-                    <div key={i} style={{padding:'10px 14px',borderTop:'1px solid rgba(255,255,255,0.05)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                      <div>
-                        <div style={{fontSize:12,fontWeight:600,color:'#fff'}}>{r.name||r.full_name||r.brand_name||r.captain_name||r.company_name||'—'}</div>
-                        <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>{r.breed||r.ticket_type||r.plan_name||r.sport||fmtDate(r.created_at)}</div>
+                  :activeS.records.map((r:any,i:number)=>{
+                    // Para 5K mostrar estructura de grupo completa
+                    if(activeSection==='5k'){
+                      const grpAttendees=allData.attendees.filter((a:Attendee)=>a.registration_id===r.id)
+                      const adults=grpAttendees.filter((a:Attendee)=>!a.is_minor)
+                      const minors=grpAttendees.filter((a:Attendee)=>a.is_minor)
+                      const grpPets=allData.pets.filter((p:Pet)=>p.registration_id===r.id)
+                      return (
+                        <div key={i}>
+                          <div style={{padding:'10px 14px',borderTop:'1px solid rgba(255,255,255,0.05)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <div>
+                              <div style={{fontSize:12,fontWeight:600,color:'#fff'}}>{r.full_name}</div>
+                              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>{r.ticket_type} · {fmtDate(r.created_at)}</div>
+                            </div>
+                            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                              <Badge status={r.status}/>
+                              {(r.amount_cents||r.total_amount)?<span style={{fontSize:11,fontWeight:700,color:'#10b981'}}>{fmtCOP(r.amount_cents||r.total_amount)}</span>:null}
+                            </div>
+                          </div>
+                          {grpAttendees.length>0&&(
+                            <div style={{padding:'4px 14px 8px 28px',background:'rgba(0,0,0,0.15)'}}>
+                              {adults.map((a:Attendee)=>(
+                                <div key={a.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+                                  <span style={{fontSize:11}}>{a.is_primary?'👑':'👤'}</span>
+                                  <div style={{flex:1}}>
+                                    <span style={{fontSize:11,fontWeight:600,color:'#e2e8f0'}}>{a.full_name}</span>
+                                    {a.is_primary&&<span style={{fontSize:9,marginLeft:4,color:CYAN}}>Titular</span>}
+                                    <span style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginLeft:6}}>{a.document_id||''}</span>
+                                  </div>
+                                  <span style={{fontSize:10,color:'#10b981'}}>{fmtCOP(a.amount_cents)}</span>
+                                </div>
+                              ))}
+                              {minors.map((a:Attendee)=>(
+                                <div key={a.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+                                  <span style={{fontSize:11}}>👶</span>
+                                  <div style={{flex:1}}>
+                                    <span style={{fontSize:11,fontWeight:600,color:'#fbbf24'}}>{a.full_name}</span>
+                                    <span style={{fontSize:9,marginLeft:4,color:'#fbbf24'}}>Niño</span>
+                                    {a.birthdate&&<span style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginLeft:6}}>Nac: {fmtDate(a.birthdate)}</span>}
+                                  </div>
+                                  <span style={{fontSize:10,color:'#fbbf24'}}>{fmtCOP(a.amount_cents)}</span>
+                                </div>
+                              ))}
+                              {grpPets.map((p:Pet)=>(
+                                <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}>
+                                  <span style={{fontSize:11}}>🐾</span>
+                                  <div style={{flex:1}}>
+                                    <span style={{fontSize:11,fontWeight:600,color:'#10b981'}}>{p.name}</span>
+                                    <span style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginLeft:6}}>{p.breed} · {p.size}</span>
+                                  </div>
+                                  {p.photo_url&&<img src={p.photo_url} style={{width:24,height:24,borderRadius:4,objectFit:'cover'}} alt={p.name}/>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
+                    return (
+                      <div key={i} style={{padding:'10px 14px',borderTop:'1px solid rgba(255,255,255,0.05)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:600,color:'#fff'}}>{r.name||r.full_name||r.brand_name||r.captain_name||r.company_name||'—'}</div>
+                          <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>{r.breed||r.ticket_type||r.plan_name||r.sport||fmtDate(r.created_at)}</div>
+                        </div>
+                        {r.status&&<Badge status={r.status}/>}
                       </div>
-                      {r.status&&<Badge status={r.status}/>}
-                    </div>
-                  ))
+                    )
+                  })
                 }
               </motion.div>
             )}
@@ -594,7 +656,7 @@ function TeamModal({team,players,onClose,onSaved}:{team:SportTeam;players:SportP
         </div>
       </div>
       {editing&&<AnimatePresence><EditModal record={team} table="sports_team_registrations"
-        fields={[{key:'captain_name',label:'Capitán'},{key:'captain_email',label:'Email'},{key:'captain_phone',label:'Teléfono'},{key:'team_name',label:'Nombre equipo'},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'payment_method',label:'Pago',options:PM}]}
+        fields={[{key:'captain_name',label:'Capitán'},{key:'captain_email',label:'Email'},{key:'captain_phone',label:'Teléfono'},{key:'team_name',label:'Nombre equipo'},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'payment_method',label:'Pago',options:PM}]}
         title="Editar equipo" onClose={()=>setEditing(false)} onSaved={()=>{onSaved();setEditing(false)}}/></AnimatePresence>}
     </Modal>
   )
@@ -603,7 +665,7 @@ function TeamModal({team,players,onClose,onSaved}:{team:SportTeam;players:SportP
 // ─── TABLA ────────────────────────────────────────────────────────────────────
 function DTable({headers,children,empty}:{headers:string[];children:React.ReactNode;empty?:boolean}) {
   return (
-    <div className="rounded-2xl" style={{background:'#0b0b1a'}}>
+    <div className="rounded-2xl overflow-hidden" style={{background:'#0b0b1a',border:'1px solid rgba(255,255,255,0.06)'}}>
       <div className="overflow-x-auto">
         <table className="w-full text-sm" style={{minWidth:600}}>
           <thead><tr style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
@@ -992,6 +1054,7 @@ export function Dashboard() {
   const [teams,setTeams]=useState<SportTeam[]>([])
   const [players,setPlayers]=useState<SportPlayer[]>([])
   const [adminUsers,setAdminUsers]=useState<AdminUser[]>([])
+  const [attendees,setAttendees]=useState<Attendee[]>([])
   const [loading,setLoading]=useState(true)
 
   // Config editable para Dev
@@ -1042,7 +1105,7 @@ export function Dashboard() {
 
   const fetchAll=useCallback(async()=>{
     setLoading(true)
-    const [a,b,c,d,e,f,g,h,i,j]=await Promise.all([
+    const [a,b,c,d,e,f,g,h,i,j,k]=await Promise.all([
       supabase.from('registrations_5k').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
       supabase.from('registration_pets').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
       supabase.from('expositor_reservations').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
@@ -1053,11 +1116,12 @@ export function Dashboard() {
       supabase.from('sports_team_registrations').select('*').is('deleted_at',null).order('created_at',{ascending:false}),
       supabase.from('sports_team_players').select('*').is('deleted_at',null).order('player_index'),
       supabase.from('admin_users').select('*').order('created_at',{ascending:false}),
+      supabase.from('registration_attendees').select('*').order('attendee_index'),
     ])
     if(a.data)setRegs5k(a.data);if(b.data)setPets(b.data);if(c.data)setExpositores(c.data)
     if(d.data)setToldos(d.data);if(e.data)setSponsors(e.data);if(f.data)setSponsorItems(f.data)
     if(g.data)setPublicSponsors(g.data);if(h.data)setTeams(h.data);if(i.data)setPlayers(i.data)
-    if(j.data)setAdminUsers(j.data)
+    if(j.data)setAdminUsers(j.data);if(k.data)setAttendees(k.data)
     setLoading(false)
   },[])
 
@@ -1130,7 +1194,7 @@ export function Dashboard() {
   ]
 
   const depTeams=teams.filter(t=>depTab==='futbol_adultos'?t.sport==='futbol'&&t.category==='adultos':depTab==='futbol_ninos'?t.sport==='futbol'&&t.category==='ninos':t.sport==='padel')
-  const efPago=[{key:'status',label:'Estado',options:['approved','pending_payment','declined','voided']},{key:'payment_method',label:'Forma de pago',options:PM},{key:'wompi_transaction_id',label:'ID TX Wompi'}]
+  const efPago=[{key:'status',label:'Estado',options:['paid','pending_payment','declined','voided']},{key:'payment_method',label:'Forma de pago',options:PM},{key:'wompi_transaction_id',label:'ID TX Wompi'}]
 
   if(!authUser) return <LoginScreen onLogin={u=>setAuthUser(u)}/>
 
@@ -1262,11 +1326,23 @@ export function Dashboard() {
                         <AddBtn label="Nuevo inscrito" onClick={()=>setCreateM({table:'registrations_5k',fields:[{key:'full_name',label:'Nombre completo',required:true},{key:'document_id',label:'Cédula'},{key:'email',label:'Email',type:'email',required:true},{key:'phone',label:'Teléfono'},{key:'ticket_type',label:'Ticket',options:['pet_lover','1p_1m','familiar']},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo inscrito Caminata 5K',defaults:{status:'pending_payment'}})}/>
                       </div>
                     </div>
-                    <DTable headers={['Nombre','Cédula','Email','Ticket','Estado','Monto','Contrato','Fecha','']} empty={!regs5k.length}>
-                      {regs5k.map(r=>(
+                    <DTable headers={['Titular','Grupo','Email','Ticket','Estado','Monto','Contrato','Fecha','']} empty={!regs5k.length}>
+                      {regs5k.map(r=>{
+                        const grpAttendees=attendees.filter(a=>a.registration_id===r.id)
+                        const adults=grpAttendees.filter(a=>!a.is_minor)
+                        const minors=grpAttendees.filter(a=>a.is_minor)
+                        const grpPets=pets.filter(p=>p.registration_id===r.id)
+                        return (
                         <TR key={r.id}>
-                          <TD cls="font-bold">{r.full_name}</TD>
-                          <TD cls="font-mono text-xs" style={{color:ts}}>{r.document_id}</TD>
+                          <TD><div className="font-bold">{r.full_name}</div><div className="text-xs" style={{color:ts}}>{r.document_id}</div></TD>
+                          <TD>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {adults.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(96,165,250,0.15)',color:'#60a5fa'}}>👤 {adults.length}</span>}
+                              {minors.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(251,191,36,0.15)',color:'#fbbf24'}}>👶 {minors.length}</span>}
+                              {grpPets.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(16,185,129,0.15)',color:'#10b981'}}>🐾 {grpPets.length}</span>}
+                              {grpAttendees.length===0&&<span className="text-xs" style={{color:ts}}>Solo titular</span>}
+                            </div>
+                          </TD>
                           <TD cls="text-xs" style={{color:ts}}>{r.email}</TD>
                           <TD cls="text-xs capitalize">{r.ticket_type}</TD>
                           <TD>
@@ -1280,11 +1356,12 @@ export function Dashboard() {
                           <TD cls="text-xs" style={{color:ts}}>{fmtDate(r.created_at)}</TD>
                           <TD><div className="flex gap-1">
                             <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
-                            <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:r,table:'registrations_5k',fields:[{key:'full_name',label:'Nombre'},{key:'document_id',label:'Cédula'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'photo_url',label:'Foto de perfil'}]})}/>
+                            <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:r,table:'registrations_5k',fields:[{key:'full_name',label:'Nombre'},{key:'document_id',label:'Cédula'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'photo_url',label:'Foto de perfil'}]})}/>
                             <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:r,table:'registrations_5k'})}/>
                           </div></TD>
                         </TR>
-                      ))}
+                        )
+                      })}
                     </DTable>
                   </div>
                 )}
@@ -1412,7 +1489,7 @@ export function Dashboard() {
                             <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:e,table:'expositor_reservations'})}/>
-                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Stand',options:STANDS_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'contact_name',label:'Contacto empresa'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'stand_type',label:'Tipo',options:['AAA','AA','A']},{key:'description',label:'Descripción'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
+                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Stand',options:STANDS_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'contact_name',label:'Contacto empresa'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'stand_type',label:'Tipo',options:['AAA','AA','A']},{key:'description',label:'Descripción'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
                               <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:e,table:'expositor_reservations'})}/>
                             </div></TD>
                           </TR>
@@ -1434,7 +1511,7 @@ export function Dashboard() {
                             <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:e,table:'expositor_reservations'})}/>
-                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Spot FT',options:FT_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'product_type',label:'Producto'},{key:'ft_width_m',label:'Ancho (m)'},{key:'ft_length_m',label:'Largo (m)'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'}]})}/>
+                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Spot FT',options:FT_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'product_type',label:'Producto'},{key:'ft_width_m',label:'Ancho (m)'},{key:'ft_length_m',label:'Largo (m)'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'}]})}/>
                               <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:e,table:'expositor_reservations'})}/>
                             </div></TD>
                           </TR>
@@ -1455,7 +1532,7 @@ export function Dashboard() {
                             <TD>{t.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:t.responsible_name,email:t.email})}/>}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:t,table:'toldos_reservations'})}/>
-                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:t,table:'toldos_reservations',fields:[{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
+                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:t,table:'toldos_reservations',fields:[{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
                               <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:t,table:'toldos_reservations'})}/>
                             </div></TD>
                           </TR>
@@ -1495,7 +1572,7 @@ export function Dashboard() {
                             <TD cls="text-xs" style={{color:ts}}>{fmtDate(team.created_at)}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👥" label="Ver" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setTeamM(team)}/>
-                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:team,table:'sports_team_registrations',fields:[{key:'captain_name',label:'Capitán'},{key:'captain_email',label:'Email'},{key:'captain_phone',label:'Teléfono'},{key:'team_name',label:'Nombre equipo'},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'payment_method',label:'Pago',options:PM}],title:'Editar equipo'})}/>
+                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:team,table:'sports_team_registrations',fields:[{key:'captain_name',label:'Capitán'},{key:'captain_email',label:'Email'},{key:'captain_phone',label:'Teléfono'},{key:'team_name',label:'Nombre equipo'},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'payment_method',label:'Pago',options:PM}],title:'Editar equipo'})}/>
                               <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:team,table:'sports_team_registrations'})}/>
                             </div></TD>
                           </TR>
@@ -1545,7 +1622,7 @@ export function Dashboard() {
                           <TD>{s.accepted_agreement_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:s.contact_name,email:s.email})}/>}</TD>
                           <TD><div className="flex gap-1">
                             <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:s,table:'sponsor_inquiries'})}/>
-                            <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:s,table:'sponsor_inquiries',fields:[{key:'company_name',label:'Empresa'},{key:'contact_name',label:'Contacto'},{key:'email',label:'Email'},{key:'plan_name',label:'Plan'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['approved','pending_payment','declined']},{key:'comments',label:'Comentarios'},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
+                            <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:s,table:'sponsor_inquiries',fields:[{key:'company_name',label:'Empresa'},{key:'contact_name',label:'Contacto'},{key:'email',label:'Email'},{key:'plan_name',label:'Plan'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'comments',label:'Comentarios'},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
                             <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:s,table:'sponsor_inquiries'})}/>
                           </div></TD>
                         </TR>
@@ -1839,7 +1916,7 @@ export function Dashboard() {
         {profileM&&(
           <ProfileModal
             record={profileM.record} table={profileM.table}
-            allData={{regs5k,expositores,toldos,sponsors,teams,pets}}
+            allData={{regs5k,expositores,toldos,sponsors,teams,pets,attendees}}
             onClose={()=>setProfileM(null)}
             onSaved={async()=>{
               await fetchAll()
