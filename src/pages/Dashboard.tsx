@@ -1082,7 +1082,7 @@ export function Dashboard() {
 
   const [sponsorTab,setSponsorTab]=useState<'empresarial'|'deportivo'|'espacios'>('empresarial')
   const [comTab,setComTab]=useState<'stand'|'foodtruck'|'toldo'>('stand')
-  const [depTab,setDepTab]=useState<'futbol_adultos'|'futbol_ninos'|'padel'>('futbol_adultos')
+  const [depTab,setDepTab]=useState<'futbol_adultos'|'futbol_ninos'|'padel'|'tenis'>('futbol_adultos')
   const [search,setSearch]=useState('')
 
   // Logo upload
@@ -1193,7 +1193,12 @@ export function Dashboard() {
     {emoji:'📦',label:'Espacios',count:sponsors.filter(s=>s.plan_type==='espacios').length,page:'patrocinadores',angle:-135},
   ]
 
-  const depTeams=teams.filter(t=>depTab==='futbol_adultos'?t.sport==='futbol'&&t.category==='adultos':depTab==='futbol_ninos'?t.sport==='futbol'&&t.category==='ninos':t.sport==='padel')
+  const depTeams=teams.filter(t=>
+    depTab==='futbol_adultos'?t.sport==='futbol'&&t.category==='adultos':
+    depTab==='futbol_ninos'?t.sport==='futbol'&&t.category==='ninos':
+    depTab==='tenis'?t.sport==='tenis':
+    t.sport==='padel'
+  )
   const efPago=[{key:'status',label:'Estado',options:['paid','pending_payment','declined','voided']},{key:'payment_method',label:'Forma de pago',options:PM},{key:'wompi_transaction_id',label:'ID TX Wompi'}]
 
   if(!authUser) return <LoginScreen onLogin={u=>setAuthUser(u)}/>
@@ -1378,7 +1383,10 @@ export function Dashboard() {
                               <td className="px-4 py-2 text-xs font-bold text-emerald-400">{fmtCOP(a.amount_cents)}</td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"></td>
-                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:a,table:'registration_attendees',fields:[{key:'full_name',label:'Nombre'},{key:'document_id',label:'Cédula'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'}],title:'Editar acompañante'})}/>
+                                <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:a,table:'registration_attendees'})}/>
+                              </div></td>
                             </tr>
                           )
                         })
@@ -1395,7 +1403,10 @@ export function Dashboard() {
                               <td className="px-4 py-2 text-xs font-bold" style={{color:'#fbbf24'}}>{fmtCOP(a.amount_cents)}</td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"></td>
-                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:a,table:'registration_attendees',fields:[{key:'full_name',label:'Nombre'},{key:'birthdate',label:'Fecha nacimiento',type:'date'}],title:'Editar niño'})}/>
+                                <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:a,table:'registration_attendees'})}/>
+                              </div></td>
                             </tr>
                           )
                         })
@@ -1415,7 +1426,10 @@ export function Dashboard() {
                               <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
                               <td className="px-4 py-2"></td>
                               <td className="px-4 py-2"></td>
-                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:p,table:'registration_pets',fields:[{key:'name',label:'Nombre'},{key:'breed',label:'Raza'},{key:'age',label:'Edad'},{key:'size',label:'Tamaño'},{key:'bio',label:'Bio'},{key:'photo_url',label:'Foto'}],title:`Editar ${p.name}`})}/>
+                                <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:p,table:'registration_pets'})}/>
+                              </div></td>
                             </tr>
                           )
                         })
@@ -1495,13 +1509,35 @@ export function Dashboard() {
                           <span className="text-xs" style={{color:ts}}>libres de {STANDS_DISPONIBLES.length}</span>
                         </div>
                         <div className="flex gap-1 flex-wrap mt-1">
-                          {STANDS_DISPONIBLES.map(s=>(
-                            <span key={s} title={STAND_INFO[s]?`${STAND_INFO[s].precio} · ${STAND_INFO[s].frentes}`:''}
-                              className="text-xs px-1.5 py-0.5 rounded font-mono font-bold cursor-default"
-                              style={{background:standsOcupados.includes(s)?'rgba(239,68,68,0.15)':'rgba(16,185,129,0.15)',color:standsOcupados.includes(s)?'#f87171':'#10b981'}}>
-                              {s}
-                            </span>
-                          ))}
+                          {STANDS_DISPONIBLES.map(s=>{
+                            const existingRec=stands.find(e=>e.stand_id===s)
+                            const isVendido=existingRec&&isOk(existingRec.status)
+                            const isReservado=existingRec&&existingRec.status==='pending_payment'
+                            const isLibre=!existingRec||existingRec.status==='available'
+                            return (
+                              <span key={s}
+                                title={STAND_INFO[s]?`${STAND_INFO[s].precio} · ${STAND_INFO[s].frentes}${isReservado?' · Click para liberar':isLibre?' · Click para reservar temporalmente':''}` : ''}
+                                onClick={async()=>{
+                                  if(isVendido) return // no tocar vendidos
+                                  if(isReservado&&existingRec?.brand_name==='RESERVADO'){
+                                    // Liberar reserva temporal
+                                    await supabase.from('expositor_reservations').delete().eq('id',existingRec.id)
+                                    fetchAll()
+                                  } else if(isLibre){
+                                    // Crear reserva temporal
+                                    await supabase.from('expositor_reservations').insert({stand_id:s,stand_type:s.startsWith('AAA')?'AAA':s.startsWith('AA')?'AA':'A',category:'comercial',brand_name:'RESERVADO',responsible_name:'Reserva temporal',email:'reserva@admin.com',phone:'0000000000',status:'pending_payment',amount_cents:0,source_tag:'reserva-temporal'})
+                                    fetchAll()
+                                  }
+                                }}
+                                className={`text-xs px-1.5 py-0.5 rounded font-mono font-bold ${isVendido?'cursor-not-allowed':isLibre||isReservado?'cursor-pointer hover:opacity-80':''}`}
+                                style={{
+                                  background:isVendido?'rgba(239,68,68,0.15)':isReservado?'rgba(245,158,11,0.15)':'rgba(16,185,129,0.15)',
+                                  color:isVendido?'#f87171':isReservado?'#f59e0b':'#10b981'
+                                }}>
+                                {s}
+                              </span>
+                            )
+                          })}
                         </div>
                       </div>
                       <div className="rounded-xl p-3" style={{background:card,border:`1px solid ${br}`}}>
@@ -1511,12 +1547,32 @@ export function Dashboard() {
                           <span className="text-xs" style={{color:ts}}>libres de {FT_DISPONIBLES.length}</span>
                         </div>
                         <div className="flex gap-1 flex-wrap mt-1">
-                          {FT_DISPONIBLES.map(s=>(
-                            <span key={s} className="text-xs px-1.5 py-0.5 rounded font-mono font-bold"
-                              style={{background:ftOcupados.includes(s)?'rgba(239,68,68,0.15)':'rgba(16,185,129,0.15)',color:ftOcupados.includes(s)?'#f87171':'#10b981'}}>
-                              {s}
-                            </span>
-                          ))}
+                          {FT_DISPONIBLES.map(s=>{
+                            const existingRec=foodtrucks.find(e=>e.stand_id===s)
+                            const isVendido=existingRec&&isOk(existingRec.status)
+                            const isReservado=existingRec&&existingRec.status==='pending_payment'
+                            const isLibre=!existingRec||existingRec.status==='available'
+                            return (
+                              <span key={s}
+                                onClick={async()=>{
+                                  if(isVendido) return
+                                  if(isReservado&&existingRec?.brand_name==='RESERVADO'){
+                                    await supabase.from('expositor_reservations').delete().eq('id',existingRec.id)
+                                    fetchAll()
+                                  } else if(isLibre){
+                                    await supabase.from('expositor_reservations').insert({stand_id:s,category:'foodtruck',brand_name:'RESERVADO',responsible_name:'Reserva temporal',email:'reserva@admin.com',phone:'0000000000',status:'pending_payment',amount_cents:0,source_tag:'reserva-temporal'})
+                                    fetchAll()
+                                  }
+                                }}
+                                className={`text-xs px-1.5 py-0.5 rounded font-mono font-bold ${isVendido?'cursor-not-allowed':'cursor-pointer hover:opacity-80'}`}
+                                style={{
+                                  background:isVendido?'rgba(239,68,68,0.15)':isReservado?'rgba(245,158,11,0.15)':'rgba(16,185,129,0.15)',
+                                  color:isVendido?'#f87171':isReservado?'#f59e0b':'#10b981'
+                                }}>
+                                {s}
+                              </span>
+                            )
+                          })}
                         </div>
                       </div>
                       <div className="rounded-xl p-3" style={{background:card,border:`1px solid ${br}`}}>
@@ -1610,33 +1666,82 @@ export function Dashboard() {
                       <div><h1 className="text-2xl font-black" style={{color:tp}}>⚽ Deportes</h1><p className="text-sm mt-0.5" style={{color:ts}}>{teams.length} equipos · {players.length} jugadores</p></div>
                       <div className="flex items-center gap-2">
                         <span className="px-3 py-1 rounded-xl text-xs font-bold" style={{background:'rgba(16,185,129,0.15)',color:'#10b981'}}>{teams.filter(t=>isOk(t.status)).length} ✅</span>
-                        <AddBtn label="Nuevo equipo" onClick={()=>setCreateM({table:'sports_team_registrations',fields:[{key:'captain_name',label:'Capitán',required:true},{key:'captain_email',label:'Email capitán',type:'email',required:true},{key:'captain_phone',label:'Teléfono'},{key:'captain_cedula',label:'Cédula capitán'},{key:'team_name',label:'Nombre equipo'},{key:'sport',label:'Deporte',options:['futbol','padel']},{key:'category',label:'Categoría',options:['adultos','ninos']},{key:'player_count',label:'# jugadores',type:'number'},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo equipo deportivo',defaults:{status:'pending_payment',amount_cents:0}})}/>
+                        <AddBtn label="Nuevo equipo" onClick={()=>setCreateM({table:'sports_team_registrations',fields:[{key:'captain_name',label:'Capitán',required:true},{key:'captain_email',label:'Email capitán',type:'email',required:true},{key:'captain_phone',label:'Teléfono'},{key:'captain_cedula',label:'Cédula capitán'},{key:'team_name',label:'Nombre equipo'},{key:'sport',label:'Deporte',options:['futbol','padel','tenis']},{key:'category',label:'Categoría',options:['adultos','ninos']},{key:'player_count',label:'# jugadores',type:'number'},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo equipo deportivo',defaults:{status:'pending_payment',amount_cents:0,source_tag:'deporte-manual'}})}/>
                       </div>
                     </div>
                     <Tabs value={depTab} onChange={v=>setDepTab(v as any)} options={[
                       {id:'futbol_adultos',label:'⚽ Adultos',count:teams.filter(t=>t.sport==='futbol'&&t.category==='adultos').length},
                       {id:'futbol_ninos',label:'👦 Niños',count:teams.filter(t=>t.sport==='futbol'&&t.category==='ninos').length},
                       {id:'padel',label:'🎾 Pádel',count:teams.filter(t=>t.sport==='padel').length},
+                      {id:'tenis',label:'🎾 Tenis',count:teams.filter(t=>t.sport==='tenis').length},
                     ]}/>
-                    <DTable headers={['Equipo / Cap','Email','Tel','Jugadores','Estado','Monto','Fecha','']} empty={!depTeams.length}>
-                      {depTeams.map(team=>{
-                        const tp2=players.filter(p=>p.team_id===team.id)
-                        return (
+                    <DTable headers={['Jugador','Equipo','Email/Tel','Rol','Estado','Monto','Fecha','']} empty={!depTeams.length}>
+                      {depTeams.flatMap(team=>{
+                        const teamPlayers=players.filter(p=>p.team_id===team.id)
+                        const eqpId=team.id.slice(-4).toUpperCase()
+                        const rows:React.ReactNode[]=[]
+
+                        // Fila del capitán/equipo
+                        rows.push(
                           <TR key={team.id}>
-                            <TD><div className="font-bold">{team.team_name||team.captain_name}</div><div className="text-xs" style={{color:ts}}>Cap: {team.captain_name}</div></TD>
+                            <TD>
+                              <div className="flex items-center gap-2">
+                                <span>👑</span>
+                                <div>
+                                  <div className="font-bold">{team.team_name||team.captain_name}</div>
+                                  <div className="text-xs" style={{color:ts}}>Cap: {team.captain_name} · {team.captain_cedula||'Sin cédula'}</div>
+                                </div>
+                              </div>
+                            </TD>
+                            <TD>
+                              <div className="flex gap-1 flex-wrap">
+                                <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(96,165,250,0.15)',color:'#60a5fa'}}>
+                                  👤 {teamPlayers.length}/{team.player_count}
+                                </span>
+                                {(team as any).team_slot&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(168,85,247,0.15)',color:'#c084fc'}}>Slot {(team as any).team_slot}</span>}
+                              </div>
+                            </TD>
                             <TD cls="text-xs" style={{color:ts}}>{team.captain_email}</TD>
-                            <TD cls="text-xs" style={{color:ts}}>{team.captain_phone}</TD>
-                            <TD><span className="font-bold">{tp2.length}</span><span className="text-xs ml-1" style={{color:ts}}>/{team.player_count}</span></TD>
-                            <TD><div className="flex items-center gap-1 flex-wrap"><Badge status={team.status}/>{!isOk(team.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:team,table:'sports_team_registrations'})}/>}</div></TD>
+                            <TD cls="text-xs capitalize" style={{color:ts}}>{team.sport} {team.category||''}</TD>
+                            <TD><div className="flex items-center gap-1"><Badge status={team.status}/>{!isOk(team.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:team,table:'sports_team_registrations'})}/>}</div></TD>
                             <TD cls="text-xs font-bold text-emerald-400">{fmtCOP(team.amount_cents)}</TD>
                             <TD cls="text-xs" style={{color:ts}}>{fmtDate(team.created_at)}</TD>
                             <TD><div className="flex gap-1">
-                              <Btn icon="👥" label="Ver" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setTeamM(team)}/>
+                              <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:team,table:'sports_team_registrations'})}/>
                               <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:team,table:'sports_team_registrations',fields:[{key:'captain_name',label:'Capitán'},{key:'captain_email',label:'Email'},{key:'captain_phone',label:'Teléfono'},{key:'team_name',label:'Nombre equipo'},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'payment_method',label:'Pago',options:PM}],title:'Editar equipo'})}/>
                               <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:team,table:'sports_team_registrations'})}/>
                             </div></TD>
                           </TR>
                         )
+
+                        // Filas de jugadores
+                        teamPlayers.forEach(p=>{
+                          rows.push(
+                            <tr key={p.id} style={{borderTop:'1px solid rgba(255,255,255,0.04)',background:'rgba(255,255,255,0.015)'}}>
+                              <td className="px-4 py-2">
+                                <div className="flex items-center gap-2 pl-4">
+                                  <span>{p.is_captain?'⚽':'👤'}</span>
+                                  <div>
+                                    <div className="text-sm text-gray-300">{p.name}</div>
+                                    <div className="text-xs" style={{color:ts}}>{p.cedula||p.ti||'Sin documento'}{p.age?` · ${p.age}a`:''}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>↳ EQP-{eqpId}</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>{p.email||p.phone||p.responsable_name||'—'}</td>
+                              <td className="px-4 py-2 text-xs" style={{color:p.is_captain?'#fbbf24':ts}}>{p.is_captain?'Capitán':'Jugador'}</td>
+                              <td className="px-4 py-2"><Badge status={team.status}/></td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>{fmtDate(p.created_at)}</td>
+                              <td className="px-4 py-2"><div className="flex gap-1">
+                                <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:p,table:'sports_team_players',fields:[{key:'name',label:'Nombre'},{key:'cedula',label:'Cédula'},{key:'ti',label:'TI (menores)'},{key:'age',label:'Edad',type:'number'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'responsable_name',label:'Responsable'},{key:'responsable_phone',label:'Tel. responsable'}],title:'Editar jugador'})}/>
+                                <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:p,table:'sports_team_players'})}/>
+                              </div></td>
+                            </tr>
+                          )
+                        })
+
+                        return rows
                       })}
                     </DTable>
                   </div>
