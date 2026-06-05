@@ -1326,41 +1326,101 @@ export function Dashboard() {
                         <AddBtn label="Nuevo inscrito" onClick={()=>setCreateM({table:'registrations_5k',fields:[{key:'full_name',label:'Nombre completo',required:true},{key:'document_id',label:'Cédula'},{key:'email',label:'Email',type:'email',required:true},{key:'phone',label:'Teléfono'},{key:'ticket_type',label:'Ticket',options:['pet_lover','1p_1m','familiar']},{key:'payment_method',label:'Pago',options:PM}],title:'Nuevo inscrito Caminata 5K',defaults:{status:'pending_payment'}})}/>
                       </div>
                     </div>
-                    <DTable headers={['Titular','Grupo','Email','Ticket','Estado','Monto','Contrato','Fecha','']} empty={!regs5k.length}>
-                      {regs5k.map(r=>{
+                    <DTable headers={['Persona','Grupo','Email','Ticket','Estado','Monto','Contrato','Fecha','']} empty={!regs5k.length}>
+                      {regs5k.flatMap(r=>{
                         const grpAttendees=attendees.filter(a=>a.registration_id===r.id)
                         const adults=grpAttendees.filter(a=>!a.is_minor)
                         const minors=grpAttendees.filter(a=>a.is_minor)
                         const grpPets=pets.filter(p=>p.registration_id===r.id)
-                        return (
-                        <TR key={r.id}>
-                          <TD><div className="font-bold">{r.full_name}</div><div className="text-xs" style={{color:ts}}>{r.document_id}</div></TD>
-                          <TD>
-                            <div className="flex gap-1.5 flex-wrap">
-                              {adults.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(96,165,250,0.15)',color:'#60a5fa'}}>👤 {adults.length}</span>}
-                              {minors.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(251,191,36,0.15)',color:'#fbbf24'}}>👶 {minors.length}</span>}
-                              {grpPets.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(16,185,129,0.15)',color:'#10b981'}}>🐾 {grpPets.length}</span>}
-                              {grpAttendees.length===0&&<span className="text-xs" style={{color:ts}}>Solo titular</span>}
-                            </div>
-                          </TD>
-                          <TD cls="text-xs" style={{color:ts}}>{r.email}</TD>
-                          <TD cls="text-xs capitalize">{r.ticket_type}</TD>
-                          <TD>
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <Badge status={r.status}/>
-                              {!isOk(r.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:r,table:'registrations_5k'})}/>}
-                            </div>
-                          </TD>
-                          <TD cls="text-xs font-bold text-emerald-400">{r.amount_cents?fmtCOP(r.amount_cents):r.total_amount?fmtCOP(r.total_amount):'—'}</TD>
-                          <TD>{r.accepted_agreement_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email})}/>}</TD>
-                          <TD cls="text-xs" style={{color:ts}}>{fmtDate(r.created_at)}</TD>
-                          <TD><div className="flex gap-1">
-                            <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
-                            <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:r,table:'registrations_5k',fields:[{key:'full_name',label:'Nombre'},{key:'document_id',label:'Cédula'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'photo_url',label:'Foto de perfil'}]})}/>
-                            <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:r,table:'registrations_5k'})}/>
-                          </div></TD>
-                        </TR>
+                        const grpId=r.id.slice(-4).toUpperCase()
+                        const rows:React.ReactNode[]=[]
+
+                        // Fila del titular
+                        rows.push(
+                          <TR key={r.id}>
+                            <TD><div className="flex items-center gap-2"><span>👑</span><div><div className="font-bold">{r.full_name}</div><div className="text-xs" style={{color:ts}}>{r.document_id}</div></div></div></TD>
+                            <TD>
+                              <div className="flex gap-1 flex-wrap">
+                                {adults.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(96,165,250,0.15)',color:'#60a5fa'}}>👤{adults.length}</span>}
+                                {minors.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(251,191,36,0.15)',color:'#fbbf24'}}>👶{minors.length}</span>}
+                                {grpPets.length>0&&<span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{background:'rgba(16,185,129,0.15)',color:'#10b981'}}>🐾{grpPets.length}</span>}
+                                {grpAttendees.length===0&&grpPets.length===0&&<span className="text-xs" style={{color:ts}}>Solo titular</span>}
+                              </div>
+                            </TD>
+                            <TD cls="text-xs" style={{color:ts}}>{r.email}</TD>
+                            <TD cls="text-xs capitalize">{r.ticket_type}</TD>
+                            <TD>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <Badge status={r.status}/>
+                                {!isOk(r.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:r,table:'registrations_5k'})}/>}
+                              </div>
+                            </TD>
+                            <TD cls="text-xs font-bold text-emerald-400">{r.amount_cents?fmtCOP(r.amount_cents):r.total_amount?fmtCOP(r.total_amount):'—'}</TD>
+                            <TD>{r.accepted_agreement_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email})}/>}</TD>
+                            <TD cls="text-xs" style={{color:ts}}>{fmtDate(r.created_at)}</TD>
+                            <TD><div className="flex gap-1">
+                              <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
+                              <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:r,table:'registrations_5k',fields:[{key:'full_name',label:'Nombre'},{key:'document_id',label:'Cédula'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'photo_url',label:'Foto de perfil'}]})}/>
+                              <Btn icon="🗑️" color="bg-red-500/10 text-red-400 hover:bg-red-500/20" onClick={()=>setDeleteM({record:r,table:'registrations_5k'})}/>
+                            </div></TD>
+                          </TR>
                         )
+
+                        // Filas de adultos acompañantes (no titular)
+                        adults.filter(a=>!a.is_primary).forEach(a=>{
+                          rows.push(
+                            <tr key={a.id} style={{borderTop:'1px solid rgba(255,255,255,0.04)',background:'rgba(255,255,255,0.015)'}}>
+                              <td className="px-4 py-2"><div className="flex items-center gap-2 pl-4"><span>👤</span><div><div className="text-sm text-gray-300">{a.full_name}</div><div className="text-xs" style={{color:ts}}>{a.document_id||'Sin cédula'}</div></div></div></td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>↳ GRP-{grpId}</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>{a.email||'—'}</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>Adulto</td>
+                              <td className="px-4 py-2"><Badge status={r.status}/></td>
+                              <td className="px-4 py-2 text-xs font-bold text-emerald-400">{fmtCOP(a.amount_cents)}</td>
+                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"></td>
+                            </tr>
+                          )
+                        })
+
+                        // Filas de niños
+                        minors.forEach(a=>{
+                          rows.push(
+                            <tr key={a.id} style={{borderTop:'1px solid rgba(255,255,255,0.04)',background:'rgba(255,255,255,0.015)'}}>
+                              <td className="px-4 py-2"><div className="flex items-center gap-2 pl-4"><span>👶</span><div><div className="text-sm font-medium" style={{color:'#fbbf24'}}>{a.full_name}</div><div className="text-xs" style={{color:ts}}>{a.birthdate?`Nac: ${fmtDate(a.birthdate)}`:'Sin fecha nac.'}</div></div></div></td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>↳ GRP-{grpId}</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
+                              <td className="px-4 py-2 text-xs" style={{color:'#fbbf24'}}>Niño</td>
+                              <td className="px-4 py-2"><Badge status={r.status}/></td>
+                              <td className="px-4 py-2 text-xs font-bold" style={{color:'#fbbf24'}}>{fmtCOP(a.amount_cents)}</td>
+                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"></td>
+                            </tr>
+                          )
+                        })
+
+                        // Filas de mascotas
+                        grpPets.forEach(p=>{
+                          rows.push(
+                            <tr key={p.id} style={{borderTop:'1px solid rgba(255,255,255,0.04)',background:'rgba(255,255,255,0.015)'}}>
+                              <td className="px-4 py-2"><div className="flex items-center gap-2 pl-4">
+                                {p.photo_url?<img src={p.photo_url} className="w-7 h-7 rounded-lg object-cover flex-shrink-0" alt={p.name}/>:<span>🐾</span>}
+                                <div><div className="text-sm text-gray-300">{p.name}</div><div className="text-xs" style={{color:ts}}>{p.breed} · {p.size}</div></div>
+                              </div></td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>↳ GRP-{grpId}</td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
+                              <td className="px-4 py-2 text-xs" style={{color:'#10b981'}}>Mascota</td>
+                              <td className="px-4 py-2"><Badge status={r.status}/></td>
+                              <td className="px-4 py-2 text-xs" style={{color:ts}}>—</td>
+                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"></td>
+                              <td className="px-4 py-2"></td>
+                            </tr>
+                          )
+                        })
+
+                        return rows
                       })}
                     </DTable>
                   </div>
