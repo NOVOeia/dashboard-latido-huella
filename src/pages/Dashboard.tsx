@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 interface Reg5k { id:string;created_at:string;full_name:string;email:string;phone:string;document_id:string;ticket_type:string;total_amount:number;amount_cents:number|null;status:string;payment_provider:string|null;payment_method:string|null;wompi_transaction_id:string|null;paid_at:string|null;accepted_agreement_at:string|null }
 interface Attendee { id:string;registration_id:string;attendee_index:number;is_primary:boolean;is_minor:boolean;full_name:string;email:string|null;phone:string|null;document_id:string|null;amount_cents:number;birthdate:string|null;photo_url:string|null;created_at:string }
+interface EmailTemplate { id:string;name:string;category:string;subject:string;body_html:string;is_active:boolean;created_at:string;updated_at:string }
 interface Pet { id:string;registration_id:string;name:string;breed:string;age:string;size:string;photo_url:string|null;is_primary:boolean;bio:string|null;amount_cents:number;approved_for_wall:boolean;created_at:string }
 interface Expositor { id:string;created_at:string;brand_name:string;responsible_name:string;email:string;phone:string;cedula:string|null;stand_id:string|null;stand_type:string|null;category:string;product_type:string|null;status:string;payment_method:string|null;amount_cents:number;cedula_url:string|null;rut_url:string|null;camara_comercio_url:string|null;accepted_contract_at:string|null;wompi_transaction_id:string|null;paid_at:string|null }
 interface Toldo { id:string;created_at:string;brand_name:string;responsible_name:string;email:string;phone:string;cedula:string|null;quantity:number;product_type:string|null;status:string;payment_method:string|null;amount_cents:number;cedula_url:string|null;rut_url:string|null;camara_comercio_url:string|null;accepted_contract_at:string|null;wompi_transaction_id:string|null;paid_at:string|null }
@@ -16,7 +17,7 @@ interface SportTeam { id:string;created_at:string;sport:string;category:string|n
 interface SportPlayer { id:string;team_id:string;player_index:number;is_captain:boolean;name:string;age:number|null;cedula:string|null;ti:string|null;email:string|null;phone:string|null;responsable_name:string|null;responsable_phone:string|null }
 interface AdminUser { id:string;created_at:string;full_name:string;email:string;password_hash:string;role:string;is_active:boolean }
 
-type Page = 'home'|'5k'|'mascotas'|'comercial'|'deportes'|'patrocinadores'|'marcas'|'pagos'|'admin'|'dev'|'papelera'
+type Page = 'home'|'5k'|'mascotas'|'comercial'|'deportes'|'patrocinadores'|'marcas'|'pagos'|'emails'|'admin'|'dev'|'papelera'
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const PM = ['wompi','efectivo','transferencia']
@@ -1039,6 +1040,296 @@ function PapeleraPage({dark,br,tp,ts,card,onHardDelete,onRestore}:{dark:boolean;
   )
 }
 
+// ─── EMAILS PAGE ─────────────────────────────────────────────────────────────
+const CAT_LABELS:Record<string,string>={
+  '5k':'🐾 Caminata 5K','stand':'🏪 Stand','foodtruck':'🚚 Food Truck',
+  'toldo':'⛺ Toldo','deporte':'⚽ Deporte','sponsor':'⭐ Patrocinador','general':'📧 General'
+}
+const VARIABLES=[
+  '{{nombre}}','{{email}}','{{tipo_registro}}','{{monto}}','{{estado_pago}}',
+  '{{fecha_evento}}','{{lugar_evento}}','{{stand_id}}','{{nombre_equipo}}',
+  '{{deporte}}','{{num_jugadores}}','{{nombre_mascota}}','{{empresa}}',
+  '{{plan_nombre}}','{{area_m2}}','{{cantidad_toldos}}'
+]
+
+function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams}:{
+  dark:boolean;br:string;tp:string;ts:string;card:string;
+  regs5k:Reg5k[];expositores:Expositor[];toldos:Toldo[];sponsors:Sponsor[];teams:SportTeam[]
+}) {
+  const [templates,setTemplates]=useState<EmailTemplate[]>([])
+  const [loading,setLoading]=useState(true)
+  const [editingTpl,setEditingTpl]=useState<EmailTemplate|null>(null)
+  const [isNew,setIsNew]=useState(false)
+  const [htmlMode,setHtmlMode]=useState(false)
+  const [preview,setPreview]=useState(false)
+  const [saving,setSaving]=useState(false)
+  const [sendingId,setSendingId]=useState<string|null>(null)
+  const [sendResult,setSendResult]=useState<{ok:boolean;msg:string}|null>(null)
+  const [sendModal,setSendModal]=useState<{template:EmailTemplate}|null>(null)
+  const [sendTarget,setSendTarget]=useState<'all'|'category'|'single'>('category')
+  const [sendEmail,setSendEmail]=useState('')
+  const [result,setResult]=useState<{ok:boolean;msg:string}|null>(null)
+
+  const loadTemplates=useCallback(async()=>{
+    setLoading(true)
+    const {data}=await supabase.from('email_templates').select('*').order('created_at')
+    if(data) setTemplates(data)
+    setLoading(false)
+  },[])
+
+  useEffect(()=>{loadTemplates()},[loadTemplates])
+
+  const saveTemplate=async()=>{
+    if(!editingTpl) return
+    setSaving(true)
+    if(isNew){
+      const {error}=await supabase.from('email_templates').insert({...editingTpl,id:undefined})
+      if(!error){setSaving(false);setEditingTpl(null);loadTemplates();return}
+    } else {
+      const {error}=await supabase.from('email_templates').update({
+        name:editingTpl.name,category:editingTpl.category,
+        subject:editingTpl.subject,body_html:editingTpl.body_html,
+        is_active:editingTpl.is_active,updated_at:new Date().toISOString()
+      }).eq('id',editingTpl.id)
+      if(!error){setSaving(false);setEditingTpl(null);loadTemplates();return}
+    }
+    setSaving(false)
+  }
+
+  const deleteTemplate=async(id:string)=>{
+    await supabase.from('email_templates').delete().eq('id',id)
+    loadTemplates()
+  }
+
+  const replaceVars=(html:string,data:Record<string,string>)=>{
+    let result=html
+    Object.entries(data).forEach(([k,v])=>{ result=result.replace(new RegExp(k.replace(/[{}]/g,'\\$&'),'g'),v) })
+    return result
+  }
+
+  const sendEmail2=async(template:EmailTemplate,to:string,vars:Record<string,string>)=>{
+    const html=replaceVars(template.body_html,vars)
+    const subject=replaceVars(template.subject,vars)
+    const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
+      body:JSON.stringify({to,subject,html,type:template.category})
+    })
+    return res.ok
+  }
+
+  const handleSend=async()=>{
+    if(!sendModal) return
+    setSendingId(sendModal.template.id)
+    setSendResult(null)
+    let sent=0; let failed=0
+
+    const vars={'{{fecha_evento}}':'26 de julio de 2026','{{lugar_evento}}':'Llanogrande, Antioquia'}
+
+    if(sendTarget==='single'&&sendEmail){
+      const ok=await sendEmail2(sendModal.template,sendEmail,{...vars,'{{nombre}}':'Participante'})
+      ok?sent++:failed++
+    } else {
+      const cat=sendModal.template.category
+      let records:any[]=[]
+      if(cat==='5k'||cat==='general') records=[...records,...regs5k.map(r=>({email:r.email,vars:{'{{nombre}}':r.full_name,'{{monto}}':fmtCOP(r.amount_cents||r.total_amount||0),'{{tipo_registro}}':r.ticket_type||'',...vars}}))]
+      if(cat==='stand'||cat==='general') records=[...records,...expositores.map(e=>({email:e.email,vars:{'{{nombre}}':e.responsible_name||e.brand_name,'{{stand_id}}':e.stand_id||'','{{monto}}':fmtCOP(e.amount_cents||0),...vars}}))]
+      if(cat==='toldo'||cat==='general') records=[...records,...toldos.map(t=>({email:t.email,vars:{'{{nombre}}':t.responsible_name||t.brand_name,'{{cantidad_toldos}}':String(t.quantity||1),'{{monto}}':fmtCOP(t.amount_cents||0),...vars}}))]
+      if(cat==='deporte'||cat==='general') records=[...records,...teams.map(t=>({email:t.captain_email,vars:{'{{nombre}}':t.captain_name,'{{nombre_equipo}}':t.team_name||t.captain_name,'{{deporte}}':t.sport||'','{{num_jugadores}}':String(t.player_count||0),'{{monto}}':fmtCOP(t.amount_cents||0),...vars}}))]
+      if(cat==='sponsor'||cat==='general') records=[...records,...sponsors.map(s=>({email:s.email,vars:{'{{nombre}}':s.contact_name||s.company_name,'{{empresa}}':s.company_name||'','{{plan_nombre}}':s.plan_name||'','{{monto}}':fmtCOP(s.amount_cents||0),...vars}}))]
+
+      if(sendTarget==='category') {
+        for(const r of records){
+          const ok=await sendEmail2(sendModal.template,r.email,r.vars)
+          ok?sent++:failed++
+        }
+      }
+    }
+
+    setSendingId(null)
+    setSendResult({ok:failed===0,msg:failed===0?`✅ ${sent} email(s) enviados`:`⚠️ ${sent} enviados, ${failed} fallidos`})
+    setTimeout(()=>{setSendModal(null);setSendResult(null)},3000)
+  }
+
+  // ── Editor ────────────────────────────────────────────────────────────────
+  if(editingTpl) return (
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <button onClick={()=>setEditingTpl(null)} className="text-sm px-3 py-1.5 rounded-xl border hover:bg-white/5" style={{color:ts,borderColor:br}}>← Volver</button>
+        <h1 className="text-xl font-black" style={{color:tp}}>{isNew?'Nueva plantilla':'Editar plantilla'}</h1>
+      </div>
+      <div className="grid grid-cols-2 gap-5">
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Nombre</label>
+            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none" style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.name} onChange={e=>setEditingTpl({...editingTpl,name:e.target.value})}/>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Categoría</label>
+            <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none" style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.category} onChange={e=>setEditingTpl({...editingTpl,category:e.target.value})}>
+              {Object.entries(CAT_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Asunto</label>
+            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none" style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.subject} onChange={e=>setEditingTpl({...editingTpl,subject:e.target.value})}/>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold" style={{color:ts}}>Variables disponibles</label>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {VARIABLES.map(v=>(
+                <button key={v} onClick={()=>setEditingTpl({...editingTpl,body_html:editingTpl.body_html+v})}
+                  className="text-xs px-2 py-0.5 rounded-lg font-mono hover:opacity-80"
+                  style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold" style={{color:ts}}>Cuerpo del email</label>
+            <div className="flex gap-2">
+              <button onClick={()=>setHtmlMode(!htmlMode)}
+                className="text-xs px-3 py-1 rounded-lg font-bold"
+                style={{background:htmlMode?'rgba(0,188,212,0.2)':'rgba(255,255,255,0.05)',color:htmlMode?'#00BCD4':ts,border:`1px solid ${br}`}}>
+                {htmlMode?'</> HTML':'📝 Simple'}
+              </button>
+              <button onClick={()=>setPreview(!preview)}
+                className="text-xs px-3 py-1 rounded-lg font-bold"
+                style={{background:preview?'rgba(76,175,80,0.2)':'rgba(255,255,255,0.05)',color:preview?'#4CAF50':ts,border:`1px solid ${br}`}}>
+                👁️ Preview
+              </button>
+            </div>
+          </div>
+          {preview
+            ?<div className="rounded-xl overflow-hidden border" style={{borderColor:br,minHeight:400}}>
+              <iframe srcDoc={editingTpl.body_html} className="w-full" style={{height:400,border:'none',background:'white'}} title="preview"/>
+            </div>
+            :<textarea className="w-full rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none resize-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp,minHeight:400}}
+              value={editingTpl.body_html} onChange={e=>setEditingTpl({...editingTpl,body_html:e.target.value})}/>
+          }
+        </div>
+      </div>
+      <div className="flex gap-3 mt-5">
+        <button onClick={saveTemplate} disabled={saving}
+          className="px-6 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+          {saving?'Guardando...':'💾 Guardar plantilla'}
+        </button>
+        <button onClick={()=>setEditingTpl(null)} className="px-4 py-2.5 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+      </div>
+    </div>
+  )
+
+  // ── Lista ─────────────────────────────────────────────────────────────────
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-black" style={{color:tp}}>📧 Emails</h1>
+          <p className="text-sm mt-0.5" style={{color:ts}}>{templates.length} plantillas · Motor: Resend</p>
+        </div>
+        <button onClick={()=>{setIsNew(true);setEditingTpl({id:'',name:'',category:'general',subject:'',body_html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">\n  <h1>Hola {{nombre}}</h1>\n  <p>Contenido del email aquí.</p>\n</div>',is_active:true,created_at:'',updated_at:''})}}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+          ➕ Nueva plantilla
+        </button>
+      </div>
+
+      {loading
+        ?<div className="text-center py-12" style={{color:ts}}>Cargando plantillas...</div>
+        :<div className="grid grid-cols-1 gap-4">
+          {Object.entries(CAT_LABELS).map(cat=>{
+            const catTemplates=templates.filter(t=>t.category===cat[0])
+            if(!catTemplates.length) return null
+            return (
+              <div key={cat[0]}>
+                <div className="text-xs font-bold mb-2 uppercase tracking-wider" style={{color:ts}}>{cat[1]}</div>
+                <div className="grid grid-cols-1 gap-2">
+                  {catTemplates.map(t=>(
+                    <div key={t.id} className="flex items-center justify-between p-4 rounded-xl" style={{background:card,border:`1px solid ${br}`}}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${t.is_active?'bg-emerald-400':'bg-gray-600'}`}/>
+                        <div>
+                          <div className="font-bold text-sm" style={{color:tp}}>{t.name}</div>
+                          <div className="text-xs mt-0.5" style={{color:ts}}>{t.subject}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={()=>setSendModal({template:t})}
+                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                          style={{background:'rgba(76,175,80,0.15)',color:'#4CAF50',border:'1px solid rgba(76,175,80,0.3)'}}>
+                          📤 Enviar
+                        </button>
+                        <button onClick={()=>{setIsNew(false);setEditingTpl(t)}}
+                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                          style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
+                          ✏️ Editar
+                        </button>
+                        <button onClick={()=>deleteTemplate(t.id)}
+                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                          style={{background:'rgba(239,68,68,0.1)',color:'#f87171',border:'1px solid rgba(239,68,68,0.2)'}}>
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      }
+
+      {/* Modal de envío */}
+      {sendModal&&(
+        <Modal onClose={()=>setSendModal(null)}>
+          <div className="p-6">
+            <h3 className="text-base font-bold mb-1" style={{color:tp}}>📤 Enviar email</h3>
+            <p className="text-xs mb-4" style={{color:ts}}>{sendModal.template.name}</p>
+            <div className="space-y-3 mb-5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" checked={sendTarget==='category'} onChange={()=>setSendTarget('category')}/>
+                <span className="text-sm" style={{color:tp}}>Enviar a todos los de esta categoría ({CAT_LABELS[sendModal.template.category]})</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" checked={sendTarget==='all'} onChange={()=>setSendTarget('all')}/>
+                <span className="text-sm" style={{color:tp}}>Enviar a todos los registrados</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" checked={sendTarget==='single'} onChange={()=>setSendTarget('single')}/>
+                <span className="text-sm" style={{color:tp}}>Enviar a un email específico</span>
+              </label>
+              {sendTarget==='single'&&(
+                <input className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none mt-1"
+                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
+                  placeholder="email@ejemplo.com" value={sendEmail} onChange={e=>setSendEmail(e.target.value)}/>
+              )}
+            </div>
+            {sendResult&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${sendResult.ok?'bg-emerald-500/15 text-emerald-400':'bg-amber-500/15 text-amber-400'}`}>{sendResult.msg}</div>}
+            <div className="flex gap-2">
+              <button onClick={handleSend} disabled={!!sendingId}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+                style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
+                {sendingId?'Enviando...':'📤 Enviar ahora'}
+              </button>
+              <button onClick={()=>setSendModal(null)} className="px-4 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  )
+}
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 function LoginScreen({onLogin}:{onLogin:(u:{id:string;email:string;role:string;name:string})=>void}) {
   const [email,setEmail]=useState('');const [pass,setPass]=useState('');const [err,setErr]=useState('');const [loading,setLoading]=useState(false)
@@ -1225,6 +1516,7 @@ export function Dashboard() {
     {id:'patrocinadores',icon:'⭐',label:'Patrocinadores',count:sponsors.length},
     {id:'marcas',icon:'🖼',label:'Marcas & Logos',count:publicSponsors.length},
     {id:'pagos',icon:'💳',label:'Pagos'},
+    {id:'emails',icon:'📧',label:'Emails'},
     null,
     {id:'admin',icon:'👥',label:'Administración'},
     {id:'dev',icon:'⚙️',label:'Desarrolladores'},
@@ -2120,6 +2412,7 @@ export function Dashboard() {
                   </div>
                 )}
 
+                {page==='emails'&&<EmailsPage dark={dark} br={br} tp={tp} ts={ts} card={card} regs5k={regs5k} expositores={expositores} toldos={toldos} sponsors={sponsors} teams={teams}/>}
                 {page==='papelera'&&<PapeleraPage dark={dark} br={br} tp={tp} ts={ts} card={card} onHardDelete={(r:any,t:string)=>setHardDeleteM({record:r,table:t})} onRestore={fetchAll}/>}
 
               </motion.div>
