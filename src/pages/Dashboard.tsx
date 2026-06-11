@@ -1179,29 +1179,37 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
 
   const [quickSend,setQuickSend]=useState(false)
   const [quickEmail,setQuickEmail]=useState('')
+  const [quickSubject,setQuickSubject]=useState('')
+  const [quickBody,setQuickBody]=useState('<p>Hola {{nombre}},</p>\n<p>Escribe tu mensaje aquí.</p>')
   const [quickTemplate,setQuickTemplate]=useState('')
+  const [quickMode,setQuickMode]=useState<'simple'|'html'|'preview'>('simple')
   const [quickSending,setQuickSending]=useState(false)
   const [quickResult,setQuickResult]=useState<{ok:boolean;msg:string}|null>(null)
 
+  const EMAIL_HEADER=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px 16px 0 0;padding:24px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:50px" alt="Latido y Huella"/></div><div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:white;padding:32px">`
+  const EMAIL_FOOTER=`</div><div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:0 0 16px 16px;padding:16px;text-align:center"><p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0">Latido y Huella · 26 Jul 2026 · Llanogrande, Antioquia</p></div>`
+
+  const buildFullHtml=(body:string)=>`${EMAIL_HEADER}${body}${EMAIL_FOOTER}`
+
   const handleQuickSend=async()=>{
-    if(!quickEmail||!quickTemplate) return
-    const tpl=templates.find(t=>t.id===quickTemplate)
-    if(!tpl) return
+    if(!quickEmail||!quickSubject) return
     setQuickSending(true)
-    const vars={'{{nombre}}':'Participante','{{fecha_evento}}':'26 de julio de 2026','{{lugar_evento}}':'Llanogrande, Antioquia'}
-    const html=Object.entries(vars).reduce((h,[k,v])=>h.replace(new RegExp(k.replace(/[{}]/g,'\\$&'),'g'),v),tpl.body_html)
-    const subject=Object.entries(vars).reduce((s,[k,v])=>s.replace(new RegExp(k.replace(/[{}]/g,'\\$&'),'g'),v),tpl.subject)
+    const fullHtml=buildFullHtml(quickBody)
     try {
       const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
         method:'POST',
         headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
-        body:JSON.stringify({to:quickEmail,subject,html,from:fromEmail,type:tpl.category})
+        body:JSON.stringify({to:quickEmail,subject:quickSubject,html:fullHtml,from:fromEmail,type:'manual'})
       })
       if(res.ok){
-        await supabase.from('email_logs').insert({template_id:tpl.id,template_name:tpl.name,to_email:quickEmail,to_name:quickEmail,category:tpl.category,subject})
+        const tpl=templates.find(t=>t.id===quickTemplate)
+        await supabase.from('email_logs').insert({
+          template_id:tpl?.id||null,template_name:tpl?.name||'Email manual',
+          to_email:quickEmail,to_name:quickEmail,category:'general',subject:quickSubject
+        })
         setQuickResult({ok:true,msg:'✅ Email enviado'})
         loadAll()
-        setTimeout(()=>{setQuickSend(false);setQuickResult(null);setQuickEmail('');setQuickTemplate('')},2000)
+        setTimeout(()=>{setQuickSend(false);setQuickResult(null);setQuickEmail('');setQuickSubject('');setQuickBody('<p>Hola {{nombre}},</p>\n<p>Escribe tu mensaje aquí.</p>');setQuickTemplate('')},2000)
       } else {
         setQuickResult({ok:false,msg:'⚠️ Error al enviar'})
       }
@@ -1307,50 +1315,111 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
         </div>
       </div>
 
-      {/* Modal Nuevo email — envío rápido a cualquier usuario */}
+      {/* Composer — envío rápido estilo Gmail */}
       {quickSend&&(
-        <Modal onClose={()=>{setQuickSend(false);setQuickResult(null)}}>
-          <div className="p-6">
-            <h3 className="text-base font-bold mb-1" style={{color:tp}}>📤 Nuevo email</h3>
-            <p className="text-xs mb-4" style={{color:ts}}>Envía un email a cualquier destinatario</p>
-            <div className="space-y-3 mb-5">
-              <div>
-                <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Email destinatario</label>
-                <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
-                  placeholder="email@ejemplo.com" value={quickEmail} onChange={e=>setQuickEmail(e.target.value)}/>
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-4" style={{background:'rgba(0,0,0,0.7)',backdropFilter:'blur(8px)'}}>
+          <motion.div initial={{y:100,opacity:0}} animate={{y:0,opacity:1}} exit={{y:100,opacity:0}}
+            className="w-full rounded-2xl overflow-hidden shadow-2xl"
+            style={{maxWidth:760,background:'#0D1B6E',border:'1px solid rgba(0,188,212,0.2)'}}>
+            {/* Header del composer */}
+            <div className="flex items-center justify-between px-5 py-3" style={{background:'rgba(0,188,212,0.15)',borderBottom:'1px solid rgba(0,188,212,0.2)'}}>
+              <div className="flex items-center gap-3">
+                <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style={{height:28,objectFit:'contain'}} alt="Logo"/>
+                <span className="font-bold text-sm text-white">Nuevo email</span>
               </div>
-              <div>
-                <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Plantilla</label>
-                <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
-                  value={quickTemplate} onChange={e=>setQuickTemplate(e.target.value)}>
-                  <option value="" className="bg-[#12122a]">Selecciona una plantilla...</option>
-                  {templates.filter(t=>t.is_active).map(t=>(
-                    <option key={t.id} value={t.id} className="bg-[#12122a]">{CAT_LABELS[t.category]||t.category} · {t.name}</option>
+              <button onClick={()=>{setQuickSend(false);setQuickResult(null)}} className="text-gray-400 hover:text-white text-xl">×</button>
+            </div>
+
+            <div className="p-5">
+              {/* Campos Para / Asunto / Remitente */}
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-3 pb-2" style={{borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+                  <span className="text-xs font-bold w-16 text-right" style={{color:'rgba(255,255,255,0.4)'}}>Para</span>
+                  <input className="flex-1 bg-transparent text-sm focus:outline-none text-white placeholder-gray-500"
+                    placeholder="email@ejemplo.com"
+                    value={quickEmail} onChange={e=>setQuickEmail(e.target.value)}/>
+                </div>
+                <div className="flex items-center gap-3 pb-2" style={{borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+                  <span className="text-xs font-bold w-16 text-right" style={{color:'rgba(255,255,255,0.4)'}}>Asunto</span>
+                  <input className="flex-1 bg-transparent text-sm focus:outline-none text-white placeholder-gray-500"
+                    placeholder="Asunto del email"
+                    value={quickSubject} onChange={e=>setQuickSubject(e.target.value)}/>
+                </div>
+                <div className="flex items-center gap-3 pb-2" style={{borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+                  <span className="text-xs font-bold w-16 text-right" style={{color:'rgba(255,255,255,0.4)'}}>De</span>
+                  <select className="flex-1 bg-transparent text-sm focus:outline-none text-white"
+                    value={fromEmail} onChange={e=>setFromEmail(e.target.value)}>
+                    {FROM_OPTIONS.map(o=><option key={o} value={o} className="bg-[#0D1B6E]">{o}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-center gap-3 pb-2" style={{borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
+                  <span className="text-xs font-bold w-16 text-right" style={{color:'rgba(255,255,255,0.4)'}}>Plantilla</span>
+                  <select className="flex-1 bg-transparent text-sm focus:outline-none text-white"
+                    value={quickTemplate}
+                    onChange={e=>{
+                      setQuickTemplate(e.target.value)
+                      const tpl=templates.find(t=>t.id===e.target.value)
+                      if(tpl){setQuickSubject(tpl.subject);setQuickBody(tpl.body_html)}
+                    }}>
+                    <option value="" className="bg-[#0D1B6E]">Sin plantilla (email libre)</option>
+                    {templates.filter(t=>t.is_active).map(t=>(
+                      <option key={t.id} value={t.id} className="bg-[#0D1B6E]">{CAT_LABELS[t.category]||t.category} · {t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Toolbar modos */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex gap-1">
+                  {(['simple','html','preview'] as const).map(m=>(
+                    <button key={m} onClick={()=>setQuickMode(m)}
+                      className="text-xs px-3 py-1 rounded-lg font-bold"
+                      style={{background:quickMode===m?'rgba(0,188,212,0.25)':'rgba(255,255,255,0.05)',color:quickMode===m?'#00BCD4':'rgba(255,255,255,0.5)',border:`1px solid ${quickMode===m?'rgba(0,188,212,0.4)':'rgba(255,255,255,0.08)'}`}}>
+                      {m==='simple'?'📝 Simple':m==='html'?'</> HTML':'👁️ Preview'}
+                    </button>
                   ))}
-                </select>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {['{{nombre}}','{{fecha_evento}}','{{lugar_evento}}','{{monto}}'].map(v=>(
+                    <button key={v} onClick={()=>setQuickBody(b=>b+v)}
+                      className="text-xs px-1.5 py-0.5 rounded font-mono hover:opacity-80"
+                      style={{background:'rgba(0,188,212,0.1)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.2)'}}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Remitente</label>
-                <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
-                  value={fromEmail} onChange={e=>setFromEmail(e.target.value)}>
-                  {FROM_OPTIONS.map(o=><option key={o} value={o} className="bg-[#12122a]">{o}</option>)}
-                </select>
+
+              {/* Editor / Preview */}
+              <div className="rounded-xl overflow-hidden mb-4" style={{border:'1px solid rgba(255,255,255,0.1)',height:220}}>
+                {quickMode==='preview'
+                  ?<iframe srcDoc={buildFullHtml(quickBody)} className="w-full h-full" style={{border:'none',background:'white'}} title="preview"/>
+                  :<textarea className="w-full h-full px-3 py-2.5 text-xs font-mono focus:outline-none resize-none"
+                    style={{background:'rgba(0,0,0,0.3)',color:'#e2e8f0',border:'none'}}
+                    placeholder={quickMode==='simple'?'Escribe el cuerpo del email aquí...\n\nPuedes usar HTML básico: <b>negrita</b>, <br> salto de línea, <a href="">links</a>':'HTML completo del email...'}
+                    value={quickBody} onChange={e=>setQuickBody(e.target.value)}/>
+                }
+              </div>
+
+              {/* Footer preview note */}
+              <div className="text-xs mb-4 px-3 py-2 rounded-lg" style={{background:'rgba(0,188,212,0.08)',color:'rgba(255,255,255,0.4)'}}>
+                ✨ Se agrega automáticamente el header con el logo y el footer del evento
+              </div>
+
+              {quickResult&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${quickResult.ok?'bg-emerald-500/15 text-emerald-400':'bg-amber-500/15 text-amber-400'}`}>{quickResult.msg}</div>}
+
+              <div className="flex gap-2 justify-end">
+                <button onClick={()=>{setQuickSend(false);setQuickResult(null)}} className="px-4 py-2 rounded-xl text-sm border" style={{color:'rgba(255,255,255,0.5)',borderColor:'rgba(255,255,255,0.1)'}}>Cancelar</button>
+                <button onClick={handleQuickSend} disabled={quickSending||!quickEmail||!quickSubject}
+                  className="px-6 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50 flex items-center gap-2"
+                  style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+                  {quickSending?'Enviando...':'📤 Enviar'}
+                </button>
               </div>
             </div>
-            {quickResult&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${quickResult.ok?'bg-emerald-500/15 text-emerald-400':'bg-amber-500/15 text-amber-400'}`}>{quickResult.msg}</div>}
-            <div className="flex gap-2">
-              <button onClick={handleQuickSend} disabled={quickSending||!quickEmail||!quickTemplate}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-                style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
-                {quickSending?'Enviando...':'📤 Enviar'}
-              </button>
-              <button onClick={()=>{setQuickSend(false);setQuickResult(null)}} className="px-4 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
-            </div>
-          </div>
-        </Modal>
+          </motion.div>
+        </div>
       )}
 
       <Tabs value={activeTab} onChange={v=>setActiveTab(v as any)} options={[
