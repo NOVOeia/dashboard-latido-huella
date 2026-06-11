@@ -308,10 +308,6 @@ function ProfileModal({record,table,allData,onClose,onSaved,onApprove,onContract
   // ── Equipo para jugadores ──────────────────────────────────────────────────
   const playerTeam=isPlayer?allData.teams.find(t=>t.id===record.team_id):null
 
-  // ── Hero: foto mascota o hero del evento ──────────────────────────────────
-  const petPhoto=isPet?record.photo_url:null
-  const heroBg=petPhoto||HERO_URL
-
   // ── Participación (buscar por email en todas las tablas) ──────────────────
   const linked5k=email?allData.regs5k.filter(r=>r.email===email):[]
   const linkedExp=email?allData.expositores.filter(e=>e.email===email):[]
@@ -319,6 +315,19 @@ function ProfileModal({record,table,allData,onClose,onSaved,onApprove,onContract
   const linkedSponsor=email?allData.sponsors.filter(s=>s.email===email):[]
   const linkedTeam=email?allData.teams.filter(t=>t.captain_email===email):[]
   const linkedPets=allData.pets.filter(p=>linked5k.some(r=>r.id===p.registration_id))
+
+  // ── Hero: foto mascota del grupo o hero del evento ────────────────────────
+  const groupPets=isAttendee
+    ?allData.pets.filter(p=>p.registration_id===record.registration_id)
+    :isPlayer
+    ?[]
+    :linkedPets
+  const petPhoto=isPet
+    ?record.photo_url
+    :groupPets.find(p=>p.photo_url)?.photo_url
+    ||linkedPets.find(p=>p.photo_url)?.photo_url
+    ||null
+  const heroBg=petPhoto||HERO_URL
 
   // Si es niño o mascota, hereda los registros del responsable
   const linkedPetsForSection=isPet?[record as Pet]:linkedPets
