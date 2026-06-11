@@ -1177,85 +1177,6 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
     setTimeout(()=>{if(failed===0) setSendModal(null);setSendResult(null)},4000)
   }
 
-  // ── Editor ────────────────────────────────────────────────────────────────
-  if(editingTpl) return (
-    <div>
-      <div className="flex items-center gap-3 mb-5">
-        <button onClick={()=>setEditingTpl(null)} className="text-sm px-3 py-1.5 rounded-xl border hover:bg-white/5" style={{color:ts,borderColor:br}}>← Volver</button>
-        <h1 className="text-xl font-black" style={{color:tp}}>{isNew?'Nueva plantilla':'Editar plantilla'}</h1>
-      </div>
-      <div className="grid grid-cols-5 gap-5">
-        {/* Configuración */}
-        <div className="col-span-2 space-y-4">
-          <div>
-            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Nombre de la plantilla</label>
-            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              style={{background:card,border:`1px solid ${br}`,color:tp}}
-              value={editingTpl.name} onChange={e=>setEditingTpl({...editingTpl,name:e.target.value})}/>
-          </div>
-          <div>
-            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Categoría</label>
-            <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              style={{background:card,border:`1px solid ${br}`,color:tp}}
-              value={editingTpl.category} onChange={e=>setEditingTpl({...editingTpl,category:e.target.value})}>
-              {Object.entries(CAT_LABELS).map(([k,v])=><option key={k} value={k} className="bg-[#12122a]">{v}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Asunto del email</label>
-            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              style={{background:card,border:`1px solid ${br}`,color:tp}}
-              value={editingTpl.subject} onChange={e=>setEditingTpl({...editingTpl,subject:e.target.value})}/>
-          </div>
-          <div>
-            <label className="text-xs font-bold mb-2 block" style={{color:ts}}>Variables disponibles</label>
-            <div className="flex flex-wrap gap-1.5">
-              {VARIABLES.map(v=>(
-                <button key={v} onClick={()=>setEditingTpl({...editingTpl,body_html:editingTpl.body_html+v})}
-                  className="text-xs px-2 py-0.5 rounded-lg font-mono hover:opacity-80"
-                  style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={editingTpl.is_active} onChange={e=>setEditingTpl({...editingTpl,is_active:e.target.checked})} id="active"/>
-            <label htmlFor="active" className="text-sm cursor-pointer" style={{color:tp}}>Plantilla activa</label>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button onClick={saveTemplate} disabled={saving}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-              style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
-              {saving?'Guardando...':'💾 Guardar'}
-            </button>
-            <button onClick={()=>setEditingTpl(null)} className="px-4 py-2.5 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
-          </div>
-        </div>
-
-        {/* Editor HTML + Preview */}
-        <div className="col-span-3">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-bold" style={{color:ts}}>Cuerpo del email (HTML)</label>
-            <button onClick={()=>setPreview(!preview)}
-              className="text-xs px-3 py-1 rounded-lg font-bold"
-              style={{background:preview?'rgba(76,175,80,0.2)':'rgba(255,255,255,0.05)',color:preview?'#4CAF50':ts,border:`1px solid ${br}`}}>
-              {preview?'✏️ Editar':'👁️ Preview'}
-            </button>
-          </div>
-          {preview
-            ?<div className="rounded-xl overflow-hidden border" style={{borderColor:br,height:'calc(100vh - 280px)'}}>
-              <iframe srcDoc={editingTpl.body_html} className="w-full h-full" style={{border:'none',background:'white'}} title="preview"/>
-            </div>
-            :<textarea className="w-full rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none resize-none"
-              style={{background:card,border:`1px solid ${br}`,color:tp,height:'calc(100vh - 280px)'}}
-              value={editingTpl.body_html} onChange={e=>setEditingTpl({...editingTpl,body_html:e.target.value})}/>
-          }
-        </div>
-      </div>
-    </div>
-  )
-
   // ── Vista principal ────────────────────────────────────────────────────────
   return (
     <div>
@@ -1344,13 +1265,11 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
         </div>
       )}
 
-      {/* Modal envío */}
       {sendModal&&(
         <Modal onClose={()=>setSendModal(null)}>
           <div className="p-6">
             <h3 className="text-base font-bold mb-1" style={{color:tp}}>📤 Enviar email</h3>
             <p className="text-xs mb-4" style={{color:ts}}>{sendModal.template.name}</p>
-
             <div className="mb-4">
               <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Remitente</label>
               <select className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none"
@@ -1359,7 +1278,6 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
                 {FROM_OPTIONS.map(o=><option key={o} value={o} className="bg-[#12122a]">{o}</option>)}
               </select>
             </div>
-
             <div className="space-y-3 mb-5">
               <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl hover:bg-white/5">
                 <input type="radio" checked={sendTarget==='category'} onChange={()=>setSendTarget('category')}/>
@@ -1375,9 +1293,7 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
                   placeholder="email@ejemplo.com" value={singleEmail} onChange={e=>setSingleEmail(e.target.value)}/>
               )}
             </div>
-
             {sendResult&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${sendResult.ok?'bg-emerald-500/15 text-emerald-400':'bg-amber-500/15 text-amber-400'}`}>{sendResult.msg}</div>}
-
             <div className="flex gap-2">
               <button onClick={handleSend} disabled={sending}
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
@@ -1392,268 +1308,6 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
     </div>
   )
 }
-
-  const loadTemplates=useCallback(async()=>{
-    setLoading(true)
-    const {data}=await supabase.from('email_templates').select('*').order('created_at')
-    if(data) setTemplates(data)
-    setLoading(false)
-  },[])
-
-  useEffect(()=>{loadTemplates()},[loadTemplates])
-
-  const saveTemplate=async()=>{
-    if(!editingTpl) return
-    setSaving(true)
-    if(isNew){
-      const {error}=await supabase.from('email_templates').insert({...editingTpl,id:undefined})
-      if(!error){setSaving(false);setEditingTpl(null);loadTemplates();return}
-    } else {
-      const {error}=await supabase.from('email_templates').update({
-        name:editingTpl.name,category:editingTpl.category,
-        subject:editingTpl.subject,body_html:editingTpl.body_html,
-        is_active:editingTpl.is_active,updated_at:new Date().toISOString()
-      }).eq('id',editingTpl.id)
-      if(!error){setSaving(false);setEditingTpl(null);loadTemplates();return}
-    }
-    setSaving(false)
-  }
-
-  const deleteTemplate=async(id:string)=>{
-    await supabase.from('email_templates').delete().eq('id',id)
-    loadTemplates()
-  }
-
-  const replaceVars=(html:string,data:Record<string,string>)=>{
-    let result=html
-    Object.entries(data).forEach(([k,v])=>{ result=result.replace(new RegExp(k.replace(/[{}]/g,'\\$&'),'g'),v) })
-    return result
-  }
-
-  const sendEmail2=async(template:EmailTemplate,to:string,vars:Record<string,string>)=>{
-    const html=replaceVars(template.body_html,vars)
-    const subject=replaceVars(template.subject,vars)
-    const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
-      method:'POST',
-      headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
-      body:JSON.stringify({to,subject,html,type:template.category})
-    })
-    return res.ok
-  }
-
-  const handleSend=async()=>{
-    if(!sendModal) return
-    setSendingId(sendModal.template.id)
-    setSendResult(null)
-    let sent=0; let failed=0
-
-    const vars={'{{fecha_evento}}':'26 de julio de 2026','{{lugar_evento}}':'Llanogrande, Antioquia'}
-
-    if(sendTarget==='single'&&sendEmail){
-      const ok=await sendEmail2(sendModal.template,sendEmail,{...vars,'{{nombre}}':'Participante'})
-      ok?sent++:failed++
-    } else {
-      const cat=sendModal.template.category
-      let records:any[]=[]
-      if(cat==='5k'||cat==='general') records=[...records,...regs5k.map(r=>({email:r.email,vars:{'{{nombre}}':r.full_name,'{{monto}}':fmtCOP(r.amount_cents||r.total_amount||0),'{{tipo_registro}}':r.ticket_type||'',...vars}}))]
-      if(cat==='stand'||cat==='general') records=[...records,...expositores.map(e=>({email:e.email,vars:{'{{nombre}}':e.responsible_name||e.brand_name,'{{stand_id}}':e.stand_id||'','{{monto}}':fmtCOP(e.amount_cents||0),...vars}}))]
-      if(cat==='toldo'||cat==='general') records=[...records,...toldos.map(t=>({email:t.email,vars:{'{{nombre}}':t.responsible_name||t.brand_name,'{{cantidad_toldos}}':String(t.quantity||1),'{{monto}}':fmtCOP(t.amount_cents||0),...vars}}))]
-      if(cat==='deporte'||cat==='general') records=[...records,...teams.map(t=>({email:t.captain_email,vars:{'{{nombre}}':t.captain_name,'{{nombre_equipo}}':t.team_name||t.captain_name,'{{deporte}}':t.sport||'','{{num_jugadores}}':String(t.player_count||0),'{{monto}}':fmtCOP(t.amount_cents||0),...vars}}))]
-      if(cat==='sponsor'||cat==='general') records=[...records,...sponsors.map(s=>({email:s.email,vars:{'{{nombre}}':s.contact_name||s.company_name,'{{empresa}}':s.company_name||'','{{plan_nombre}}':s.plan_name||'','{{monto}}':fmtCOP(s.amount_cents||0),...vars}}))]
-
-      if(sendTarget==='category') {
-        for(const r of records){
-          const ok=await sendEmail2(sendModal.template,r.email,r.vars)
-          ok?sent++:failed++
-        }
-      }
-    }
-
-    setSendingId(null)
-    setSendResult({ok:failed===0,msg:failed===0?`✅ ${sent} email(s) enviados`:`⚠️ ${sent} enviados, ${failed} fallidos`})
-    setTimeout(()=>{setSendModal(null);setSendResult(null)},3000)
-  }
-
-  // ── Editor ────────────────────────────────────────────────────────────────
-  if(editingTpl) return (
-    <div>
-      <div className="flex items-center gap-3 mb-5">
-        <button onClick={()=>setEditingTpl(null)} className="text-sm px-3 py-1.5 rounded-xl border hover:bg-white/5" style={{color:ts,borderColor:br}}>← Volver</button>
-        <h1 className="text-xl font-black" style={{color:tp}}>{isNew?'Nueva plantilla':'Editar plantilla'}</h1>
-      </div>
-      <div className="grid grid-cols-2 gap-5">
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Nombre</label>
-            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none" style={{background:card,border:`1px solid ${br}`,color:tp}}
-              value={editingTpl.name} onChange={e=>setEditingTpl({...editingTpl,name:e.target.value})}/>
-          </div>
-          <div>
-            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Categoría</label>
-            <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none" style={{background:card,border:`1px solid ${br}`,color:tp}}
-              value={editingTpl.category} onChange={e=>setEditingTpl({...editingTpl,category:e.target.value})}>
-              {Object.entries(CAT_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Asunto</label>
-            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none" style={{background:card,border:`1px solid ${br}`,color:tp}}
-              value={editingTpl.subject} onChange={e=>setEditingTpl({...editingTpl,subject:e.target.value})}/>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-bold" style={{color:ts}}>Variables disponibles</label>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {VARIABLES.map(v=>(
-                <button key={v} onClick={()=>setEditingTpl({...editingTpl,body_html:editingTpl.body_html+v})}
-                  className="text-xs px-2 py-0.5 rounded-lg font-mono hover:opacity-80"
-                  style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-bold" style={{color:ts}}>Cuerpo del email</label>
-            <div className="flex gap-2">
-              <button onClick={()=>setHtmlMode(!htmlMode)}
-                className="text-xs px-3 py-1 rounded-lg font-bold"
-                style={{background:htmlMode?'rgba(0,188,212,0.2)':'rgba(255,255,255,0.05)',color:htmlMode?'#00BCD4':ts,border:`1px solid ${br}`}}>
-                {htmlMode?'</> HTML':'📝 Simple'}
-              </button>
-              <button onClick={()=>setPreview(!preview)}
-                className="text-xs px-3 py-1 rounded-lg font-bold"
-                style={{background:preview?'rgba(76,175,80,0.2)':'rgba(255,255,255,0.05)',color:preview?'#4CAF50':ts,border:`1px solid ${br}`}}>
-                👁️ Preview
-              </button>
-            </div>
-          </div>
-          {preview
-            ?<div className="rounded-xl overflow-hidden border" style={{borderColor:br,minHeight:400}}>
-              <iframe srcDoc={editingTpl.body_html} className="w-full" style={{height:400,border:'none',background:'white'}} title="preview"/>
-            </div>
-            :<textarea className="w-full rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none resize-none"
-              style={{background:card,border:`1px solid ${br}`,color:tp,minHeight:400}}
-              value={editingTpl.body_html} onChange={e=>setEditingTpl({...editingTpl,body_html:e.target.value})}/>
-          }
-        </div>
-      </div>
-      <div className="flex gap-3 mt-5">
-        <button onClick={saveTemplate} disabled={saving}
-          className="px-6 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
-          {saving?'Guardando...':'💾 Guardar plantilla'}
-        </button>
-        <button onClick={()=>setEditingTpl(null)} className="px-4 py-2.5 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
-      </div>
-    </div>
-  )
-
-  // ── Lista ─────────────────────────────────────────────────────────────────
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black" style={{color:tp}}>📧 Emails</h1>
-          <p className="text-sm mt-0.5" style={{color:ts}}>{templates.length} plantillas · Motor: Resend</p>
-        </div>
-        <button onClick={()=>{setIsNew(true);setEditingTpl({id:'',name:'',category:'general',subject:'',body_html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">\n  <h1>Hola {{nombre}}</h1>\n  <p>Contenido del email aquí.</p>\n</div>',is_active:true,created_at:'',updated_at:''})}}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
-          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
-          ➕ Nueva plantilla
-        </button>
-      </div>
-
-      {loading
-        ?<div className="text-center py-12" style={{color:ts}}>Cargando plantillas...</div>
-        :<div className="grid grid-cols-1 gap-4">
-          {Object.entries(CAT_LABELS).map(cat=>{
-            const catTemplates=templates.filter(t=>t.category===cat[0])
-            if(!catTemplates.length) return null
-            return (
-              <div key={cat[0]}>
-                <div className="text-xs font-bold mb-2 uppercase tracking-wider" style={{color:ts}}>{cat[1]}</div>
-                <div className="grid grid-cols-1 gap-2">
-                  {catTemplates.map(t=>(
-                    <div key={t.id} className="flex items-center justify-between p-4 rounded-xl" style={{background:card,border:`1px solid ${br}`}}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${t.is_active?'bg-emerald-400':'bg-gray-600'}`}/>
-                        <div>
-                          <div className="font-bold text-sm" style={{color:tp}}>{t.name}</div>
-                          <div className="text-xs mt-0.5" style={{color:ts}}>{t.subject}</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={()=>setSendModal({template:t})}
-                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                          style={{background:'rgba(76,175,80,0.15)',color:'#4CAF50',border:'1px solid rgba(76,175,80,0.3)'}}>
-                          📤 Enviar
-                        </button>
-                        <button onClick={()=>{setIsNew(false);setEditingTpl(t)}}
-                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                          style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
-                          ✏️ Editar
-                        </button>
-                        <button onClick={()=>deleteTemplate(t.id)}
-                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                          style={{background:'rgba(239,68,68,0.1)',color:'#f87171',border:'1px solid rgba(239,68,68,0.2)'}}>
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      }
-
-      {/* Modal de envío */}
-      {sendModal&&(
-        <Modal onClose={()=>setSendModal(null)}>
-          <div className="p-6">
-            <h3 className="text-base font-bold mb-1" style={{color:tp}}>📤 Enviar email</h3>
-            <p className="text-xs mb-4" style={{color:ts}}>{sendModal.template.name}</p>
-            <div className="space-y-3 mb-5">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={sendTarget==='category'} onChange={()=>setSendTarget('category')}/>
-                <span className="text-sm" style={{color:tp}}>Enviar a todos los de esta categoría ({CAT_LABELS[sendModal.template.category]})</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={sendTarget==='all'} onChange={()=>setSendTarget('all')}/>
-                <span className="text-sm" style={{color:tp}}>Enviar a todos los registrados</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={sendTarget==='single'} onChange={()=>setSendTarget('single')}/>
-                <span className="text-sm" style={{color:tp}}>Enviar a un email específico</span>
-              </label>
-              {sendTarget==='single'&&(
-                <input className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none mt-1"
-                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
-                  placeholder="email@ejemplo.com" value={sendEmail} onChange={e=>setSendEmail(e.target.value)}/>
-              )}
-            </div>
-            {sendResult&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${sendResult.ok?'bg-emerald-500/15 text-emerald-400':'bg-amber-500/15 text-amber-400'}`}>{sendResult.msg}</div>}
-            <div className="flex gap-2">
-              <button onClick={handleSend} disabled={!!sendingId}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-                style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
-                {sendingId?'Enviando...':'📤 Enviar ahora'}
-              </button>
-              <button onClick={()=>setSendModal(null)} className="px-4 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
-            </div>
-          </div>
-        </Modal>
-      )}
-    </div>
-  )
-}
-
-// ─── LOGIN ────────────────────────────────────────────────────────────────────
 function LoginScreen({onLogin}:{onLogin:(u:{id:string;email:string;role:string;name:string})=>void}) {
   const [email,setEmail]=useState('');const [pass,setPass]=useState('');const [err,setErr]=useState('');const [loading,setLoading]=useState(false)
   const doLogin=async(e:React.FormEvent)=>{
