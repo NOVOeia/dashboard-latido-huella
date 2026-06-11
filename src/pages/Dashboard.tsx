@@ -1177,6 +1177,114 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
     setTimeout(()=>{if(failed===0) setSendModal(null);setSendResult(null)},4000)
   }
 
+  const [quickSend,setQuickSend]=useState(false)
+  const [quickEmail,setQuickEmail]=useState('')
+  const [quickTemplate,setQuickTemplate]=useState('')
+  const [quickSending,setQuickSending]=useState(false)
+  const [quickResult,setQuickResult]=useState<{ok:boolean;msg:string}|null>(null)
+
+  const handleQuickSend=async()=>{
+    if(!quickEmail||!quickTemplate) return
+    const tpl=templates.find(t=>t.id===quickTemplate)
+    if(!tpl) return
+    setQuickSending(true)
+    const vars={'{{nombre}}':'Participante','{{fecha_evento}}':'26 de julio de 2026','{{lugar_evento}}':'Llanogrande, Antioquia'}
+    const html=Object.entries(vars).reduce((h,[k,v])=>h.replace(new RegExp(k.replace(/[{}]/g,'\\$&'),'g'),v),tpl.body_html)
+    const subject=Object.entries(vars).reduce((s,[k,v])=>s.replace(new RegExp(k.replace(/[{}]/g,'\\$&'),'g'),v),tpl.subject)
+    try {
+      const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
+        method:'POST',
+        headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
+        body:JSON.stringify({to:quickEmail,subject,html,from:fromEmail,type:tpl.category})
+      })
+      if(res.ok){
+        await supabase.from('email_logs').insert({template_id:tpl.id,template_name:tpl.name,to_email:quickEmail,to_name:quickEmail,category:tpl.category,subject})
+        setQuickResult({ok:true,msg:'✅ Email enviado'})
+        loadAll()
+        setTimeout(()=>{setQuickSend(false);setQuickResult(null);setQuickEmail('');setQuickTemplate('')},2000)
+      } else {
+        setQuickResult({ok:false,msg:'⚠️ Error al enviar'})
+      }
+    } catch { setQuickResult({ok:false,msg:'⚠️ Error de conexión'}) }
+    setQuickSending(false)
+  }
+
+  // ── Editor ────────────────────────────────────────────────────────────────
+  if(editingTpl) return (
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <button onClick={()=>setEditingTpl(null)} className="text-sm px-3 py-1.5 rounded-xl border hover:bg-white/5" style={{color:ts,borderColor:br}}>← Volver</button>
+        <h1 className="text-xl font-black" style={{color:tp}}>{isNew?'Nueva plantilla':'Editar plantilla'}</h1>
+      </div>
+      <div className="grid grid-cols-5 gap-5">
+        <div className="col-span-2 space-y-4">
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Nombre de la plantilla</label>
+            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.name} onChange={e=>setEditingTpl({...editingTpl,name:e.target.value})}/>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Categoría</label>
+            <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.category} onChange={e=>setEditingTpl({...editingTpl,category:e.target.value})}>
+              {Object.entries(CAT_LABELS).map(([k,v])=><option key={k} value={k} className="bg-[#12122a]">{v}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Asunto del email</label>
+            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.subject} onChange={e=>setEditingTpl({...editingTpl,subject:e.target.value})}/>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-2 block" style={{color:ts}}>Variables disponibles</label>
+            <div className="flex flex-wrap gap-1.5">
+              {VARIABLES.map(v=>(
+                <button key={v} onClick={()=>setEditingTpl({...editingTpl,body_html:editingTpl.body_html+v})}
+                  className="text-xs px-2 py-0.5 rounded-lg font-mono hover:opacity-80"
+                  style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={editingTpl.is_active} onChange={e=>setEditingTpl({...editingTpl,is_active:e.target.checked})} id="active"/>
+            <label htmlFor="active" className="text-sm cursor-pointer" style={{color:tp}}>Plantilla activa</label>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={saveTemplate} disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+              style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+              {saving?'Guardando...':'💾 Guardar'}
+            </button>
+            <button onClick={()=>setEditingTpl(null)} className="px-4 py-2.5 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+          </div>
+        </div>
+        <div className="col-span-3">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold" style={{color:ts}}>Cuerpo del email (HTML)</label>
+            <button onClick={()=>setPreview(!preview)}
+              className="text-xs px-3 py-1 rounded-lg font-bold"
+              style={{background:preview?'rgba(76,175,80,0.2)':'rgba(255,255,255,0.05)',color:preview?'#4CAF50':ts,border:`1px solid ${br}`}}>
+              {preview?'✏️ Editar':'👁️ Preview'}
+            </button>
+          </div>
+          {preview
+            ?<div className="rounded-xl overflow-hidden border" style={{borderColor:br,height:'calc(100vh - 280px)'}}>
+              <iframe srcDoc={editingTpl.body_html} className="w-full h-full" style={{border:'none',background:'white'}} title="preview"/>
+            </div>
+            :<textarea className="w-full rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none resize-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp,height:'calc(100vh - 280px)'}}
+              value={editingTpl.body_html} onChange={e=>setEditingTpl({...editingTpl,body_html:e.target.value})}/>
+          }
+        </div>
+      </div>
+    </div>
+  )
+
   // ── Vista principal ────────────────────────────────────────────────────────
   return (
     <div>
@@ -1185,12 +1293,65 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
           <h1 className="text-2xl font-black" style={{color:tp}}>📧 Emails</h1>
           <p className="text-sm mt-0.5" style={{color:ts}}>{templates.length} plantillas · {logs.length} enviados</p>
         </div>
-        <button onClick={()=>{setIsNew(true);setEditingTpl({id:'',name:'',category:'general',subject:'',body_html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">\n  <h1>Hola {{nombre}}</h1>\n  <p>Contenido del email aquí.</p>\n</div>',is_active:true,created_at:'',updated_at:''})}}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
-          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
-          ➕ Nueva plantilla
-        </button>
+        <div className="flex gap-2">
+          <button onClick={()=>setQuickSend(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold"
+            style={{background:'rgba(76,175,80,0.15)',color:'#4CAF50',border:'1px solid rgba(76,175,80,0.3)'}}>
+            📤 Nuevo email
+          </button>
+          <button onClick={()=>{setIsNew(true);setEditingTpl({id:'',name:'',category:'general',subject:'',body_html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">\n  <h1>Hola {{nombre}}</h1>\n  <p>Contenido del email aquí.</p>\n</div>',is_active:true,created_at:'',updated_at:''})}}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+            style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+            ➕ Nueva plantilla
+          </button>
+        </div>
       </div>
+
+      {/* Modal Nuevo email — envío rápido a cualquier usuario */}
+      {quickSend&&(
+        <Modal onClose={()=>{setQuickSend(false);setQuickResult(null)}}>
+          <div className="p-6">
+            <h3 className="text-base font-bold mb-1" style={{color:tp}}>📤 Nuevo email</h3>
+            <p className="text-xs mb-4" style={{color:ts}}>Envía un email a cualquier destinatario</p>
+            <div className="space-y-3 mb-5">
+              <div>
+                <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Email destinatario</label>
+                <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
+                  placeholder="email@ejemplo.com" value={quickEmail} onChange={e=>setQuickEmail(e.target.value)}/>
+              </div>
+              <div>
+                <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Plantilla</label>
+                <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
+                  value={quickTemplate} onChange={e=>setQuickTemplate(e.target.value)}>
+                  <option value="" className="bg-[#12122a]">Selecciona una plantilla...</option>
+                  {templates.filter(t=>t.is_active).map(t=>(
+                    <option key={t.id} value={t.id} className="bg-[#12122a]">{CAT_LABELS[t.category]||t.category} · {t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Remitente</label>
+                <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
+                  value={fromEmail} onChange={e=>setFromEmail(e.target.value)}>
+                  {FROM_OPTIONS.map(o=><option key={o} value={o} className="bg-[#12122a]">{o}</option>)}
+                </select>
+              </div>
+            </div>
+            {quickResult&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${quickResult.ok?'bg-emerald-500/15 text-emerald-400':'bg-amber-500/15 text-amber-400'}`}>{quickResult.msg}</div>}
+            <div className="flex gap-2">
+              <button onClick={handleQuickSend} disabled={quickSending||!quickEmail||!quickTemplate}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+                style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
+                {quickSending?'Enviando...':'📤 Enviar'}
+              </button>
+              <button onClick={()=>{setQuickSend(false);setQuickResult(null)}} className="px-4 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       <Tabs value={activeTab} onChange={v=>setActiveTab(v as any)} options={[
         {id:'plantillas',label:'📋 Plantillas',count:templates.length},
