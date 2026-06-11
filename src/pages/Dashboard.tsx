@@ -1057,18 +1057,341 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
   regs5k:Reg5k[];expositores:Expositor[];toldos:Toldo[];sponsors:Sponsor[];teams:SportTeam[]
 }) {
   const [templates,setTemplates]=useState<EmailTemplate[]>([])
+  const [logs,setLogs]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [editingTpl,setEditingTpl]=useState<EmailTemplate|null>(null)
   const [isNew,setIsNew]=useState(false)
-  const [htmlMode,setHtmlMode]=useState(false)
   const [preview,setPreview]=useState(false)
   const [saving,setSaving]=useState(false)
-  const [sendingId,setSendingId]=useState<string|null>(null)
-  const [sendResult,setSendResult]=useState<{ok:boolean;msg:string}|null>(null)
+  const [sending,setSending]=useState(false)
   const [sendModal,setSendModal]=useState<{template:EmailTemplate}|null>(null)
-  const [sendTarget,setSendTarget]=useState<'all'|'category'|'single'>('category')
-  const [sendEmail,setSendEmail]=useState('')
-  const [result,setResult]=useState<{ok:boolean;msg:string}|null>(null)
+  const [sendTarget,setSendTarget]=useState<'category'|'single'>('category')
+  const [singleEmail,setSingleEmail]=useState('')
+  const [fromEmail,setFromEmail]=useState('eventos@latidoyhuella.co')
+  const [sendResult,setSendResult]=useState<{ok:boolean;msg:string}|null>(null)
+  const [activeTab,setActiveTab]=useState<'plantillas'|'historial'>('plantillas')
+
+  const FROM_OPTIONS=['eventos@latidoyhuella.co','contacto@latidoyhuella.co','noresponder@latidoyhuella.co']
+
+  const loadAll=useCallback(async()=>{
+    setLoading(true)
+    const [tRes,lRes]=await Promise.all([
+      supabase.from('email_templates').select('*').order('created_at'),
+      supabase.from('email_logs').select('*').order('sent_at',{ascending:false}).limit(100)
+    ])
+    if(tRes.data) setTemplates(tRes.data)
+    if(lRes.data) setLogs(lRes.data)
+    setLoading(false)
+  },[])
+
+  useEffect(()=>{loadAll()},[loadAll])
+
+  const saveTemplate=async()=>{
+    if(!editingTpl) return
+    setSaving(true)
+    if(isNew){
+      await supabase.from('email_templates').insert({...editingTpl,id:undefined})
+    } else {
+      await supabase.from('email_templates').update({
+        name:editingTpl.name,category:editingTpl.category,
+        subject:editingTpl.subject,body_html:editingTpl.body_html,
+        is_active:editingTpl.is_active,updated_at:new Date().toISOString()
+      }).eq('id',editingTpl.id)
+    }
+    setSaving(false);setEditingTpl(null);loadAll()
+  }
+
+  const deleteTemplate=async(id:string)=>{
+    if(!confirm('¿Eliminar esta plantilla?')) return
+    await supabase.from('email_templates').delete().eq('id',id)
+    loadAll()
+  }
+
+  const replaceVars=(html:string,data:Record<string,string>)=>{
+    let r=html
+    Object.entries(data).forEach(([k,v])=>{ r=r.replace(new RegExp(k.replace(/[{}]/g,'\\$&'),'g'),v||'') })
+    return r
+  }
+
+  const sendOne=async(template:EmailTemplate,to:string,toName:string,vars:Record<string,string>,skipIfSent=false)=>{
+    // Control: no reenviar bienvenida si ya fue enviada
+    if(skipIfSent){
+      const alreadySent=logs.some(l=>l.to_email===to&&l.template_id===template.id)
+      if(alreadySent) return 'skipped'
+    }
+    const html=replaceVars(template.body_html,vars)
+    const subject=replaceVars(template.subject,vars)
+    try {
+      const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
+        method:'POST',
+        headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
+        body:JSON.stringify({to,subject,html,from:fromEmail,type:template.category})
+      })
+      if(res.ok){
+        // Guardar log
+        await supabase.from('email_logs').insert({
+          template_id:template.id,template_name:template.name,
+          to_email:to,to_name:toName,category:template.category,subject
+        })
+        return 'sent'
+      }
+      return 'failed'
+    } catch { return 'failed' }
+  }
+
+  const handleSend=async()=>{
+    if(!sendModal) return
+    setSending(true);setSendResult(null)
+    const template=sendModal.template
+    const baseVars={'{{fecha_evento}}':'26 de julio de 2026','{{lugar_evento}}':'Llanogrande, Antioquia'}
+    const isWelcome=template.name.toLowerCase().includes('confirmación')||template.name.toLowerCase().includes('bienvenid')
+    let sent=0;let skipped=0;let failed=0
+
+    if(sendTarget==='single'&&singleEmail){
+      const r=await sendOne(template,singleEmail,'Participante',{...baseVars,'{{nombre}}':'Participante'},false)
+      r==='sent'?sent++:r==='skipped'?skipped++:failed++
+    } else {
+      const cat=template.category
+      let records:Array<{email:string;name:string;vars:Record<string,string>}>=[]
+      if(cat==='5k'||cat==='general') regs5k.forEach(r=>records.push({email:r.email,name:r.full_name,vars:{...baseVars,'{{nombre}}':r.full_name,'{{monto}}':fmtCOP(r.amount_cents||r.total_amount||0),'{{tipo_registro}}':r.ticket_type||''}}))
+      if(cat==='stand'||cat==='general') expositores.forEach(e=>records.push({email:e.email,name:e.responsible_name||e.brand_name,vars:{...baseVars,'{{nombre}}':e.responsible_name||e.brand_name,'{{stand_id}}':e.stand_id||'','{{monto}}':fmtCOP(e.amount_cents||0)}}))
+      if(cat==='toldo'||cat==='general') toldos.forEach(t=>records.push({email:t.email,name:t.responsible_name||t.brand_name,vars:{...baseVars,'{{nombre}}':t.responsible_name||t.brand_name,'{{cantidad_toldos}}':String(t.quantity||1),'{{monto}}':fmtCOP(t.amount_cents||0)}}))
+      if(cat==='deporte'||cat==='general') teams.forEach(t=>records.push({email:t.captain_email,name:t.captain_name,vars:{...baseVars,'{{nombre}}':t.captain_name,'{{nombre_equipo}}':t.team_name||t.captain_name,'{{deporte}}':t.sport||'','{{num_jugadores}}':String(t.player_count||0),'{{monto}}':fmtCOP(t.amount_cents||0)}}))
+      if(cat==='sponsor'||cat==='general') sponsors.forEach(s=>records.push({email:s.email,name:s.contact_name||s.company_name,vars:{...baseVars,'{{nombre}}':s.contact_name||s.company_name,'{{empresa}}':s.company_name||'','{{plan_nombre}}':s.plan_name||'','{{monto}}':fmtCOP(s.amount_cents||0)}}))
+
+      // Enviar en paralelo con límite de 5 a la vez
+      const BATCH=5
+      for(let i=0;i<records.length;i+=BATCH){
+        const batch=records.slice(i,i+BATCH)
+        const results=await Promise.all(batch.map(r=>sendOne(template,r.email,r.name,r.vars,isWelcome)))
+        results.forEach(r=>r==='sent'?sent++:r==='skipped'?skipped++:failed++)
+      }
+    }
+
+    setSending(false)
+    setSendResult({
+      ok:failed===0,
+      msg:`✅ ${sent} enviados${skipped>0?` · ${skipped} ya tenían este email`:''}${failed>0?` · ⚠️ ${failed} fallidos`:''}`
+    })
+    loadAll()
+    setTimeout(()=>{if(failed===0) setSendModal(null);setSendResult(null)},4000)
+  }
+
+  // ── Editor ────────────────────────────────────────────────────────────────
+  if(editingTpl) return (
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <button onClick={()=>setEditingTpl(null)} className="text-sm px-3 py-1.5 rounded-xl border hover:bg-white/5" style={{color:ts,borderColor:br}}>← Volver</button>
+        <h1 className="text-xl font-black" style={{color:tp}}>{isNew?'Nueva plantilla':'Editar plantilla'}</h1>
+      </div>
+      <div className="grid grid-cols-5 gap-5">
+        {/* Configuración */}
+        <div className="col-span-2 space-y-4">
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Nombre de la plantilla</label>
+            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.name} onChange={e=>setEditingTpl({...editingTpl,name:e.target.value})}/>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Categoría</label>
+            <select className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.category} onChange={e=>setEditingTpl({...editingTpl,category:e.target.value})}>
+              {Object.entries(CAT_LABELS).map(([k,v])=><option key={k} value={k} className="bg-[#12122a]">{v}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Asunto del email</label>
+            <input className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp}}
+              value={editingTpl.subject} onChange={e=>setEditingTpl({...editingTpl,subject:e.target.value})}/>
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-2 block" style={{color:ts}}>Variables disponibles</label>
+            <div className="flex flex-wrap gap-1.5">
+              {VARIABLES.map(v=>(
+                <button key={v} onClick={()=>setEditingTpl({...editingTpl,body_html:editingTpl.body_html+v})}
+                  className="text-xs px-2 py-0.5 rounded-lg font-mono hover:opacity-80"
+                  style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={editingTpl.is_active} onChange={e=>setEditingTpl({...editingTpl,is_active:e.target.checked})} id="active"/>
+            <label htmlFor="active" className="text-sm cursor-pointer" style={{color:tp}}>Plantilla activa</label>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={saveTemplate} disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+              style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+              {saving?'Guardando...':'💾 Guardar'}
+            </button>
+            <button onClick={()=>setEditingTpl(null)} className="px-4 py-2.5 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+          </div>
+        </div>
+
+        {/* Editor HTML + Preview */}
+        <div className="col-span-3">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold" style={{color:ts}}>Cuerpo del email (HTML)</label>
+            <button onClick={()=>setPreview(!preview)}
+              className="text-xs px-3 py-1 rounded-lg font-bold"
+              style={{background:preview?'rgba(76,175,80,0.2)':'rgba(255,255,255,0.05)',color:preview?'#4CAF50':ts,border:`1px solid ${br}`}}>
+              {preview?'✏️ Editar':'👁️ Preview'}
+            </button>
+          </div>
+          {preview
+            ?<div className="rounded-xl overflow-hidden border" style={{borderColor:br,height:'calc(100vh - 280px)'}}>
+              <iframe srcDoc={editingTpl.body_html} className="w-full h-full" style={{border:'none',background:'white'}} title="preview"/>
+            </div>
+            :<textarea className="w-full rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none resize-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp,height:'calc(100vh - 280px)'}}
+              value={editingTpl.body_html} onChange={e=>setEditingTpl({...editingTpl,body_html:e.target.value})}/>
+          }
+        </div>
+      </div>
+    </div>
+  )
+
+  // ── Vista principal ────────────────────────────────────────────────────────
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h1 className="text-2xl font-black" style={{color:tp}}>📧 Emails</h1>
+          <p className="text-sm mt-0.5" style={{color:ts}}>{templates.length} plantillas · {logs.length} enviados</p>
+        </div>
+        <button onClick={()=>{setIsNew(true);setEditingTpl({id:'',name:'',category:'general',subject:'',body_html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">\n  <h1>Hola {{nombre}}</h1>\n  <p>Contenido del email aquí.</p>\n</div>',is_active:true,created_at:'',updated_at:''})}}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+          ➕ Nueva plantilla
+        </button>
+      </div>
+
+      <Tabs value={activeTab} onChange={v=>setActiveTab(v as any)} options={[
+        {id:'plantillas',label:'📋 Plantillas',count:templates.length},
+        {id:'historial',label:'📊 Historial',count:logs.length},
+      ]}/>
+
+      {activeTab==='plantillas'&&(
+        loading
+          ?<div className="text-center py-12" style={{color:ts}}>Cargando...</div>
+          :<div className="space-y-4 mt-4">
+            {Object.entries(CAT_LABELS).map(([catKey,catLabel])=>{
+              const catTpls=templates.filter(t=>t.category===catKey)
+              if(!catTpls.length) return null
+              return (
+                <div key={catKey}>
+                  <div className="text-xs font-bold mb-2 uppercase tracking-wider" style={{color:ts}}>{catLabel}</div>
+                  <div className="space-y-2">
+                    {catTpls.map(t=>{
+                      const sentCount=logs.filter(l=>l.template_id===t.id).length
+                      return (
+                        <div key={t.id} className="flex items-center justify-between p-4 rounded-xl" style={{background:card,border:`1px solid ${br}`}}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${t.is_active?'bg-emerald-400':'bg-gray-600'}`}/>
+                            <div>
+                              <div className="font-bold text-sm" style={{color:tp}}>{t.name}</div>
+                              <div className="text-xs mt-0.5 flex items-center gap-2" style={{color:ts}}>
+                                <span>{t.subject}</span>
+                                {sentCount>0&&<span className="px-1.5 py-0.5 rounded-full text-xs" style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>📤 {sentCount} enviados</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={()=>{setSendModal({template:t});setSendTarget('category');setSingleEmail('')}}
+                              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                              style={{background:'rgba(76,175,80,0.15)',color:'#4CAF50',border:'1px solid rgba(76,175,80,0.3)'}}>
+                              📤 Enviar
+                            </button>
+                            <button onClick={()=>{setIsNew(false);setEditingTpl(t)}}
+                              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                              style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4',border:'1px solid rgba(0,188,212,0.3)'}}>
+                              ✏️ Editar
+                            </button>
+                            <button onClick={()=>deleteTemplate(t.id)}
+                              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                              style={{background:'rgba(239,68,68,0.1)',color:'#f87171',border:'1px solid rgba(239,68,68,0.2)'}}>
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+      )}
+
+      {activeTab==='historial'&&(
+        <div className="mt-4">
+          <DTable headers={['Plantilla','Para','Categoría','Fecha','']} empty={!logs.length}>
+            {logs.map((l,i)=>(
+              <TR key={i}>
+                <TD cls="font-medium text-sm">{l.template_name}</TD>
+                <TD><div className="font-medium">{l.to_name||'—'}</div><div className="text-xs" style={{color:ts}}>{l.to_email}</div></TD>
+                <TD><span className="text-xs px-2 py-0.5 rounded-full" style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>{CAT_LABELS[l.category]||l.category}</span></TD>
+                <TD cls="text-xs" style={{color:ts}}>{fmtDate(l.sent_at)}</TD>
+                <TD><span className="text-xs font-bold text-emerald-400">✓ Enviado</span></TD>
+              </TR>
+            ))}
+          </DTable>
+        </div>
+      )}
+
+      {/* Modal envío */}
+      {sendModal&&(
+        <Modal onClose={()=>setSendModal(null)}>
+          <div className="p-6">
+            <h3 className="text-base font-bold mb-1" style={{color:tp}}>📤 Enviar email</h3>
+            <p className="text-xs mb-4" style={{color:ts}}>{sendModal.template.name}</p>
+
+            <div className="mb-4">
+              <label className="text-xs font-bold mb-1 block" style={{color:ts}}>Remitente</label>
+              <select className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none"
+                style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
+                value={fromEmail} onChange={e=>setFromEmail(e.target.value)}>
+                {FROM_OPTIONS.map(o=><option key={o} value={o} className="bg-[#12122a]">{o}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-3 mb-5">
+              <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl hover:bg-white/5">
+                <input type="radio" checked={sendTarget==='category'} onChange={()=>setSendTarget('category')}/>
+                <span className="text-sm" style={{color:tp}}>Enviar a todos de esta categoría <span style={{color:'#00BCD4'}}>({CAT_LABELS[sendModal.template.category]})</span></span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer p-3 rounded-xl hover:bg-white/5">
+                <input type="radio" checked={sendTarget==='single'} onChange={()=>setSendTarget('single')}/>
+                <span className="text-sm" style={{color:tp}}>Enviar a un email específico</span>
+              </label>
+              {sendTarget==='single'&&(
+                <input className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none"
+                  style={{background:'rgba(255,255,255,0.05)',border:`1px solid ${br}`,color:tp}}
+                  placeholder="email@ejemplo.com" value={singleEmail} onChange={e=>setSingleEmail(e.target.value)}/>
+              )}
+            </div>
+
+            {sendResult&&<div className={`mb-4 text-xs rounded-xl px-3 py-2.5 font-medium ${sendResult.ok?'bg-emerald-500/15 text-emerald-400':'bg-amber-500/15 text-amber-400'}`}>{sendResult.msg}</div>}
+
+            <div className="flex gap-2">
+              <button onClick={handleSend} disabled={sending}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+                style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
+                {sending?'Enviando...':'📤 Enviar ahora'}
+              </button>
+              <button onClick={()=>setSendModal(null)} className="px-4 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  )
+}
 
   const loadTemplates=useCallback(async()=>{
     setLoading(true)
