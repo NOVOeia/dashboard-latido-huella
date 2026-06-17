@@ -14,11 +14,13 @@ import { TerminosPage } from './pages/TerminosPage';
 import { NovoeiaModal } from './components/NovoeiaModal';
 import { DiverxoModal } from './components/DiverxoModal';
 import { Dashboard } from './pages/Dashboard';
+import { ContratoPage } from './pages/ContratoPage';
 
 export function App() {
   return (
     <Routes>
       <Route path="/admin" element={<Dashboard />} />
+      <Route path="/contrato/:token" element={<ContratoPage />} />
       <Route path="*" element={
         <div className="min-h-screen bg-white overflow-x-hidden">
           <Navbar />
