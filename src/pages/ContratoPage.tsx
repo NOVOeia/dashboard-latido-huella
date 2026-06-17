@@ -15,18 +15,18 @@ function fmtCOP(cents: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format((cents || 0) / 100)
 }
 
-// ── QR Code (usando API de Google Charts) ────────────────────────────────────
+// ── QR Code ──────────────────────────────────────────────────────────────────
 function QRCode({ url }: { url: string }) {
   const encoded = encodeURIComponent(url)
   return (
-    <div className="flex flex-col items-center p-4 bg-white rounded-2xl border-2" style={{ borderColor: CYAN }}>
+    <div className="flex flex-col items-center p-3 bg-white rounded-2xl border" style={{ borderColor: '#ddd' }}>
       <img
-        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encoded}`}
+        src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encoded}`}
         alt="QR firma móvil"
-        className="w-44 h-44"
+        className="w-28 h-28"
       />
-      <p className="text-xs text-center mt-2" style={{ color: '#666' }}>
-        Escanea con tu celular para firmar con el dedo
+      <p className="text-xs text-center mt-2 text-gray-400">
+        Escanea para firmar desde el celular
       </p>
     </div>
   )
@@ -39,6 +39,7 @@ function SignatureCanvas({ onSign }: { onSign: (dataUrl: string) => void }) {
   const signed = useRef(false)
   const onSignRef = useRef(onSign)
   onSignRef.current = onSign
+  const [showPlaceholder, setShowPlaceholder] = useState(true)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -67,6 +68,7 @@ function SignatureCanvas({ onSign }: { onSign: (dataUrl: string) => void }) {
     const start = (e: MouseEvent | TouchEvent) => {
       e.preventDefault()
       drawing.current = true
+      setShowPlaceholder(false)
       const pos = getPos(e)
       ctx.beginPath()
       ctx.moveTo(pos.x, pos.y)
@@ -111,19 +113,22 @@ function SignatureCanvas({ onSign }: { onSign: (dataUrl: string) => void }) {
     const ctx = canvas.getContext('2d')!
     ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
     signed.current = false
+    setShowPlaceholder(true)
     onSignRef.current('')
   }
 
   return (
     <div>
       <div className="relative border-2 rounded-xl overflow-hidden bg-white"
-        style={{ borderColor: CYAN, height: 160 }}>
+        style={{ borderColor: showPlaceholder ? '#ddd' : CYAN, height: 180 }}>
         <canvas ref={canvasRef}
           className="w-full h-full touch-none cursor-crosshair"
           style={{ display: 'block' }} />
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-          <p className="text-sm" style={{ color: '#ddd' }}>✍️ Dibuja tu firma aquí</p>
-        </div>
+        {showPlaceholder && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+            <p className="text-sm" style={{ color: '#ccc' }}>✍️ Dibuja tu firma aquí</p>
+          </div>
+        )}
       </div>
       <button onClick={clear}
         className="mt-2 text-xs px-3 py-1 rounded-lg border hover:bg-gray-50"
@@ -355,14 +360,20 @@ export function ContratoPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: NAVY }}>
       <img src={LOGO_URL} alt="Logo" className="h-12 mb-6" />
       <h2 className="text-white font-bold text-xl mb-2 text-center">Firma tu Acta de Vinculación</h2>
-      <p className="text-white/60 text-sm text-center mb-6">Dibuja tu firma con el dedo en el recuadro</p>
-      <div className="w-full max-w-sm bg-white rounded-2xl p-4">
-        <SignatureCanvas onSign={handleMobileSign} />
-        {signatureDataUrl && (
-          <div className="mt-4 p-3 rounded-xl text-center" style={{ background: 'rgba(76,175,80,0.1)', color: '#4CAF50' }}>
-            ✅ Firma capturada — puedes continuar en el PC
-          </div>
-        )}
+      <p className="text-white/60 text-sm text-center mb-6">Dibuja tu firma con el dedo en el recuadro de abajo</p>
+      <div className="w-full max-w-sm">
+        <div className="bg-white rounded-2xl p-4 mb-4">
+          <SignatureCanvas onSign={handleMobileSign} />
+        </div>
+        {signatureDataUrl
+          ? <div className="text-center">
+              <div className="p-4 rounded-2xl mb-4 font-bold" style={{ background: 'rgba(76,175,80,0.15)', color: '#4CAF50' }}>
+                ✅ Firma capturada correctamente
+              </div>
+              <p className="text-white/60 text-sm">Vuelve al computador para completar el acta y enviarla.</p>
+            </div>
+          : <p className="text-white/40 text-xs text-center">Firma en el recuadro blanco con tu dedo</p>
+        }
       </div>
     </div>
   )
