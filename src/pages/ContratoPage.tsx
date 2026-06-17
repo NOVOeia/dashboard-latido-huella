@@ -340,7 +340,7 @@ export function ContratoPage() {
         accepted_contract_at: new Date().toISOString(),
       }
       if (nombre) updates[table === 'sports_team_registrations' ? 'captain_name' : table === 'sports_team_players' ? 'name' : 'full_name'] = nombre
-      if (documento) updates[table === 'sports_team_registrations' ? 'captain_cedula' : 'cedula'] = documento
+      if (documento) updates[table === 'sports_team_registrations' ? 'captain_cedula' : table === 'registrations_5k' ? 'document_id' : 'cedula'] = documento
       if (telefono) updates[table === 'sports_team_registrations' ? 'captain_phone' : 'phone'] = telefono
       if (email) updates[table === 'sports_team_registrations' ? 'captain_email' : 'email'] = email
       if (eps) updates.eps = eps
