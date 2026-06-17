@@ -15,8 +15,106 @@ function fmtCOP(cents: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format((cents || 0) / 100)
 }
 
+// ── Canvas de firma ──────────────────────────────────────────────────────────
+function SignatureCanvas({ onSign }: { onSign: (dataUrl: string) => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const drawing = useRef(false)
+  const [signed, setSigned] = useState(false)
+  const dprRef = useRef(1)
 
-// Ajustar el tamaño del canvas para devicePixelRatio
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const dpr = window.devicePixelRatio || 1
+    dprRef.current = dpr
+    const rect = canvas.getBoundingClientRect()
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+
+    const ctx = canvas.getContext('2d')!
+    ctx.scale(dpr, dpr)
+    ctx.strokeStyle = NAVY
+    ctx.lineWidth = 2.5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+
+    const getPos = (e: MouseEvent | TouchEvent) => {
+      const r = canvas.getBoundingClientRect()
+      if ('touches' in e) {
+        return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top }
+      }
+      return { x: (e as MouseEvent).clientX - r.left, y: (e as MouseEvent).clientY - r.top }
+    }
+
+    const start = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault()
+      drawing.current = true
+      const pos = getPos(e)
+      ctx.beginPath()
+      ctx.moveTo(pos.x, pos.y)
+    }
+    const move = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault()
+      if (!drawing.current) return
+      const pos = getPos(e)
+      ctx.lineTo(pos.x, pos.y)
+      ctx.stroke()
+      setSigned(true)
+    }
+    const end = () => {
+      drawing.current = false
+      onSign(canvas.toDataURL('image/png'))
+    }
+
+    canvas.addEventListener('mousedown', start)
+    canvas.addEventListener('mousemove', move)
+    canvas.addEventListener('mouseup', end)
+    canvas.addEventListener('touchstart', start, { passive: false })
+    canvas.addEventListener('touchmove', move, { passive: false })
+    canvas.addEventListener('touchend', end)
+
+    return () => {
+      canvas.removeEventListener('mousedown', start)
+      canvas.removeEventListener('mousemove', move)
+      canvas.removeEventListener('mouseup', end)
+      canvas.removeEventListener('touchstart', start)
+      canvas.removeEventListener('touchmove', move)
+      canvas.removeEventListener('touchend', end)
+    }
+  }, [onSign])
+
+  const clear = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const dpr = dprRef.current
+    const ctx = canvas.getContext('2d')!
+    ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
+    setSigned(false)
+    onSign('')
+  }
+
+  return (
+    <div>
+      <div className="relative border-2 rounded-xl overflow-hidden bg-white"
+        style={{ borderColor: signed ? CYAN : '#ddd', height: 160 }}>
+        <canvas ref={canvasRef}
+          className="w-full h-full touch-none cursor-crosshair"
+          style={{ display: 'block' }} />
+        {!signed && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <p style={{ color: '#ccc', fontSize: 14 }}>✍️ Dibuja tu firma aquí</p>
+          </div>
+        )}
+      </div>
+      <button onClick={clear}
+        className="mt-2 text-xs px-3 py-1 rounded-lg border hover:bg-gray-50"
+        style={{ color: '#666', borderColor: '#ddd' }}>
+        Limpiar firma
+      </button>
+    </div>
+  )
+}
 
 // ── Uploader de documento ────────────────────────────────────────────────────
 function DocUploader({ label, field, recordId, existingUrl, onUploaded }:
