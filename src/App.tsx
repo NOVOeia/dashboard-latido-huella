@@ -20,28 +20,16 @@ export function App() {
   return (
     <Routes>
       <Route path="/admin" element={<Dashboard />} />
+      <Route path="/admin/*" element={<Dashboard />} />
       <Route path="/contrato/:token" element={<ContratoPage />} />
-      <Route path="*" element={
-        <div className="min-h-screen bg-white overflow-x-hidden">
-          <Navbar />
-          <main>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/caminata-5k" element={<Caminata5KPage />} />
-              <Route path="/deportes" element={<DeportesPage />} />
-              <Route path="/expositores" element={<ExpositoresPage />} />
-              <Route path="/patrocinadores" element={<PatrocinadoresPage />} />
-              <Route path="/gracias" element={<GraciasPage />} />
-              <Route path="/subir-documento" element={<SubirDocumentoPage />} />
-              <Route path="/terminos" element={<TerminosPage />} />
-            </Routes>
-          </main>
-          <Footer />
-          <WhatsAppButton />
-          <NovoeiaModal />
-          <DiverxoModal />
-        </div>
-      } />
+      <Route path="/" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><HomePage /></main><Footer /><WhatsAppButton /><NovoeiaModal /><DiverxoModal /></div>} />
+      <Route path="/caminata-5k" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><Caminata5KPage /></main><Footer /><WhatsAppButton /></div>} />
+      <Route path="/deportes" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><DeportesPage /></main><Footer /><WhatsAppButton /></div>} />
+      <Route path="/expositores" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><ExpositoresPage /></main><Footer /><WhatsAppButton /></div>} />
+      <Route path="/patrocinadores" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><PatrocinadoresPage /></main><Footer /><WhatsAppButton /></div>} />
+      <Route path="/gracias" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><GraciasPage /></main><Footer /><WhatsAppButton /></div>} />
+      <Route path="/subir-documento" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><SubirDocumentoPage /></main><Footer /><WhatsAppButton /></div>} />
+      <Route path="/terminos" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><TerminosPage /></main><Footer /><WhatsAppButton /></div>} />
     </Routes>
   );
 }
