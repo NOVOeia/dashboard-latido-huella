@@ -157,6 +157,8 @@ export function ContratoPage() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
+  const [editing, setEditing] = useState(false)
+  const [mobileConfirmed, setMobileConfirmed] = useState(false)
 
   const [nombre, setNombre] = useState('')
   const [documento, setDocumento] = useState('')
@@ -339,10 +341,37 @@ export function ContratoPage() {
       <h2 className="text-white font-bold text-xl mb-2 text-center">Firma tu documento</h2>
       <p className="text-white/60 text-sm text-center mb-6">Dibuja tu firma con el dedo en el recuadro</p>
       <div className="w-full max-w-sm">
-        <div className="bg-white rounded-2xl p-4 mb-4"><SignatureCanvas onSign={handleMobileSign} /></div>
-        {signatureDataUrl
-          ? <div className="p-4 rounded-2xl text-center font-bold" style={{ background: 'rgba(76,175,80,0.15)', color: '#4CAF50' }}>✅ Firma capturada — vuelve al computador para completar</div>
-          : <p className="text-white/40 text-xs text-center">Firma en el recuadro blanco con tu dedo</p>}
+        <div className="bg-white rounded-2xl p-4 mb-4">
+          <SignatureCanvas onSign={url => { setSignatureDataUrl(url) }} />
+          {signatureDataUrl && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-500 mb-1">Vista previa de tu firma:</p>
+              <img src={signatureDataUrl} alt="Firma" className="w-full border rounded-xl" style={{ maxHeight: 80, objectFit: 'contain', background: '#f9f9f9' }} />
+            </div>
+          )}
+        </div>
+        {!mobileConfirmed
+          ? <>
+              {signatureDataUrl && (
+                <button onClick={async () => {
+                  const blob = await fetch(signatureDataUrl).then(r => r.blob())
+                  const path = `signatures/mobile_${record?.id}_${Date.now()}.png`
+                  const { data } = await supabase.storage.from('expositor-documents').upload(path, blob, { contentType: 'image/png', upsert: true })
+                  if (data) {
+                    const { data: u } = supabase.storage.from('expositor-documents').getPublicUrl(path)
+                    await supabase.from(table).update({ mobile_signature_url: u.publicUrl }).eq('id', record.id)
+                    setMobileConfirmed(true)
+                  }
+                }} className="w-full py-3 rounded-2xl font-bold text-white mb-3" style={{ background: 'linear-gradient(135deg,#4CAF50,#388E3C)' }}>
+                  ✅ Confirmar mi firma
+                </button>
+              )}
+              <p className="text-white/40 text-xs text-center">Dibuja tu firma y presiona Confirmar</p>
+            </>
+          : <div className="p-4 rounded-2xl text-center font-bold" style={{ background: 'rgba(76,175,80,0.15)', color: '#4CAF50' }}>
+              ✅ Firma confirmada — vuelve al computador para completar el documento
+            </div>
+        }
       </div>
     </div>
   )
@@ -371,7 +400,7 @@ export function ContratoPage() {
     : isJugador ? 'DESCARGO INDIVIDUAL DE RESPONSABILIDAD'
     : isSponsor ? 'CONTRATO DE PATROCINIO'
     : isFoodTruck ? 'ACTA DE VINCULACIÓN COMERCIAL — FOOD TRUCK'
-    : isToldo ? 'ACTA DE VINCULACIÓN COMERCIAL — TOLDO GASTRONÓMICO'
+    : isToldo ? 'ACTA DE VINCULACIÓN COMERCIAL — TOLDOS'
     : 'ACTA DE VINCULACIÓN COMERCIAL — EXPOSITOR'
 
   const subtitulo = isCapitan ? `${record?.sport?.toUpperCase()} — ${record?.category === 'ninos' ? 'Categoría Infantil' : 'Categoría Adultos'}`
@@ -393,28 +422,56 @@ export function ContratoPage() {
           ⚠️ <strong>Todos los campos marcados con * son obligatorios.</strong> Todos los checkmarks deben ser marcados para poder firmar el documento. Por favor verifica que tus datos estén correctos antes de firmar.
         </div>
 
-        {/* DATOS EDITABLES */}
+        {/* DATOS */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h2 className="font-bold text-lg mb-1" style={{ color: NAVY }}>Verifica y completa tus datos</h2>
-          <p className="text-xs text-gray-400 mb-4">Corrige si es necesario antes de firmar. Los campos marcados con * son obligatorios.</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Nombre completo" value={nombre} set={setNombre} colSpan required />
-            {isComercial && <Field label="Empresa / Marca" value={empresa} set={setEmpresa} colSpan required />}
-            {isComercial && <Field label="Razón social" value={razonSocial} set={setRazonSocial} colSpan />}
-            {isSponsor && <Field label="Empresa / Razón social" value={empresa} set={setEmpresa} colSpan required />}
-            <Field label="Documento de identidad (CC / NIT / TI)" value={documento} set={setDocumento} required />
-            <Field label="Teléfono / WhatsApp" value={telefono} set={setTelefono} required />
-            <Field label="Correo electrónico" value={email} set={setEmail} type="email" colSpan required />
-            {(isCaminata || isJugador) && <Field label="EPS o Medicina Prepagada" value={eps} set={setEps} colSpan />}
-            {isJugador && <>
-              <Field label="Nombre contacto de emergencia" value={emergName} set={setEmergName} required />
-              <Field label="Teléfono contacto de emergencia" value={emergPhone} set={setEmergPhone} required />
-            </>}
-            {isComercial && <>
-              <Field label="Dirección" value={address} set={setAddress} colSpan required />
-              <Field label="Ciudad" value={city} set={setCity} required />
-            </>}
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-bold text-lg" style={{ color: NAVY }}>Tus datos de registro</h2>
+            <button onClick={() => setEditing(!editing)}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold border transition-all"
+              style={{ color: editing ? '#f87171' : CYAN, borderColor: editing ? '#f87171' : CYAN, background: editing ? 'rgba(248,113,113,0.1)' : 'rgba(0,188,212,0.1)' }}>
+              {editing ? '🔒 Bloquear edición' : '✏️ Editar mis datos'}
+            </button>
           </div>
+          <p className="text-xs mb-4" style={{ color: editing ? '#f87171' : '#999' }}>
+            {editing ? '⚠️ Estás editando tus datos. Asegúrate de que sean correctos antes de firmar.' : '✅ Tus datos están correctos. Activa la edición solo si necesitas corregir algo.'}
+          </p>
+          {!editing
+            ? <div className="grid grid-cols-2 gap-3">
+                {[
+                  ['Nombre completo', nombre],
+                  ...(isComercial ? [['Empresa / Marca', empresa], ['Razón social', razonSocial]] : []),
+                  ...(isSponsor ? [['Empresa', empresa]] : []),
+                  ['Documento de identidad', documento],
+                  ['Teléfono / WhatsApp', telefono],
+                  ['Correo electrónico', email],
+                  ...(isJugador ? [['Contacto emergencia', emergName], ['Tel. emergencia', emergPhone]] : []),
+                  ...(isComercial ? [['Dirección', address], ['Ciudad', city]] : []),
+                ].map(([label, val]) => (
+                  <div key={label} className={label === 'Correo electrónico' || label === 'Empresa / Marca' || label === 'Razón social' ? 'col-span-2' : ''}>
+                    <div className="text-xs font-bold text-gray-400 mb-0.5">{label}</div>
+                    <div className="text-sm font-medium text-gray-800 bg-gray-50 rounded-xl px-3 py-2">{val || '—'}</div>
+                  </div>
+                ))}
+              </div>
+            : <div className="grid grid-cols-2 gap-3">
+                <Field label="Nombre completo *" value={nombre} set={setNombre} colSpan required />
+                {isComercial && <Field label="Empresa / Marca *" value={empresa} set={setEmpresa} colSpan required />}
+                {isComercial && <Field label="Razón social" value={razonSocial} set={setRazonSocial} colSpan />}
+                {isSponsor && <Field label="Empresa / Razón social *" value={empresa} set={setEmpresa} colSpan required />}
+                <Field label="Documento de identidad *" value={documento} set={setDocumento} required />
+                <Field label="Teléfono / WhatsApp *" value={telefono} set={setTelefono} required />
+                <Field label="Correo electrónico *" value={email} set={setEmail} type="email" colSpan required />
+                {(isCaminata || isJugador) && <Field label="EPS o Medicina Prepagada" value={eps} set={setEps} colSpan />}
+                {isJugador && <>
+                  <Field label="Nombre contacto de emergencia *" value={emergName} set={setEmergName} required />
+                  <Field label="Teléfono contacto de emergencia *" value={emergPhone} set={setEmergPhone} required />
+                </>}
+                {isComercial && <>
+                  <Field label="Dirección *" value={address} set={setAddress} colSpan required />
+                  <Field label="Ciudad *" value={city} set={setCity} required />
+                </>}
+              </div>
+          }
         </div>
 
         {/* DOCUMENTOS */}
@@ -518,19 +575,20 @@ export function ContratoPage() {
               <p className="font-bold" style={{ color: NAVY }}>1. DATOS DEL MENOR DE EDAD</p>
               <DatosTable datos={[
                 ['Nombre completo del menor', record?.full_name || ''],
-                ['Documento de identidad', record?.document_id || record?.ti || ''],
+                ['Tarjeta de Identidad (TI)', record?.ti || record?.document_id || ''],
                 ['Fecha de nacimiento', record?.birthdate || ''],
-                ['Actividad', parentRecord?.ticket_type || 'Caminata 6.5K'],
+                ['Actividad en la que participa', parentRecord?.ticket_type === 'pet_lover' ? '☑ Caminata 6.5K' : parentRecord?.ticket_type === 'deportista' ? '☑ Deporte' : '☑ Caminata 6.5K'],
+                ['EPS o seguro médico', eps || ''],
               ]} />
               <p className="font-bold" style={{ color: NAVY }}>2. DATOS DEL PADRE / MADRE O ACUDIENTE LEGAL</p>
               <DatosTable datos={[
-                ['Nombre completo', nombre],
-                ['Cédula de ciudadanía', documento],
-                ['Celular', telefono],
-                ['Email', email],
+                ['Nombre completo', parentRecord?.full_name || nombre],
+                ['Cédula de ciudadanía', parentRecord?.document_id || documento],
+                ['Celular', parentRecord?.phone || telefono],
+                ['Email', parentRecord?.email || email],
               ]} />
               <p className="font-bold" style={{ color: NAVY }}>4. DECLARACIÓN Y AUTORIZACIÓN</p>
-              <p>Yo, <strong>{nombre}</strong>, identificado(a) con cédula No. <strong>{documento}</strong>, en mi calidad de padre/madre/acudiente legal del menor mencionado, AUTORIZO expresamente su participación en el evento LATIDO Y HUELLA 2026 y DECLARO:</p>
+              <p>Yo, <strong>{parentRecord?.full_name || nombre}</strong>, identificado(a) con cédula No. <strong>{parentRecord?.document_id || documento}</strong>, en mi calidad de padre/madre/acudiente legal del menor <strong>{record?.full_name}</strong>, AUTORIZO expresamente su participación en el evento LATIDO Y HUELLA 2026 y DECLARO:</p>
               {[
                 ['autorizacion', 'AUTORIZACIÓN DE PARTICIPACIÓN: Autorizo la participación del menor bajo mi responsabilidad legal en la actividad seleccionada del evento.'],
                 ['saludMenor', 'ESTADO DE SALUD: Declaro que el menor se encuentra en buenas condiciones de salud y apto para realizar actividad física. No presenta ninguna condición médica que le impida participar.'],
@@ -747,7 +805,7 @@ export function ContratoPage() {
             {isToldo && <>
               <DocHeader titulo="ACTA DE VINCULACIÓN COMERCIAL — TOLDO GASTRONÓMICO" subtitulo="Zona Toldos — Feria Comercial, Familiar y Pet Friendly" />
               <p>Señores LATIDO y HUELLA 2026 — Medellín</p>
-              <p className="font-bold mt-2">Asunto: Vinculación Comercial — Toldo Gastronómico LATIDO y HUELLA 2026</p>
+              <p className="font-bold mt-2">Asunto: Vinculación Comercial — Toldos LATIDO y HUELLA 2026</p>
               <p className="font-bold mt-3" style={{ color: NAVY }}>1. INFORMACIÓN GENERAL</p>
               <p>Por medio del presente documento, <strong>{nombre}</strong>, identificado(a) con CC / NIT No. <strong>{documento}</strong>, actuando en nombre propio o en representación de la empresa / marca <strong>{empresa}</strong>, manifiesta su aceptación de vinculación como TOLDO GASTRONÓMICO en LATIDO y HUELLA 2026.</p>
               <DatosTable datos={[
@@ -802,7 +860,12 @@ export function ContratoPage() {
             <div>
               <label className="text-sm font-bold text-gray-600 mb-2 block">O firma desde tu celular</label>
               <QRCode url={mobileUrl} />
-              {signatureDataUrl && <div className="mt-2 p-2 rounded-xl text-xs text-center font-bold" style={{ background: 'rgba(76,175,80,0.1)', color: '#4CAF50' }}>✅ Firma recibida</div>}
+              {signatureDataUrl && (
+                <div className="mt-2">
+                  <div className="p-2 rounded-xl text-xs text-center font-bold mb-2" style={{ background: 'rgba(76,175,80,0.1)', color: '#4CAF50' }}>✅ Firma recibida desde móvil</div>
+                  <img src={signatureDataUrl} alt="Firma móvil" className="w-full border-2 rounded-xl" style={{ maxHeight: 80, objectFit: 'contain', background: 'white', borderColor: CYAN }} />
+                </div>
+              )}
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-4">Firma digital con validez legal conforme a la Ley 527 de 1999 de Colombia. Al firmar confirma que ha leído y acepta todos los términos del presente documento.</p>
