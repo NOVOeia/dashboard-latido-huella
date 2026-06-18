@@ -304,6 +304,8 @@ export function ContratoPage() {
         contract_signed_at: new Date().toISOString(),
         contract_signature_url: sigUrl.publicUrl,
         accepted_contract_at: new Date().toISOString(),
+        contract_checks: checks,
+        signature_name: signatureName,
       }
       if (nombre) updates[table === 'sports_team_registrations' ? 'captain_name' : table === 'sports_team_players' ? 'name' : 'full_name'] = nombre
       if (documento) updates[table === 'sports_team_registrations' ? 'captain_cedula' : table === 'registrations_5k' ? 'document_id' : 'cedula'] = documento
