@@ -332,6 +332,66 @@ export function ContratoPage() {
         const staffToSave = staffToldo.filter(s => s.full_name.trim())
         if (staffToSave.length > 0) await supabase.from('stand_staff').insert(staffToSave.map(s => ({ ...s, expositor_id: record.id })))
       }
+
+      // Generar PDF y enviar emails
+      try {
+        const pdfRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-contract-pdf`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contract_token: token })
+        })
+        const pdfData = await pdfRes.json()
+        const pdfUrl = pdfData.pdf_url || ''
+        const recipientEmail = email || record.email || record.captain_email || ''
+        const recipientName = nombre || ''
+
+        const tipoDoc = isCaminata ? 'Términos y Condiciones — Caminata 6.5K'
+          : isMinor ? 'Autorización Menor de Edad'
+          : isCapitan ? 'Inscripción de Equipo Deportivo'
+          : isJugador ? 'Descargo Individual de Responsabilidad'
+          : isSponsor ? 'Contrato de Patrocinio'
+          : isFoodTruck ? 'Acta de Vinculación — Food Truck'
+          : isToldo ? 'Acta de Vinculación — Toldos'
+          : 'Acta de Vinculación Comercial'
+
+        const emailHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden">
+          <div style="padding:32px;text-align:center">
+            <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px" alt="Latido y Huella"/>
+          </div>
+          <div style="background:white;padding:32px;border-radius:0 0 16px 16px">
+            <h1 style="color:#0D1B6E">¡Documento firmado! ✅</h1>
+            <p>Hola <strong>${recipientName}</strong>,</p>
+            <p>Tu <strong>${tipoDoc}</strong> ha sido firmado exitosamente para el evento Latido y Huella 2026.</p>
+            <div style="background:#f0fdf4;border-radius:12px;padding:16px;margin:16px 0;border:1px solid #4CAF50">
+              <p style="color:#4CAF50;font-weight:bold;margin:0">✅ Documento firmado el ${new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
+            ${pdfUrl ? `<div style="text-align:center;margin:24px 0">
+              <a href="${pdfUrl}" style="background:linear-gradient(135deg,#0D1B6E,#00BCD4);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">📄 Descargar documento firmado</a>
+            </div>` : ''}
+            <p style="color:#666;font-size:12px">Latido y Huella 2026 · Organizado por Diverxo S.A.S · eventos@latidoyhuella.co</p>
+          </div>
+        </div>`
+
+        // Email al usuario
+        if (recipientEmail) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: recipientEmail, subject: `✅ Documento firmado — ${tipoDoc}`, html: emailHtml, from: 'eventos@latidoyhuella.co', type: 'contrato' })
+          })
+        }
+
+        // Email a eventos@latidoyhuella.co
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: 'eventos@latidoyhuella.co', subject: `📋 Nuevo contrato firmado — ${recipientName} (${tipoDoc})`, html: emailHtml, from: 'noresponder@latidoyhuella.co', type: 'contrato' })
+        })
+      } catch (emailErr) {
+        console.error('Error sending post-signature email:', emailErr)
+        // No bloqueamos el flujo si el email falla
+      }
+
       setDone(true)
     } catch (err) { console.error(err); alert('Error al enviar. Por favor intenta de nuevo.') }
     setSubmitting(false)
