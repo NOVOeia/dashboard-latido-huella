@@ -316,7 +316,8 @@ export function ContratoPage() {
       if (city) updates.city = city
       if (emergName) updates.emergency_contact_name = emergName
       if (emergPhone) updates.emergency_contact_phone = emergPhone
-      if (empresa) updates[table === 'sponsor_inquiries' ? 'company_name' : 'brand_name'] = empresa
+      if (empresa && ['expositor_reservations','toldos_reservations'].includes(table)) updates.brand_name = empresa
+      if (empresa && table === 'sponsor_inquiries') updates.company_name = empresa
       if (cedulaUrl) updates.cedula_url = cedulaUrl
       if (rutUrl) updates.rut_url = rutUrl
       if (camaraUrl) updates.camara_comercio_url = camaraUrl
