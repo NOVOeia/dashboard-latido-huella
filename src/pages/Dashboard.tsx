@@ -1131,7 +1131,7 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
         // Guardar log
         await supabase.from('email_logs').insert({
           template_id:template.id,template_name:template.name,
-          to_email:to,to_name:toName,category:template.category,subject
+          to_email:to,to_name:toName,category:template.category,subject,body_html:html
         })
         return 'sent'
       }
@@ -1189,7 +1189,12 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
   const EMAIL_HEADER=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px 16px 0 0;padding:24px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:50px" alt="Latido y Huella"/></div><div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:white;padding:32px">`
   const EMAIL_FOOTER=`</div><div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:0 0 16px 16px;padding:16px;text-align:center"><p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0">Latido y Huella · 26 Jul 2026 · Llanogrande, Antioquia</p></div>`
 
-  const buildFullHtml=(body:string)=>`${EMAIL_HEADER}${body}${EMAIL_FOOTER}`
+  const buildFullHtml=(body:string)=>{
+    // Si el HTML ya tiene su propio header con el logo, no agregar otro
+    const alreadyHasHeader = body.includes('6a0b45bdc474827cc4087698') || body.includes('background:#0D1B6E')
+    if(alreadyHasHeader) return body
+    return `${EMAIL_HEADER}${body}${EMAIL_FOOTER}`
+  }
 
   const handleQuickSend=async()=>{
     if(!quickEmail||!quickSubject) return
@@ -1205,7 +1210,7 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
         const tpl=templates.find(t=>t.id===quickTemplate)
         await supabase.from('email_logs').insert({
           template_id:tpl?.id||null,template_name:tpl?.name||'Email manual',
-          to_email:quickEmail,to_name:quickEmail,category:'general',subject:quickSubject
+          to_email:quickEmail,to_name:quickEmail,category:'general',subject:quickSubject,body_html:fullHtml
         })
         setQuickResult({ok:true,msg:'✅ Email enviado'})
         loadAll()
@@ -1216,6 +1221,8 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
     } catch { setQuickResult({ok:false,msg:'⚠️ Error de conexión'}) }
     setQuickSending(false)
   }
+
+  const [previewLog,setPreviewLog]=useState<any|null>(null)
 
   // ── Editor ────────────────────────────────────────────────────────────────
   if(editingTpl) return (
