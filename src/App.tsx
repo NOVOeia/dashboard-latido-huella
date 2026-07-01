@@ -15,6 +15,7 @@ import { NovoeiaModal } from './components/NovoeiaModal';
 import { DiverxoModal } from './components/DiverxoModal';
 import { Dashboard } from './pages/Dashboard';
 import { ContratoPage } from './pages/ContratoPage';
+import { ECardPage } from './pages/ECardPage';
 
 export function App() {
   return (
@@ -22,6 +23,7 @@ export function App() {
       <Route path="/admin" element={<Dashboard />} />
       <Route path="/admin/*" element={<Dashboard />} />
       <Route path="/contrato/:token" element={<ContratoPage />} />
+      <Route path="/ecard/:id" element={<ECardPage />} />
       <Route path="/" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><HomePage /></main><Footer /><WhatsAppButton /><NovoeiaModal /><DiverxoModal /></div>} />
       <Route path="/caminata-5k" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><Caminata5KPage /></main><Footer /><WhatsAppButton /></div>} />
       <Route path="/deportes" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><DeportesPage /></main><Footer /><WhatsAppButton /></div>} />
