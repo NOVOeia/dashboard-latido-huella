@@ -323,8 +323,6 @@ export function ContratoPage() {
       if (camaraUrl && ['expositor_reservations','toldos_reservations'].includes(table)) updates.camara_comercio_url = camaraUrl
       if (docUrl) updates.cedula_url = docUrl
 
-      console.log('TABLE:', table)
-      console.log('UPDATES:', JSON.stringify(updates))
       await supabase.from(table).update(updates).eq('id', record.id)
 
       if (isComercial && !isToldo) {
