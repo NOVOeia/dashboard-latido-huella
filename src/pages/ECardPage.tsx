@@ -257,7 +257,7 @@ export function ECardPage() {
             <div style={{ background: isSigned ? 'rgba(76,175,80,0.1)' : 'rgba(255,179,0,0.1)', border: `1px solid ${isSigned ? GREEN : YELLOW}`, borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 18 }}>{isSigned ? '✍️' : '⏳'}</span>
               <div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Contrato</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Consentimiento</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: isSigned ? GREEN : YELLOW }}>{isSigned ? 'Firmado' : 'Pendiente de firma'}</div>
               </div>
             </div>
