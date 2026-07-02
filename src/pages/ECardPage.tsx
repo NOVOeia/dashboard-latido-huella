@@ -262,6 +262,34 @@ export function ECardPage() {
             </div>
           </div>
 
+          {/* Participación — íconos */}
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 12px' }}>Participación en el evento</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+              {[
+                { id: '5k', icon: '🐾', label: '5K', active: isCaminata },
+                { id: 'mascota', icon: '🐶', label: 'Mascota', active: isCaminata && pets.length > 0 },
+                { id: 'stand', icon: '🏪', label: 'Stand', active: isExpositor && record.category !== 'foodtruck' && table !== 'toldos_reservations' },
+                { id: 'toldo', icon: '⛺', label: 'Toldo', active: table === 'toldos_reservations' },
+                { id: 'sponsor', icon: '⭐', label: 'Patroc.', active: isSponsor },
+                { id: 'deporte', icon: '⚽', label: 'Deporte', active: isDeporte },
+              ].map(s => (
+                <div key={s.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, opacity: s.active ? 1 : 0.25 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: '50%',
+                    background: s.active ? 'rgba(0,188,212,0.18)' : 'rgba(255,255,255,0.04)',
+                    border: `2px solid ${s.active ? CYAN : 'rgba(255,255,255,0.1)'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: s.active ? '0 0 16px rgba(0,188,212,0.3)' : 'none',
+                  }}>
+                    <span style={{ fontSize: 22, filter: s.active ? 'none' : 'grayscale(1)' }}>{s.icon}</span>
+                  </div>
+                  <span style={{ fontSize: 9, color: s.active ? CYAN : 'rgba(255,255,255,0.4)', fontWeight: s.active ? 600 : 400 }}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* QR */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20 }}>
             <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 12, border: '1px solid rgba(0,188,212,0.2)' }}>
