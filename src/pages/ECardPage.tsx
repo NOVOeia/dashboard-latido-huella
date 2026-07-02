@@ -120,6 +120,7 @@ export function ECardPage() {
   const heroBg = petPhoto || record.photo_url || HERO_URL
   const avatarPhoto = record.photo_url || null
 
+  const ICON_URL = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/expositor-documents/assets/icono_blanco_latido.png'
   const qrData = encodeURIComponent(JSON.stringify({
     id: eCardNum,
     nombre,
@@ -127,7 +128,7 @@ export function ECardPage() {
     evento: 'Latido y Huella 2026',
     registroId: id,
   }))
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}&bgcolor=0D1B6E&color=00BCD4&qzone=1`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}&bgcolor=0D1B6E&color=00BCD4&qzone=1&format=png`
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: '#0a0f2c' }}>
@@ -290,12 +291,29 @@ export function ECardPage() {
             </div>
           </div>
 
-          {/* QR */}
+          {/* Título eCard */}
+          <div style={{ background: 'rgba(0,188,212,0.1)', border: '1px solid rgba(0,188,212,0.3)', borderRadius: 12, padding: '10px 16px', marginBottom: 20 }}>
+            <p style={{ fontSize: 11, color: CYAN, fontWeight: 700, margin: 0, letterSpacing: '0.05em' }}>🎫 E-CARD DE INGRESO AL EVENTO</p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>Latido y Huella 2026 · Llanogrande</p>
+          </div>
+
+          {/* QR con icono en el centro */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20 }}>
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 12, border: '1px solid rgba(0,188,212,0.2)' }}>
-              <img src={qrUrl} style={{ width: 160, height: 160, display: 'block' }} alt="QR ticket" crossOrigin="anonymous" />
+            <div style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 12, border: '1px solid rgba(0,188,212,0.2)' }}>
+              <img src={qrUrl} style={{ width: 160, height: 160, display: 'block', borderRadius: 8 }} alt="QR ticket" crossOrigin="anonymous" />
+              {/* Icono en el centro */}
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 38, height: 38, borderRadius: '50%',
+                background: NAVY, border: `2px solid ${CYAN}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 4,
+              }}>
+                <img src={ICON_URL} style={{ width: 26, height: 26, objectFit: 'contain' }} alt="icon" crossOrigin="anonymous" />
+              </div>
             </div>
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>Presenta este QR en la entrada</p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>Presenta este QR en la entrada del evento</p>
           </div>
 
           {/* Fecha y lugar */}
