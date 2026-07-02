@@ -355,21 +355,112 @@ export function ContratoPage() {
           : isToldo ? 'Acta de Vinculación — Toldos'
           : 'Acta de Vinculación Comercial'
 
-        const emailHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden">
-          <div style="padding:32px;text-align:center">
-            <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px" alt="Latido y Huella"/>
-          </div>
-          <div style="background:white;padding:32px;border-radius:0 0 16px 16px">
-            <h1 style="color:#0D1B6E">¡Documento firmado! ✅</h1>
-            <p>Hola <strong>${recipientName}</strong>,</p>
-            <p>Tu <strong>${tipoDoc}</strong> ha sido firmado exitosamente para el evento Latido y Huella 2026.</p>
-            <div style="background:#f0fdf4;border-radius:12px;padding:16px;margin:16px 0;border:1px solid #4CAF50">
-              <p style="color:#4CAF50;font-weight:bold;margin:0">✅ Documento firmado el ${new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        const ecardUrl = `https://admin-latidoyhuella.netlify.app/ecard/${record.id}`
+        const emailHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f5f5f5">
+          
+          <!-- Header -->
+          <div style="background:#0D1B6E;padding:40px 32px;text-align:center;border-radius:16px 16px 0 0">
+            <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:65px;margin-bottom:16px" alt="Latido y Huella"/>
+            <div style="background:rgba(76,175,80,0.2);border:1px solid #4CAF50;border-radius:30px;display:inline-block;padding:8px 20px;margin-bottom:16px">
+              <span style="color:#4CAF50;font-weight:700;font-size:14px">✅ ¡Todo listo! Ya eres parte del evento</span>
             </div>
-            ${pdfUrl ? `<div style="text-align:center;margin:24px 0">
-              <a href="${pdfUrl}" style="background:linear-gradient(135deg,#0D1B6E,#00BCD4);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">📄 Descargar documento firmado</a>
+            <h1 style="color:white;font-size:28px;margin:0;font-weight:800;line-height:1.2">¡Tu registro está<br/>100% completo! 🎉</h1>
+          </div>
+
+          <!-- Body -->
+          <div style="background:white;padding:36px 32px">
+            
+            <p style="color:#333;font-size:16px;line-height:1.6;margin:0 0 20px">Hola <strong>${recipientName}</strong>,</p>
+            
+            <p style="color:#555;font-size:15px;line-height:1.7;margin:0 0 24px">
+              Tu <strong>${tipoDoc}</strong> ha sido firmado exitosamente. 
+              Ya eres parte oficial de <strong>Latido y Huella 2026</strong>, 
+              la feria más especial del año para los amantes de las mascotas y el deporte. 
+              ¡Nos emociona tenerte con nosotros! 🐾❤️
+            </p>
+
+            <!-- Evento info -->
+            <div style="background:linear-gradient(135deg,#0D1B6E,#1a2d8a);border-radius:16px;padding:24px;margin:24px 0;color:white">
+              <h2 style="margin:0 0 16px;font-size:18px;color:#00BCD4">📅 Información del evento</h2>
+              <table style="width:100%;border-collapse:collapse">
+                <tr>
+                  <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1)">
+                    <span style="color:rgba(255,255,255,0.6);font-size:12px">📅 FECHA</span><br/>
+                    <strong style="color:white;font-size:15px">Domingo 26 de julio de 2026</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.1)">
+                    <span style="color:rgba(255,255,255,0.6);font-size:12px">⏰ HORA</span><br/>
+                    <strong style="color:white;font-size:15px">7:00 AM — 5:00 PM</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0">
+                    <span style="color:rgba(255,255,255,0.6);font-size:12px">📍 LUGAR</span><br/>
+                    <strong style="color:white;font-size:15px">Parque del Bienestar COMFAMA Llanogrande</strong><br/>
+                    <span style="color:rgba(255,255,255,0.6);font-size:13px">Km 8.5, Milla de Oro Llanogrande, Antioquia</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Mensaje motivador -->
+            <div style="background:#f0f4ff;border-left:4px solid #00BCD4;border-radius:0 12px 12px 0;padding:20px;margin:24px 0">
+              <p style="color:#0D1B6E;font-size:15px;font-weight:700;margin:0 0 8px">🌟 ¡Comparte este momento!</p>
+              <p style="color:#444;font-size:14px;line-height:1.6;margin:0">
+                Invita a tus amigos y familia a ser parte de este gran evento. 
+                Cuantos más seamos, más especial será la experiencia. 
+                Juntos haremos de Latido y Huella 2026 un día inolvidable. ¡Nos vemos el 26!
+              </p>
+            </div>
+
+            <!-- E-Card -->
+            <div style="background:#f8f9ff;border:2px dashed #00BCD4;border-radius:16px;padding:24px;margin:24px 0;text-align:center">
+              <div style="font-size:32px;margin-bottom:8px">🎫</div>
+              <h3 style="color:#0D1B6E;margin:0 0 8px;font-size:18px">Tu E-Card de ingreso está lista</h3>
+              <p style="color:#666;font-size:13px;margin:0 0 20px;line-height:1.6">
+                Adjunto encontrarás tu ticket digital de ingreso.<br/>
+                <strong>Descárgalo y guárdalo en tu celular</strong> — lo necesitarás para ingresar al evento.<br/>
+                El staff escaneará tu QR en la entrada.
+              </p>
+              <a href="${ecardUrl}" style="background:linear-gradient(135deg,#0D1B6E,#00BCD4);color:white;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:800;display:inline-block;font-size:15px">
+                🎫 Ver y descargar mi E-Card
+              </a>
+            </div>
+
+            ${pdfUrl ? `<!-- PDF -->
+            <div style="text-align:center;margin:16px 0">
+              <a href="${pdfUrl}" style="color:#0D1B6E;font-size:13px;text-decoration:underline">📄 Ver documento firmado (PDF)</a>
             </div>` : ''}
-            <p style="color:#666;font-size:12px">Latido y Huella 2026 · Organizado por Diverxo S.A.S · eventos@latidoyhuella.co</p>
+
+            <!-- Tips -->
+            <div style="background:#fff8e1;border-radius:12px;padding:20px;margin:24px 0">
+              <h3 style="color:#F57F17;margin:0 0 12px;font-size:15px">💡 Recuerda el día del evento</h3>
+              <ul style="color:#555;font-size:13px;line-height:2;margin:0;padding-left:20px">
+                <li>Llega con tiempo — el acceso abre a las 7:00 AM</li>
+                <li>Presenta tu E-Card (QR) en la entrada</li>
+                <li>Lleva documento de identidad</li>
+                <li>Si traes mascota: correa, agua y carnet de vacunas</li>
+                <li>¡Usa ropa cómoda y mucha energía! 🎉</li>
+              </ul>
+            </div>
+
+            <p style="color:#555;font-size:14px;line-height:1.7;margin:24px 0 0;text-align:center">
+              ¿Tienes preguntas? Escríbenos a<br/>
+              <a href="mailto:eventos@latidoyhuella.co" style="color:#00BCD4;font-weight:700">eventos@latidoyhuella.co</a><br/>
+              o por WhatsApp al <strong>+57 333 277 7912</strong>
+            </p>
+          </div>
+
+          <!-- Footer -->
+          <div style="background:#0D1B6E;padding:24px 32px;text-align:center;border-radius:0 0 16px 16px">
+            <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:40px;margin-bottom:12px" alt="Latido y Huella"/>
+            <p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0;line-height:1.8">
+              Latido y Huella 2026 · Organizado por Diverxo S.A.S<br/>
+              eventos@latidoyhuella.co · www.latidoyhuella.com<br/>
+              WhatsApp: +57 333 277 7912
+            </p>
           </div>
         </div>`
 
