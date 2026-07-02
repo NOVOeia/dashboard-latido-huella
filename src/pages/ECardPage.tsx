@@ -326,7 +326,11 @@ export function ECardPage() {
             <div style={{ width: 1, background: 'rgba(255,255,255,0.1)' }} />
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>📍 Lugar</div>
-              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>Parque del Bienestar COMFAMA Llanogrande</div>
+              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, whiteSpace: 'pre-line' }}>
+                Parque del Bienestar
+                <br/>
+                COMFAMA Llanogrande
+              </div>
             </div>
           </div>
 
