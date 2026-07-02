@@ -115,7 +115,10 @@ export function ECardPage() {
   const isPaid = record.status === 'paid' || record.status === 'approved'
   const isSigned = !!record.contract_signed_at || !!record.accepted_contract_at
   const petPhoto = pets.find(p => p.photo_url)?.photo_url || null
-  const heroBg = record.photo_url || petPhoto || HERO_URL
+  // Adulto: hero=foto mascota, avatar=foto adulto
+  // Mascota: hero=foto adulto, avatar=foto mascota
+  const heroBg = petPhoto || record.photo_url || HERO_URL
+  const avatarPhoto = record.photo_url || null
 
   const qrData = encodeURIComponent(JSON.stringify({
     id: eCardNum,
@@ -160,8 +163,8 @@ export function ECardPage() {
           {/* Avatar */}
           <div style={{ position: 'absolute', bottom: -50, left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
             <div style={{ width: 100, height: 100, borderRadius: '50%', border: `4px solid ${CYAN}`, background: NAVY, overflow: 'hidden', boxShadow: `0 0 0 5px rgba(0,188,212,0.12)` }}>
-              {record.photo_url
-                ? <img src={record.photo_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={nombre} crossOrigin="anonymous" />
+              {avatarPhoto
+                ? <img src={avatarPhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={nombre} crossOrigin="anonymous" />
                 : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, color: CYAN, fontWeight: 700, background: `linear-gradient(135deg,${NAVY},rgba(0,188,212,0.3))` }}>
                     {nombre.charAt(0).toUpperCase()}
                   </div>
