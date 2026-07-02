@@ -320,7 +320,8 @@ export function ECardPage() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 16 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>📅 Fecha</div>
-              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>26 Jul 2026</div>
+              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>26 Jul 2026 · 7:00 AM
+</div>
             </div>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.1)' }} />
             <div style={{ textAlign: 'center' }}>
