@@ -244,29 +244,108 @@ function ApproveModal({record,table,onClose,onSaved}:{record:any;table:string;on
 }
 
 // ─── CONTRACT MODAL ───────────────────────────────────────────────────────────
-function ContractModal({name,email,onClose}:{name:string;email:string;onClose:()=>void}) {
-  const [link,setLink]=useState('');const [copied,setCopied]=useState(false)
+function ContractModal({name,email,recordId,table,contractToken,contractSignedAt,contractPdfUrl,onClose}:{
+  name:string;email:string;recordId:string;table:string;
+  contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;onClose:()=>void
+}) {
+  const [sending,setSending]=useState(false)
+  const [sent,setSent]=useState(false)
+  const [error,setError]=useState('')
+  const isSigned=!!contractSignedAt
+  const contractUrl=contractToken?`${window.location.origin}/contrato/${contractToken}`:''
+  const ecardUrl=`${window.location.origin}/ecard/${recordId}`
+
+  const sendContractEmail=async()=>{
+    if(!email||!contractToken) return
+    setSending(true);setError('')
+    try {
+      const html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden">
+        <div style="padding:32px;text-align:center">
+          <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px" alt="Latido y Huella"/>
+        </div>
+        <div style="background:white;padding:32px;border-radius:0 0 16px 16px">
+          <h1 style="color:#0D1B6E">Hola ${name} 👋</h1>
+          <p>Tienes un documento pendiente de firma para completar tu registro en <strong>Latido y Huella 2026</strong>.</p>
+          <p>Por favor firma el documento antes del evento para que tu registro esté 100% completo.</p>
+          <div style="text-align:center;margin:24px 0">
+            <a href="${contractUrl}" style="background:linear-gradient(135deg,#00BCD4,#0097A7);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">✍️ Firmar documento</a>
+          </div>
+          <p style="color:#666;font-size:12px;text-align:center">Latido y Huella 2026 · eventos@latidoyhuella.co</p>
+        </div>
+      </div>`
+      const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
+        method:'POST',
+        headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
+        body:JSON.stringify({to:email,subject:`✍️ Tienes un documento pendiente — Latido y Huella 2026`,html,from:'eventos@latidoyhuella.co',type:'contrato'})
+      })
+      if(res.ok){setSent(true);setTimeout(()=>{onClose()},2000)}
+      else setError('Error al enviar. Intenta de nuevo.')
+    } catch { setError('Error de conexión.') }
+    setSending(false)
+  }
+
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-bold text-white">📝 Enviar contrato</h3>
+          <h3 className="text-base font-bold text-white">{isSigned?'✅ Contrato firmado':'📝 Contrato pendiente'}</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none">×</button>
         </div>
+
         <div className="bg-white/5 rounded-xl p-3 mb-4 border border-white/10">
-          <div className="text-xs text-gray-500">Para</div>
+          <div className="text-xs text-gray-500">Participante</div>
           <div className="text-sm font-semibold text-white">{name}</div>
           <div className="text-xs text-gray-400">{email}</div>
         </div>
-        <input className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white mb-4 focus:outline-none focus:border-emerald-500 placeholder-gray-600"
-          placeholder="https://..." value={link} onChange={e=>setLink(e.target.value)}/>
-        <div className="flex gap-2">
-          <button onClick={()=>{navigator.clipboard.writeText(link);setCopied(true);setTimeout(()=>setCopied(false),2000)}}
-            disabled={!link} className="flex-1 bg-emerald-600 text-white rounded-xl py-2.5 text-sm font-bold hover:bg-emerald-500 disabled:opacity-30">
-            {copied?'✓ Copiado':'📋 Copiar link'}
-          </button>
-          <button onClick={onClose} className="px-4 border border-white/10 rounded-xl text-sm text-gray-400 hover:bg-white/5">Cerrar</button>
-        </div>
+
+        {isSigned
+          ? <div className="space-y-3">
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
+                <div className="text-emerald-400 font-bold text-sm">✅ Firmado</div>
+                <div className="text-xs text-gray-400 mt-1">{new Date(contractSignedAt!).toLocaleString('es-CO')}</div>
+              </div>
+              {contractPdfUrl&&<a href={contractPdfUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{background:'linear-gradient(135deg,#0D1B6E,#00BCD4)'}}>
+                📄 Descargar PDF firmado
+              </a>}
+              <a href={ecardUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold border"
+                style={{color:'#00BCD4',borderColor:'rgba(0,188,212,0.3)'}}>
+                🎫 Ver E-Card
+              </a>
+            </div>
+          : <div className="space-y-3">
+              {contractToken
+                ? <>
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
+                      <div className="text-amber-400 font-bold text-sm">⏳ Pendiente de firma</div>
+                    </div>
+                    {sent
+                      ? <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center text-emerald-400 text-sm font-bold">✅ Email enviado</div>
+                      : <button onClick={sendContractEmail} disabled={sending}
+                          className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+                          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+                          {sending?'Enviando...':'📤 Enviar link de firma por email'}
+                        </button>
+                    }
+                    <div className="flex gap-2">
+                      <input readOnly value={contractUrl}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none"/>
+                      <button onClick={()=>navigator.clipboard.writeText(contractUrl)}
+                        className="px-3 py-2 rounded-xl text-xs border border-white/10 text-gray-400 hover:bg-white/5">
+                        📋
+                      </button>
+                    </div>
+                    {error&&<div className="text-red-400 text-xs text-center">{error}</div>}
+                  </>
+                : <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
+                    <div className="text-red-400 text-sm font-bold">⚠️ Sin token de contrato</div>
+                    <div className="text-xs text-gray-400 mt-1">El usuario debe pagar primero para generar el link</div>
+                  </div>
+              }
+            </div>
+        }
       </div>
     </Modal>
   )
@@ -1545,6 +1624,205 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
     </div>
   )
 }
+// ─── STAFF PAGE ───────────────────────────────────────────────────────────────
+function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp:string;ts:string;card:string}) {
+  const [scanning,setScanning]=useState(false)
+  const [result,setResult]=useState<any>(null)
+  const [loading,setLoading]=useState(false)
+  const [checkedIn,setCheckedIn]=useState(false)
+  const videoRef=useRef<HTMLVideoElement>(null)
+  const streamRef=useRef<MediaStream|null>(null)
+
+  const stopCamera=()=>{
+    streamRef.current?.getTracks().forEach(t=>t.stop())
+    streamRef.current=null
+    setScanning(false)
+  }
+
+  const startCamera=async()=>{
+    try {
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+      streamRef.current=stream
+      if(videoRef.current) videoRef.current.srcObject=stream
+      setScanning(true)
+      // Use BarcodeDetector API if available
+      if('BarcodeDetector' in window) {
+        const detector=new (window as any).BarcodeDetector({formats:['qr_code']})
+        const interval=setInterval(async()=>{
+          if(videoRef.current&&videoRef.current.readyState===4) {
+            try {
+              const codes=await detector.detect(videoRef.current)
+              if(codes.length>0) {
+                clearInterval(interval)
+                stopCamera()
+                handleQRResult(codes[0].rawValue)
+              }
+            } catch(_e){}
+          }
+        },300)
+      }
+    } catch(e) { alert('No se pudo acceder a la cámara') }
+  }
+
+  const handleQRResult=async(raw:string)=>{
+    setLoading(true);setResult(null);setCheckedIn(false)
+    try {
+      const data=JSON.parse(raw)
+      const registroId=data.registroId||data.id
+      if(!registroId) { setResult({error:'QR inválido'}); setLoading(false); return }
+
+      const tablas=['registrations_5k','expositor_reservations','toldos_reservations','sports_team_registrations','sponsor_inquiries']
+      for(const t of tablas) {
+        const {data:rec}=await supabase.from(t).select('*').eq('id',registroId).maybeSingle()
+        if(rec) {
+          setResult({record:rec,table:t})
+          setLoading(false)
+          return
+        }
+      }
+      setResult({error:'Registro no encontrado'})
+    } catch { setResult({error:'QR inválido o ilegible'}) }
+    setLoading(false)
+  }
+
+  const handleManualInput=(e:React.FormEvent<HTMLFormElement>)=>{
+    e.preventDefault()
+    const form=e.currentTarget
+    const val=(form.elements.namedItem('qrInput') as HTMLInputElement).value
+    if(val) handleQRResult(val)
+  }
+
+  const handleCheckIn=async()=>{
+    if(!result?.record||!result?.table) return
+    await supabase.from(result.table).update({
+      checked_in_at:new Date().toISOString(),
+      checked_in_by:user?.name||user?.email||'Staff'
+    }).eq('id',result.record.id)
+    setCheckedIn(true)
+    setResult({...result,record:{...result.record,checked_in_at:new Date().toISOString()}})
+  }
+
+  const r=result?.record
+  const isPaid=r?.status==='paid'||r?.status==='approved'
+  const isSigned=!!r?.contract_signed_at||!!r?.accepted_contract_at
+  const isCheckedIn=checkedIn||!!r?.checked_in_at
+  const nombre=r?.full_name||r?.responsible_name||r?.captain_name||r?.contact_name||''
+  const tipo=result?.table==='registrations_5k'?'🐾 Caminata 5K':result?.table==='expositor_reservations'?'🏪 Expositor':result?.table==='toldos_reservations'?'⛺ Toldo':result?.table==='sports_team_registrations'?'⚽ Deportes':'⭐ Patrocinador'
+
+  return (
+    <div className="max-w-md mx-auto px-4 py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-black" style={{color:tp}}>📱 Validador QR</h1>
+          <p className="text-xs mt-0.5" style={{color:ts}}>Staff: {user?.name||user?.email}</p>
+        </div>
+        <div className="text-xs px-3 py-1.5 rounded-full font-bold" style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>Latido y Huella 2026</div>
+      </div>
+
+      {/* Botón escanear */}
+      {!scanning&&!result&&(
+        <div className="space-y-4">
+          <button onClick={startCamera}
+            className="w-full py-6 rounded-2xl font-bold text-white text-lg"
+            style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+            📷 Escanear QR
+          </button>
+          <form onSubmit={handleManualInput} className="flex gap-2">
+            <input name="qrInput" placeholder="O pega el contenido del QR aquí..."
+              className="flex-1 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              style={{background:card,border:`1px solid ${br}`,color:tp}}/>
+            <button type="submit" className="px-4 rounded-xl font-bold text-white" style={{background:'#00BCD4'}}>Buscar</button>
+          </form>
+        </div>
+      )}
+
+      {/* Video cámara */}
+      {scanning&&(
+        <div className="space-y-4">
+          <div className="relative rounded-2xl overflow-hidden" style={{aspectRatio:'1',background:'#000'}}>
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover"/>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-48 h-48 border-4 rounded-2xl" style={{borderColor:'#00BCD4'}}/>
+            </div>
+          </div>
+          <button onClick={stopCamera} className="w-full py-3 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading&&<div className="text-center py-12" style={{color:ts}}>⏳ Buscando registro...</div>}
+
+      {/* Resultado */}
+      {result&&!loading&&(
+        <div className="space-y-4">
+          {result.error
+            ? <div className="p-6 rounded-2xl text-center" style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)'}}>
+                <div className="text-4xl mb-2">❌</div>
+                <div className="font-bold text-red-400">{result.error}</div>
+              </div>
+            : <>
+                {/* Status principal */}
+                <div className="p-6 rounded-2xl text-center" style={{
+                  background:isCheckedIn?'rgba(76,175,80,0.1)':isPaid?'rgba(0,188,212,0.1)':'rgba(245,158,11,0.1)',
+                  border:`1px solid ${isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}`
+                }}>
+                  <div className="text-5xl mb-2">{isCheckedIn?'✅':isPaid?'🎫':'⚠️'}</div>
+                  <div className="font-black text-xl" style={{color:isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}}>
+                    {isCheckedIn?'¡Ingreso registrado!':isPaid?'Ticket válido':'Pago pendiente'}
+                  </div>
+                </div>
+
+                {/* Datos */}
+                <div className="rounded-2xl p-4 space-y-3" style={{background:card,border:`1px solid ${br}`}}>
+                  <div className="text-lg font-black" style={{color:tp}}>{nombre}</div>
+                  <div className="text-sm font-bold" style={{color:'#00BCD4'}}>{tipo}</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-xl p-2" style={{background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{color:ts}}>Pago</div>
+                      <div className={`font-bold ${isPaid?'text-emerald-400':'text-amber-400'}`}>{isPaid?'✅ Pagado':'⏳ Pendiente'}</div>
+                    </div>
+                    <div className="rounded-xl p-2" style={{background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{color:ts}}>Consentimiento</div>
+                      <div className={`font-bold ${isSigned?'text-emerald-400':'text-amber-400'}`}>{isSigned?'✅ Firmado':'⏳ Pendiente'}</div>
+                    </div>
+                    {r?.stand_id&&<div className="rounded-xl p-2 col-span-2" style={{background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{color:ts}}>Stand</div>
+                      <div className="font-bold" style={{color:tp}}>{r.stand_id}</div>
+                    </div>}
+                    {r?.team_name&&<div className="rounded-xl p-2 col-span-2" style={{background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{color:ts}}>Equipo</div>
+                      <div className="font-bold" style={{color:tp}}>{r.team_name}</div>
+                    </div>}
+                    {isCheckedIn&&r?.checked_in_at&&<div className="rounded-xl p-2 col-span-2" style={{background:'rgba(76,175,80,0.1)',border:'1px solid rgba(76,175,80,0.3)'}}>
+                      <div className="text-emerald-400/60 text-xs">Ingresó el</div>
+                      <div className="font-bold text-emerald-400 text-xs">{new Date(r.checked_in_at).toLocaleString('es-CO')}</div>
+                    </div>}
+                  </div>
+                </div>
+
+                {/* Botones */}
+                <div className="space-y-2">
+                  {!isCheckedIn&&isPaid&&(
+                    <button onClick={handleCheckIn}
+                      className="w-full py-3 rounded-xl font-bold text-white text-sm"
+                      style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
+                      ✅ Validar ingreso
+                    </button>
+                  )}
+                  <button onClick={()=>{setResult(null);setCheckedIn(false)}}
+                    className="w-full py-3 rounded-xl font-bold text-sm border"
+                    style={{color:ts,borderColor:br}}>
+                    📷 Escanear otro QR
+                  </button>
+                </div>
+              </>
+          }
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LoginScreen({onLogin}:{onLogin:(u:{id:string;email:string;role:string;name:string})=>void}) {
   const [email,setEmail]=useState('');const [pass,setPass]=useState('');const [err,setErr]=useState('');const [loading,setLoading]=useState(false)
   const doLogin=async(e:React.FormEvent)=>{
@@ -1626,7 +1904,7 @@ export function Dashboard() {
   const [devSaved,setDevSaved]=useState(false)
 
   // Modals
-  const [contractM,setContractM]=useState<{name:string;email:string}|null>(null)
+  const [contractM,setContractM]=useState<{name:string;email:string;recordId:string;table:string;contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string}|null>(null)
   const [editM,setEditM]=useState<{record:any;table:string;fields:any[];title?:string}|null>(null)
   const [approveM,setApproveM]=useState<{record:any;table:string}|null>(null)
   const [profileM,setProfileM]=useState<{record:any;table:string}|null>(null)
@@ -1731,6 +2009,7 @@ export function Dashboard() {
     {id:'marcas',icon:'🖼',label:'Marcas & Logos',count:publicSponsors.length},
     {id:'pagos',icon:'💳',label:'Pagos'},
     {id:'emails',icon:'📧',label:'Emails'},
+    {id:'staff',icon:'📱',label:'Validador QR'},
     null,
     {id:'admin',icon:'👥',label:'Administración'},
     {id:'dev',icon:'⚙️',label:'Desarrolladores'},
@@ -1759,6 +2038,20 @@ export function Dashboard() {
   const efPago=[{key:'status',label:'Estado',options:['paid','pending_payment','declined','voided']},{key:'payment_method',label:'Forma de pago',options:PM},{key:'wompi_transaction_id',label:'ID TX Wompi'}]
 
   if(!authUser) return <LoginScreen onLogin={u=>setAuthUser(u)}/>
+
+  // Staff role — solo ve el validador QR
+  if(authUser.role==='staff') return (
+    <div className="min-h-screen" style={{background:bg,fontFamily:"'DM Sans',sans-serif",color:tp}}>
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{background:'#0d0d1f',borderBottom:'1px solid rgba(255,255,255,0.1)'}}>
+        <div className="flex items-center gap-2">
+          <img src={LOGO_URL} className="h-7" alt=""/>
+          <span className="text-xs font-bold" style={{color:ts}}>Staff · {authUser.name}</span>
+        </div>
+        <button onClick={()=>setAuthUser(null)} className="text-xs px-3 py-1 rounded-lg border" style={{color:ts,borderColor:br}}>Salir</button>
+      </div>
+      <StaffPage user={authUser} dark={dark} br={br} tp={tp} ts={ts} card={card}/>
+    </div>
+  )
 
   return (
     <div className="flex min-h-screen" style={{background:bg,fontFamily:"'DM Sans',sans-serif",color:tp}}>
@@ -1918,7 +2211,7 @@ export function Dashboard() {
                               </div>
                             </TD>
                             <TD cls="text-xs font-bold text-emerald-400">{r.amount_cents?fmtCOP(r.amount_cents):r.total_amount?fmtCOP(r.total_amount):'—'}</TD>
-                            <TD>{r.accepted_agreement_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email})}/>}</TD>
+                            <TD>{r.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email,recordId:r.id,table:'registrations_5k',contractToken:r.contract_token,contractSignedAt:r.contract_signed_at,contractPdfUrl:r.contract_pdf_url})}/></TD>
                             <TD cls="text-xs" style={{color:ts}}>{fmtDate(r.created_at)}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
@@ -2162,7 +2455,7 @@ export function Dashboard() {
                             <TD><StandStatusBtn record={e} table="expositor_reservations" onSaved={fetchAll}/></TD>
                             <TD cls="text-xs font-bold text-emerald-400">{e.amount_cents?fmtCOP(e.amount_cents):e.total_amount?fmtCOP(e.total_amount):'—'}</TD>
                             <TD><div className="flex gap-1"><DocBadge ok={!!e.cedula_url} label="CC" url={e.cedula_url}/><DocBadge ok={!!e.rut_url} label="RUT" url={e.rut_url}/></div></TD>
-                            <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
+                            <TD>{e.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email,recordId:e.id,table:'expositor_reservations',contractToken:e.contract_token,contractSignedAt:e.contract_signed_at,contractPdfUrl:e.contract_pdf_url})}/>}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:e,table:'expositor_reservations'})}/>
                               <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Stand',options:STANDS_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'contact_name',label:'Contacto empresa'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'stand_type',label:'Tipo',options:['AAA','AA','A']},{key:'description',label:'Descripción'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
@@ -2184,7 +2477,7 @@ export function Dashboard() {
                             <TD><StandStatusBtn record={e} table="expositor_reservations" onSaved={fetchAll}/></TD>
                             <TD cls="text-xs font-bold text-emerald-400">{e.amount_cents?fmtCOP(e.amount_cents):e.total_amount?fmtCOP(e.total_amount):'—'}</TD>
                             <TD><div className="flex gap-1"><DocBadge ok={!!e.cedula_url} label="CC" url={e.cedula_url}/><DocBadge ok={!!e.rut_url} label="RUT" url={e.rut_url}/></div></TD>
-                            <TD>{e.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email})}/>}</TD>
+                            <TD>{e.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:e.responsible_name||e.contact_name||'',email:e.email,recordId:e.id,table:'expositor_reservations',contractToken:e.contract_token,contractSignedAt:e.contract_signed_at,contractPdfUrl:e.contract_pdf_url})}/>}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:e,table:'expositor_reservations'})}/>
                               <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:e,table:'expositor_reservations',fields:[{key:'stand_id',label:'Spot FT',options:FT_DISPONIBLES},{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'phone',label:'Teléfono'},{key:'product_type',label:'Producto'},{key:'ft_width_m',label:'Ancho (m)'},{key:'ft_length_m',label:'Largo (m)'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'}]})}/>
@@ -2205,7 +2498,7 @@ export function Dashboard() {
                             <TD><StandStatusBtn record={t} table="toldos_reservations" onSaved={fetchAll}/></TD>
                             <TD cls="text-xs font-bold text-emerald-400">{t.amount_cents?fmtCOP(t.amount_cents):'—'}</TD>
                             <TD><div className="flex gap-1"><DocBadge ok={!!t.cedula_url} label="CC" url={t.cedula_url}/><DocBadge ok={!!t.rut_url} label="RUT" url={t.rut_url}/></div></TD>
-                            <TD>{t.accepted_contract_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:t.responsible_name,email:t.email})}/>}</TD>
+                            <TD>{t.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:t.responsible_name,email:t.email,recordId:t.id,table:'toldos_reservations',contractToken:t.contract_token,contractSignedAt:t.contract_signed_at,contractPdfUrl:t.contract_pdf_url})}/>}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:t,table:'toldos_reservations'})}/>
                               <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:t,table:'toldos_reservations',fields:[{key:'brand_name',label:'Marca'},{key:'responsible_name',label:'Responsable'},{key:'email',label:'Email'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
@@ -2345,7 +2638,7 @@ export function Dashboard() {
                           <TD><div className="flex items-center gap-1 flex-wrap"><Badge status={s.status}/>{!isOk(s.status)&&<Btn icon="✅" color="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25" onClick={()=>setApproveM({record:s,table:'sponsor_inquiries'})}/>}</div></TD>
                           <TD cls="text-xs font-bold text-emerald-400">{s.amount_cents?fmtCOP(s.amount_cents):'—'}</TD>
                           <TD><div className="flex gap-1 flex-wrap"><DocBadge ok={!!s.cedula_url} label="CC" url={s.cedula_url}/><DocBadge ok={!!s.rut_url} label="RUT" url={s.rut_url}/><DocBadge ok={!!s.camara_comercio_url} label="CAM" url={s.camara_comercio_url}/></div></TD>
-                          <TD>{s.accepted_agreement_at?<span className="text-xs font-bold text-emerald-400">✓</span>:<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:s.contact_name,email:s.email})}/>}</TD>
+                          <TD>{s.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:s.contact_name,email:s.email,recordId:s.id,table:'sponsor_inquiries',contractToken:s.contract_token,contractSignedAt:s.contract_signed_at,contractPdfUrl:s.contract_pdf_url})}/></TD>
                           <TD><div className="flex gap-1">
                             <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:s,table:'sponsor_inquiries'})}/>
                             <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:s,table:'sponsor_inquiries',fields:[{key:'company_name',label:'Empresa'},{key:'contact_name',label:'Contacto'},{key:'email',label:'Email'},{key:'plan_name',label:'Plan'},{key:'payment_method',label:'Pago',options:PM},{key:'status',label:'Estado',options:['paid','pending_payment','declined']},{key:'comments',label:'Comentarios'},{key:'cedula_url',label:'Cédula (CC)'},{key:'rut_url',label:'RUT'},{key:'camara_comercio_url',label:'Cámara de Comercio'}]})}/>
@@ -2495,7 +2788,7 @@ export function Dashboard() {
                   <div>
                     <div className="flex items-center justify-between mb-6">
                       <h1 className="text-2xl font-black" style={{color:tp}}>👥 Administración</h1>
-                      <AddBtn label="Nuevo usuario" onClick={()=>setCreateM({table:'admin_users',fields:[{key:'full_name',label:'Nombre completo',required:true},{key:'email',label:'Email',type:'email',required:true},{key:'password_hash',label:'Contraseña',required:true},{key:'role',label:'Rol',options:['super_admin','admin','viewer']}],title:'Nuevo usuario del panel',defaults:{is_active:true}})}/>
+                      <AddBtn label="Nuevo usuario" onClick={()=>setCreateM({table:'admin_users',fields:[{key:'full_name',label:'Nombre completo',required:true},{key:'email',label:'Email',type:'email',required:true},{key:'password_hash',label:'Contraseña',required:true},{key:'role',label:'Rol',options:['super_admin','admin','viewer','staff']}],title:'Nuevo usuario del panel',defaults:{is_active:true}})}/>
                     </div>
                     <div className="grid grid-cols-2 gap-5">
                       <div className="rounded-2xl overflow-hidden" style={{background:card,border:`1px solid ${br}`}}>
@@ -2518,7 +2811,7 @@ export function Dashboard() {
                                   {u.role}
                                 </span>
                                 <div className={`w-2 h-2 rounded-full ${u.is_active?'bg-emerald-500':'bg-red-500'}`}/>
-                                <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:u,table:'admin_users',fields:[{key:'full_name',label:'Nombre'},{key:'email',label:'Email'},{key:'password_hash',label:'Contraseña'},{key:'role',label:'Rol',options:['super_admin','admin','viewer']},{key:'is_active',label:'Activo',options:['true','false']}],title:'Editar usuario'})}/>
+                                <Btn icon="✏️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setEditM({record:u,table:'admin_users',fields:[{key:'full_name',label:'Nombre'},{key:'email',label:'Email'},{key:'password_hash',label:'Contraseña'},{key:'role',label:'Rol',options:['super_admin','admin','viewer','staff']},{key:'is_active',label:'Activo',options:['true','false']}],title:'Editar usuario'})}/>
                               </div>
                             </div>
                           ))}
@@ -2627,6 +2920,7 @@ export function Dashboard() {
                 )}
 
                 {page==='emails'&&<EmailsPage dark={dark} br={br} tp={tp} ts={ts} card={card} regs5k={regs5k} expositores={expositores} toldos={toldos} sponsors={sponsors} teams={teams}/>}
+                {page==='staff'&&<StaffPage user={authUser} dark={dark} br={br} tp={tp} ts={ts} card={card}/>}
                 {page==='papelera'&&<PapeleraPage dark={dark} br={br} tp={tp} ts={ts} card={card} onHardDelete={(r:any,t:string)=>setHardDeleteM({record:r,table:t})} onRestore={fetchAll}/>}
 
               </motion.div>
@@ -2637,7 +2931,7 @@ export function Dashboard() {
 
       {/* MODALS */}
       <AnimatePresence>
-        {contractM&&<ContractModal name={contractM.name} email={contractM.email} onClose={()=>setContractM(null)}/>}
+        {contractM&&<ContractModal name={contractM.name} email={contractM.email} recordId={contractM.recordId} table={contractM.table} contractToken={contractM.contractToken} contractSignedAt={contractM.contractSignedAt} contractPdfUrl={contractM.contractPdfUrl} onClose={()=>setContractM(null)}/>}
         {editM&&<EditModal record={editM.record} table={editM.table} fields={editM.fields} title={editM.title} onClose={()=>setEditM(null)} onSaved={fetchAll}/>}
         {approveM&&<ApproveModal record={approveM.record} table={approveM.table} onClose={()=>setApproveM(null)} onSaved={fetchAll}/>}
         {profileM&&(
@@ -2651,7 +2945,7 @@ export function Dashboard() {
               if(data) setProfileM(prev=>prev?{...prev,record:data}:null)
             }}
             onApprove={()=>{setProfileM(null);setApproveM({record:profileM.record,table:profileM.table})}}
-            onContract={()=>{const n=profileM.record.full_name||profileM.record.responsible_name||profileM.record.company_name||profileM.record.captain_name||'';const e=profileM.record.email||profileM.record.captain_email||'';setProfileM(null);setContractM({name:n,email:e})}}
+            onContract={()=>{const n=profileM.record.full_name||profileM.record.responsible_name||profileM.record.company_name||profileM.record.captain_name||'';const e=profileM.record.email||profileM.record.captain_email||'';setProfileM(null);setContractM({name:n,email:e,recordId:profileM.record.id,table:profileM.table,contractToken:profileM.record.contract_token,contractSignedAt:profileM.record.contract_signed_at,contractPdfUrl:profileM.record.contract_pdf_url})}}
           />
         )}
         {logoEditM&&<LogoEditModal logo={logoEditM} onClose={()=>setLogoEditM(null)} onSaved={fetchAll}/>}
