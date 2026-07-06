@@ -1631,37 +1631,38 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
   const [loading,setLoading]=useState(false)
   const [checkedIn,setCheckedIn]=useState(false)
   const [manualInput,setManualInput]=useState('')
+  const videoRef=useRef<HTMLVideoElement>(null)
   const scannerRef=useRef<any>(null)
-  const scannerDivId='lh-qr-scanner'
 
   const stopScanner=()=>{
     if(scannerRef.current){
-      try{scannerRef.current.stop().then(()=>{scannerRef.current=null}).catch(()=>{scannerRef.current=null})}catch(_e){scannerRef.current=null}
+      try{scannerRef.current.reset()}catch(_e){}
+      scannerRef.current=null
     }
     setScanning(false)
   }
 
   const startScanner=async()=>{
     setScanning(true)
-    // Wait for div to be visible in DOM
     await new Promise(r=>setTimeout(r,300))
     try{
-      const {Html5Qrcode}=await import('html5-qrcode')
-      const html5QrCode=new Html5Qrcode(scannerDivId)
-      scannerRef.current=html5QrCode
-      await html5QrCode.start(
-        {facingMode:'environment'},
-        {fps:10,qrbox:250},
-        (decodedText:string)=>{
+      const {BrowserMultiFormatReader}=await import('@zxing/browser')
+      const codeReader=new BrowserMultiFormatReader()
+      scannerRef.current=codeReader
+      const videoInputDevices=await BrowserMultiFormatReader.listVideoInputDevices()
+      // Prefer back camera
+      const deviceId=videoInputDevices.find(d=>d.label.toLowerCase().includes('back')||d.label.toLowerCase().includes('rear')||d.label.toLowerCase().includes('environment'))?.deviceId||videoInputDevices[videoInputDevices.length-1]?.deviceId
+      if(!videoRef.current){setScanning(false);return}
+      await codeReader.decodeFromVideoDevice(deviceId,videoRef.current,(result,error)=>{
+        if(result){
           stopScanner()
-          handleQRResult(decodedText)
-        },
-        (_errorMessage:string)=>{}
-      )
+          handleQRResult(result.getText())
+        }
+      })
     }catch(e){
       console.error('Scanner error:',e)
       setScanning(false)
-      alert('No se pudo activar la cámara. Verifica los permisos del navegador.')
+      alert('No se pudo activar la cámara. Verifica los permisos.')
     }
   }
 
@@ -1671,9 +1672,7 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
     setLoading(true);setResult(null);setCheckedIn(false)
     try{
       let registroId=raw.trim()
-      // Try parsing as JSON first
       try{const data=JSON.parse(raw);registroId=data.registroId||data.id||raw.trim()}catch(_e){}
-      // Remove any #LH- prefix if present
       registroId=registroId.replace(/^#LH-/,'').trim()
       if(!registroId){setResult({error:'QR inválido'});setLoading(false);return}
       const tablas=['registrations_5k','expositor_reservations','toldos_reservations','sports_team_registrations','sponsor_inquiries']
@@ -1714,8 +1713,8 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
         <div style={{fontSize:11,padding:'6px 12px',borderRadius:20,fontWeight:700,background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>Latido y Huella 2026</div>
       </div>
 
-      {/* QR scanner div — SIEMPRE en el DOM */}
-      <div id={scannerDivId} style={{display:scanning?'block':'none',borderRadius:16,overflow:'hidden',background:'#000',marginBottom:scanning?12:0}}/>
+      {/* Video element — siempre en DOM */}
+      <video ref={videoRef} style={{display:scanning?'block':'none',width:'100%',borderRadius:16,background:'#000',marginBottom:scanning?12:0}} autoPlay playsInline muted/>
 
       {/* Cancelar cámara */}
       {scanning&&(
@@ -1761,7 +1760,6 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
                     {isCheckedIn?'¡Ingreso registrado!':isPaid?'Ticket válido':'Pago pendiente'}
                   </div>
                 </div>
-
                 <div style={{borderRadius:16,padding:16,background:card,border:`1px solid ${br}`}}>
                   <div style={{fontSize:20,fontWeight:900,color:tp,marginBottom:4}}>{nombre}</div>
                   <div style={{fontSize:14,fontWeight:700,color:'#00BCD4',marginBottom:12}}>{tipo}</div>
@@ -1788,7 +1786,6 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
                     </div>}
                   </div>
                 </div>
-
                 <div style={{display:'flex',flexDirection:'column',gap:10}}>
                   {!isCheckedIn&&isPaid&&(
                     <button onClick={handleCheckIn}
