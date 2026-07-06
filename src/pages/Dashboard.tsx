@@ -1632,74 +1632,70 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
   const [checkedIn,setCheckedIn]=useState(false)
   const [manualInput,setManualInput]=useState('')
   const scannerRef=useRef<any>(null)
-  const scannerDivId='qr-scanner-div'
-
-  const startScanner=async()=>{
-    setScanning(true)
-    try {
-      const {Html5Qrcode}=await import('html5-qrcode')
-      scannerRef.current=new Html5Qrcode(scannerDivId)
-      await scannerRef.current.start(
-        {facingMode:'environment'},
-        {fps:10,qrbox:{width:250,height:250}},
-        (decodedText:string)=>{
-          stopScanner()
-          handleQRResult(decodedText)
-        },
-        ()=>{}
-      )
-    } catch(e) {
-      console.error(e)
-      setScanning(false)
-      alert('No se pudo acceder a la cámara. Verifica los permisos.')
-    }
-  }
+  const scannerDivId='lh-qr-scanner'
 
   const stopScanner=()=>{
-    if(scannerRef.current) {
-      try { scannerRef.current.stop().catch(()=>{}) } catch(_e){}
-      scannerRef.current=null
+    if(scannerRef.current){
+      try{scannerRef.current.stop().then(()=>{scannerRef.current=null}).catch(()=>{scannerRef.current=null})}catch(_e){scannerRef.current=null}
     }
     setScanning(false)
   }
 
-  useEffect(()=>()=>stopScanner(),[])
+  const startScanner=async()=>{
+    setScanning(true)
+    // Wait for div to be visible in DOM
+    await new Promise(r=>setTimeout(r,300))
+    try{
+      const {Html5Qrcode}=await import('html5-qrcode')
+      const html5QrCode=new Html5Qrcode(scannerDivId)
+      scannerRef.current=html5QrCode
+      await html5QrCode.start(
+        {facingMode:'environment'},
+        {fps:10,qrbox:250},
+        (decodedText:string)=>{
+          stopScanner()
+          handleQRResult(decodedText)
+        },
+        (_errorMessage:string)=>{}
+      )
+    }catch(e){
+      console.error('Scanner error:',e)
+      setScanning(false)
+      alert('No se pudo activar la cámara. Verifica los permisos del navegador.')
+    }
+  }
+
+  useEffect(()=>()=>{stopScanner()},[])
 
   const handleQRResult=async(raw:string)=>{
     setLoading(true);setResult(null);setCheckedIn(false)
-    try {
-      let registroId=''
-      try {
-        const data=JSON.parse(raw)
-        registroId=data.registroId||data.id||''
-      } catch { registroId=raw.trim() }
-
+    try{
+      let registroId=raw.trim()
+      // Try parsing as JSON first
+      try{const data=JSON.parse(raw);registroId=data.registroId||data.id||raw.trim()}catch(_e){}
+      // Remove any #LH- prefix if present
+      registroId=registroId.replace(/^#LH-/,'').trim()
       if(!registroId){setResult({error:'QR inválido'});setLoading(false);return}
-
       const tablas=['registrations_5k','expositor_reservations','toldos_reservations','sports_team_registrations','sponsor_inquiries']
       for(const t of tablas){
         const{data:rec}=await supabase.from(t).select('*').eq('id',registroId).maybeSingle()
         if(rec){setResult({record:rec,table:t});setLoading(false);return}
       }
       setResult({error:'Registro no encontrado'})
-    } catch{setResult({error:'QR inválido o ilegible'})}
+    }catch{setResult({error:'QR inválido o ilegible'})}
     setLoading(false)
   }
 
-  const handleManualSubmit=(e:React.FormEvent)=>{
-    e.preventDefault()
-    if(manualInput.trim()) handleQRResult(manualInput.trim())
-  }
+  const handleManualSubmit=(e:React.FormEvent)=>{e.preventDefault();if(manualInput.trim())handleQRResult(manualInput.trim())}
 
   const handleCheckIn=async()=>{
-    if(!result?.record||!result?.table) return
-    await supabase.from(result.table).update({
-      checked_in_at:new Date().toISOString(),
-      checked_in_by:user?.name||user?.email||'Staff'
-    }).eq('id',result.record.id)
+    if(!result?.record||!result?.table)return
+    await supabase.from(result.table).update({checked_in_at:new Date().toISOString(),checked_in_by:user?.name||user?.email||'Staff'}).eq('id',result.record.id)
     setCheckedIn(true)
     setResult((prev:any)=>({...prev,record:{...prev.record,checked_in_at:new Date().toISOString()}}))
   }
+
+  const resetAll=()=>{setResult(null);setCheckedIn(false);setManualInput('');stopScanner()}
 
   const r=result?.record
   const isPaid=r?.status==='paid'||r?.status==='approved'
@@ -1709,53 +1705,46 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
   const tipo=result?.table==='registrations_5k'?'🐾 Caminata 5K':result?.table==='expositor_reservations'?'🏪 Expositor':result?.table==='toldos_reservations'?'⛺ Toldo':result?.table==='sports_team_registrations'?'⚽ Deportes':'⭐ Patrocinador'
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div style={{maxWidth:480,margin:'0 auto',padding:'24px 16px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24}}>
         <div>
-          <h1 className="text-xl font-black" style={{color:tp}}>📱 Validador QR</h1>
-          <p className="text-xs mt-0.5" style={{color:ts}}>Staff: {user?.name||user?.email}</p>
+          <h1 style={{fontSize:20,fontWeight:900,color:tp,margin:0}}>📱 Validador QR</h1>
+          <p style={{fontSize:12,color:ts,margin:'4px 0 0'}}>Staff: {user?.name||user?.email}</p>
         </div>
-        <div className="text-xs px-3 py-1.5 rounded-full font-bold" style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>Latido y Huella 2026</div>
+        <div style={{fontSize:11,padding:'6px 12px',borderRadius:20,fontWeight:700,background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>Latido y Huella 2026</div>
       </div>
 
-      {/* Botón escanear */}
-      {!scanning&&!result&&(
-        <div className="space-y-4">
+      {/* QR scanner div — SIEMPRE en el DOM */}
+      <div id={scannerDivId} style={{display:scanning?'block':'none',borderRadius:16,overflow:'hidden',background:'#000',marginBottom:scanning?12:0}}/>
+
+      {/* Cancelar cámara */}
+      {scanning&&(
+        <button onClick={stopScanner} style={{width:'100%',padding:12,borderRadius:12,fontSize:14,color:'white',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontWeight:600,marginBottom:12}}>
+          ✕ Cancelar cámara
+        </button>
+      )}
+
+      {/* Pantalla inicial */}
+      {!scanning&&!result&&!loading&&(
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <button onClick={startScanner}
-            style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)',width:'100%',padding:'24px',borderRadius:16,fontWeight:700,color:'white',fontSize:18,border:'none',cursor:'pointer'}}>
+            style={{width:'100%',padding:24,borderRadius:16,fontWeight:700,color:'white',fontSize:18,background:'linear-gradient(135deg,#00BCD4,#0097A7)',border:'none',cursor:'pointer'}}>
             📷 Escanear QR
           </button>
-
-          {/* Scanner div - oculto hasta activarse */}
-          <div id={scannerDivId} style={{display:'none',borderRadius:16,overflow:'hidden'}}/>
-
           <form onSubmit={handleManualSubmit} style={{display:'flex',gap:8}}>
-            <input
-              value={manualInput}
-              onChange={e=>setManualInput(e.target.value)}
-              placeholder="O pega el contenido del QR aquí..."
+            <input value={manualInput} onChange={e=>setManualInput(e.target.value)}
+              placeholder="O pega el ID del registro aquí..."
               style={{flex:1,borderRadius:12,padding:'10px 14px',fontSize:14,background:card,border:`1px solid ${br}`,color:tp,outline:'none'}}/>
             <button type="submit"
-              style={{padding:'10px 16px',borderRadius:12,fontWeight:700,color:'white',background:'#00BCD4',border:'none',cursor:'pointer'}}>
+              style={{padding:'10px 18px',borderRadius:12,fontWeight:700,color:'white',background:'#00BCD4',border:'none',cursor:'pointer'}}>
               Buscar
             </button>
           </form>
         </div>
       )}
 
-      {/* Scanner activo */}
-      {scanning&&(
-        <div style={{display:'flex',flexDirection:'column',gap:12}}>
-          <div id={scannerDivId} style={{borderRadius:16,overflow:'hidden',background:'#000',minHeight:300}}/>
-          <button onClick={stopScanner}
-            style={{width:'100%',padding:12,borderRadius:12,fontSize:14,color:tp,background:'transparent',border:`1px solid ${br}`,cursor:'pointer',fontWeight:600}}>
-            ✕ Cancelar
-          </button>
-        </div>
-      )}
-
       {/* Loading */}
-      {loading&&<div style={{textAlign:'center',padding:'48px 0',color:ts}}>⏳ Buscando registro...</div>}
+      {loading&&<div style={{textAlign:'center',padding:'48px 0',color:ts,fontSize:16}}>⏳ Buscando registro...</div>}
 
       {/* Resultado */}
       {result&&!loading&&(
@@ -1763,60 +1752,56 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
           {result.error
             ? <div style={{padding:24,borderRadius:16,textAlign:'center',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)'}}>
                 <div style={{fontSize:40,marginBottom:8}}>❌</div>
-                <div style={{fontWeight:700,color:'#f87171'}}>{result.error}</div>
+                <div style={{fontWeight:700,color:'#f87171',fontSize:16}}>{result.error}</div>
               </div>
             : <>
-                <div style={{
-                  padding:24,borderRadius:16,textAlign:'center',
-                  background:isCheckedIn?'rgba(76,175,80,0.1)':isPaid?'rgba(0,188,212,0.1)':'rgba(245,158,11,0.1)',
-                  border:`1px solid ${isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}`
-                }}>
+                <div style={{padding:24,borderRadius:16,textAlign:'center',background:isCheckedIn?'rgba(76,175,80,0.1)':isPaid?'rgba(0,188,212,0.1)':'rgba(245,158,11,0.1)',border:`2px solid ${isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}`}}>
                   <div style={{fontSize:48,marginBottom:8}}>{isCheckedIn?'✅':isPaid?'🎫':'⚠️'}</div>
-                  <div style={{fontWeight:900,fontSize:20,color:isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}}>
+                  <div style={{fontWeight:900,fontSize:22,color:isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}}>
                     {isCheckedIn?'¡Ingreso registrado!':isPaid?'Ticket válido':'Pago pendiente'}
                   </div>
                 </div>
 
                 <div style={{borderRadius:16,padding:16,background:card,border:`1px solid ${br}`}}>
-                  <div style={{fontSize:18,fontWeight:900,color:tp,marginBottom:4}}>{nombre}</div>
+                  <div style={{fontSize:20,fontWeight:900,color:tp,marginBottom:4}}>{nombre}</div>
                   <div style={{fontSize:14,fontWeight:700,color:'#00BCD4',marginBottom:12}}>{tipo}</div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                    <div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)'}}>
-                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Pago</div>
-                      <div style={{fontWeight:700,color:isPaid?'#4ade80':'#fbbf24'}}>{isPaid?'✅ Pagado':'⏳ Pendiente'}</div>
+                    <div style={{borderRadius:12,padding:10,background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:3}}>Pago</div>
+                      <div style={{fontWeight:700,fontSize:13,color:isPaid?'#4ade80':'#fbbf24'}}>{isPaid?'✅ Pagado':'⏳ Pendiente'}</div>
                     </div>
-                    <div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)'}}>
-                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Consentimiento</div>
-                      <div style={{fontWeight:700,color:isSigned?'#4ade80':'#fbbf24'}}>{isSigned?'✅ Firmado':'⏳ Pendiente'}</div>
+                    <div style={{borderRadius:12,padding:10,background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:3}}>Consentimiento</div>
+                      <div style={{fontWeight:700,fontSize:13,color:isSigned?'#4ade80':'#fbbf24'}}>{isSigned?'✅ Firmado':'⏳ Pendiente'}</div>
                     </div>
-                    {r?.stand_id&&<div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)',gridColumn:'span 2'}}>
-                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Stand</div>
+                    {r?.stand_id&&<div style={{borderRadius:12,padding:10,background:'rgba(255,255,255,0.05)',gridColumn:'span 2'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:3}}>Stand</div>
                       <div style={{fontWeight:700,color:tp}}>{r.stand_id}</div>
                     </div>}
-                    {r?.team_name&&<div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)',gridColumn:'span 2'}}>
-                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Equipo</div>
+                    {r?.team_name&&<div style={{borderRadius:12,padding:10,background:'rgba(255,255,255,0.05)',gridColumn:'span 2'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:3}}>Equipo</div>
                       <div style={{fontWeight:700,color:tp}}>{r.team_name}</div>
                     </div>}
-                    {isCheckedIn&&r?.checked_in_at&&<div style={{borderRadius:12,padding:8,background:'rgba(76,175,80,0.1)',border:'1px solid rgba(76,175,80,0.3)',gridColumn:'span 2'}}>
-                      <div style={{fontSize:10,color:'rgba(74,222,128,0.6)',marginBottom:2}}>Ingresó el</div>
+                    {isCheckedIn&&r?.checked_in_at&&<div style={{borderRadius:12,padding:10,background:'rgba(76,175,80,0.1)',border:'1px solid rgba(76,175,80,0.3)',gridColumn:'span 2'}}>
+                      <div style={{fontSize:10,color:'rgba(74,222,128,0.6)',marginBottom:3}}>Ingresó el</div>
                       <div style={{fontWeight:700,color:'#4ade80',fontSize:12}}>{new Date(r.checked_in_at).toLocaleString('es-CO')}</div>
                     </div>}
                   </div>
                 </div>
 
-                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                <div style={{display:'flex',flexDirection:'column',gap:10}}>
                   {!isCheckedIn&&isPaid&&(
                     <button onClick={handleCheckIn}
-                      style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,color:'white',fontSize:14,background:'linear-gradient(135deg,#4CAF50,#388E3C)',border:'none',cursor:'pointer'}}>
+                      style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,color:'white',fontSize:15,background:'linear-gradient(135deg,#4CAF50,#388E3C)',border:'none',cursor:'pointer'}}>
                       ✅ Validar ingreso
                     </button>
                   )}
                   <button onClick={()=>{setResult(null);setCheckedIn(false);setManualInput('')}}
-                    style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,fontSize:14,color:'white',background:'linear-gradient(135deg,#00BCD4,#0097A7)',border:'none',cursor:'pointer'}}>
+                    style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,fontSize:15,color:'white',background:'linear-gradient(135deg,#00BCD4,#0097A7)',border:'none',cursor:'pointer'}}>
                     📷 Escanear otro QR
                   </button>
-                  <button onClick={()=>{setResult(null);setCheckedIn(false);setManualInput('');stopScanner()}}
-                    style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,fontSize:14,color:tp,background:'transparent',border:`1px solid ${br}`,cursor:'pointer'}}>
+                  <button onClick={resetAll}
+                    style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,fontSize:15,color:'white',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer'}}>
                     ← Regresar al inicio
                   </button>
                 </div>
@@ -1827,7 +1812,6 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
     </div>
   )
 }
-
 function LoginScreen({onLogin}:{onLogin:(u:{id:string;email:string;role:string;name:string})=>void}) {
   const [email,setEmail]=useState('');const [pass,setPass]=useState('');const [err,setErr]=useState('');const [loading,setLoading]=useState(false)
   const doLogin=async(e:React.FormEvent)=>{
