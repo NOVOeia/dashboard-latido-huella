@@ -1633,6 +1633,7 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
   const [manualInput,setManualInput]=useState('')
   const videoRef=useRef<HTMLVideoElement>(null)
   const scannerRef=useRef<any>(null)
+  const processingRef=useRef(false)
 
   const stopScanner=()=>{
     if(scannerRef.current){
@@ -1644,17 +1645,18 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
 
   const startScanner=async()=>{
     setScanning(true)
+    processingRef.current=false
     await new Promise(r=>setTimeout(r,300))
     try{
       const {BrowserMultiFormatReader}=await import('@zxing/browser')
       const codeReader=new BrowserMultiFormatReader()
       scannerRef.current=codeReader
       const videoInputDevices=await BrowserMultiFormatReader.listVideoInputDevices()
-      // Prefer back camera
       const deviceId=videoInputDevices.find(d=>d.label.toLowerCase().includes('back')||d.label.toLowerCase().includes('rear')||d.label.toLowerCase().includes('environment'))?.deviceId||videoInputDevices[videoInputDevices.length-1]?.deviceId
       if(!videoRef.current){setScanning(false);return}
-      await codeReader.decodeFromVideoDevice(deviceId,videoRef.current,(result,error)=>{
-        if(result){
+      await codeReader.decodeFromVideoDevice(deviceId,videoRef.current,(result,_error)=>{
+        if(result&&!processingRef.current){
+          processingRef.current=true
           stopScanner()
           handleQRResult(result.getText())
         }

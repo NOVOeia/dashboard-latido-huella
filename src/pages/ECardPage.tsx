@@ -286,25 +286,14 @@ export function ECardPage() {
 
           {/* Título eCard */}
           <div style={{ background: 'rgba(0,188,212,0.1)', border: '1px solid rgba(0,188,212,0.3)', borderRadius: 12, padding: '10px 16px', marginBottom: 20 }}>
-            <p style={{ fontSize: 11, color: CYAN, fontWeight: 700, margin: 0, letterSpacing: '0.05em' }}>🎫 E-CARD DE INGRESO AL EVENTO</p>
+            <p style={{ fontSize: 11, color: CYAN, fontWeight: 700, margin: 0, letterSpacing: '0.05em' }}>🎟️ E-CARD DE INGRESO AL EVENTO</p>
             <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '2px 0 0' }}>Latido y Huella 2026 · Llanogrande</p>
           </div>
 
-          {/* QR con icono en el centro */}
+          {/* QR sin logo para mejor lectura */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20 }}>
-            <div style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 12, border: '1px solid rgba(0,188,212,0.2)' }}>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 12, border: '1px solid rgba(0,188,212,0.2)' }}>
               <img src={qrUrl} style={{ width: 160, height: 160, display: 'block', borderRadius: 8 }} alt="QR ticket" crossOrigin="anonymous" />
-              {/* Icono en el centro */}
-              <div style={{
-                position: 'absolute', top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 38, height: 38, borderRadius: '50%',
-                background: NAVY, border: `2px solid ${CYAN}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: 4,
-              }}>
-                <img src={ICON_URL} style={{ width: 26, height: 26, objectFit: 'contain' }} alt="icon" crossOrigin="anonymous" />
-              </div>
             </div>
             <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>Presenta este QR en la entrada del evento</p>
           </div>
