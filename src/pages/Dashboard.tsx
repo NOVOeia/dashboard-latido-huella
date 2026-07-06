@@ -1828,7 +1828,7 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
 
                 {/* Botones de acción */}
                 <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                  {/* Pago pendiente — NO puede ingresar */}
+                  {/* Pago pendiente */}
                   {!isPaid&&!isCheckedIn&&(
                     <button onClick={()=>sendEmail('pago')} disabled={sendingEmail}
                       style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,color:'white',fontSize:14,background:'linear-gradient(135deg,#f59e0b,#d97706)',border:'none',cursor:'pointer',opacity:sendingEmail?0.6:1}}>
@@ -1836,8 +1836,8 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
                     </button>
                   )}
 
-                  {/* Consentimiento pendiente — advertencia */}
-                  {isPaid&&!isSigned&&!isCheckedIn&&(
+                  {/* Consentimiento pendiente — mostrar siempre que falte firma */}
+                  {!isSigned&&!isCheckedIn&&r?.contract_token&&(
                     <button onClick={()=>sendEmail('firma')} disabled={sendingEmail}
                       style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,color:'white',fontSize:14,background:'linear-gradient(135deg,#f59e0b,#d97706)',border:'none',cursor:'pointer',opacity:sendingEmail?0.6:1}}>
                       {sendingEmail?'Enviando...':'📧 Enviar link de firma'}
