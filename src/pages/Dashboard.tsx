@@ -1637,7 +1637,7 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
   const startScanner=async()=>{
     setScanning(true)
     try {
-      const {Html5Qrcode}=await import('https://esm.sh/html5-qrcode@2.3.8' as any)
+      const {Html5Qrcode}=await import('html5-qrcode')
       scannerRef.current=new Html5Qrcode(scannerDivId)
       await scannerRef.current.start(
         {facingMode:'environment'},
@@ -1727,7 +1727,7 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
           </button>
 
           {/* Scanner div - oculto hasta activarse */}
-          <div id={scannerDivId} style={{display:'none'}}/>
+          <div id={scannerDivId} style={{display:'none',borderRadius:16,overflow:'hidden'}}/>
 
           <form onSubmit={handleManualSubmit} style={{display:'flex',gap:8}}>
             <input
@@ -1745,8 +1745,8 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
 
       {/* Scanner activo */}
       {scanning&&(
-        <div className="space-y-4">
-          <div id={scannerDivId} style={{borderRadius:16,overflow:'hidden',background:'#000'}}/>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div id={scannerDivId} style={{borderRadius:16,overflow:'hidden',background:'#000',minHeight:300}}/>
           <button onClick={stopScanner}
             style={{width:'100%',padding:12,borderRadius:12,fontSize:14,color:tp,background:'transparent',border:`1px solid ${br}`,cursor:'pointer',fontWeight:600}}>
             ✕ Cancelar
