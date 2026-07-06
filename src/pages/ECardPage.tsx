@@ -121,14 +121,7 @@ export function ECardPage() {
   const avatarPhoto = record.photo_url || null
 
   const ICON_URL = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/expositor-documents/assets/icono_blanco_latido.png'
-  const qrData = encodeURIComponent(JSON.stringify({
-    id: eCardNum,
-    nombre,
-    tipo: isCaminata ? record.ticket_type : isExpositor ? 'Expositor' : isDeporte ? record.sport : 'Patrocinador',
-    evento: 'Latido y Huella 2026',
-    registroId: id,
-  }))
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}&bgcolor=0D1B6E&color=00BCD4&qzone=1&format=png`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(id!)}&bgcolor=0D1B6E&color=00BCD4&qzone=1&format=png`
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: '#0a0f2c' }}>
@@ -320,17 +313,12 @@ export function ECardPage() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 16 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>📅 Fecha</div>
-              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>26 Jul 2026 · 7:00 AM
-</div>
+              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>26 Jul 2026</div>
             </div>
             <div style={{ width: 1, background: 'rgba(255,255,255,0.1)' }} />
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>📍 Lugar</div>
-              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600, whiteSpace: 'pre-line' }}>
-                Parque del Bienestar
-                <br/>
-                COMFAMA Llanogrande
-              </div>
+              <div style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>COMFAMA Llanogrande</div>
             </div>
           </div>
 
