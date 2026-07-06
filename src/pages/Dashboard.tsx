@@ -1630,66 +1630,65 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
   const [result,setResult]=useState<any>(null)
   const [loading,setLoading]=useState(false)
   const [checkedIn,setCheckedIn]=useState(false)
-  const videoRef=useRef<HTMLVideoElement>(null)
-  const streamRef=useRef<MediaStream|null>(null)
+  const [manualInput,setManualInput]=useState('')
+  const scannerRef=useRef<any>(null)
+  const scannerDivId='qr-scanner-div'
 
-  const stopCamera=()=>{
-    streamRef.current?.getTracks().forEach(t=>t.stop())
-    streamRef.current=null
+  const startScanner=async()=>{
+    setScanning(true)
+    try {
+      const {Html5Qrcode}=await import('https://esm.sh/html5-qrcode@2.3.8' as any)
+      scannerRef.current=new Html5Qrcode(scannerDivId)
+      await scannerRef.current.start(
+        {facingMode:'environment'},
+        {fps:10,qrbox:{width:250,height:250}},
+        (decodedText:string)=>{
+          stopScanner()
+          handleQRResult(decodedText)
+        },
+        ()=>{}
+      )
+    } catch(e) {
+      console.error(e)
+      setScanning(false)
+      alert('No se pudo acceder a la cámara. Verifica los permisos.')
+    }
+  }
+
+  const stopScanner=()=>{
+    if(scannerRef.current) {
+      try { scannerRef.current.stop().catch(()=>{}) } catch(_e){}
+      scannerRef.current=null
+    }
     setScanning(false)
   }
 
-  const startCamera=async()=>{
-    try {
-      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
-      streamRef.current=stream
-      if(videoRef.current) videoRef.current.srcObject=stream
-      setScanning(true)
-      // Use BarcodeDetector API if available
-      if('BarcodeDetector' in window) {
-        const detector=new (window as any).BarcodeDetector({formats:['qr_code']})
-        const interval=setInterval(async()=>{
-          if(videoRef.current&&videoRef.current.readyState===4) {
-            try {
-              const codes=await detector.detect(videoRef.current)
-              if(codes.length>0) {
-                clearInterval(interval)
-                stopCamera()
-                handleQRResult(codes[0].rawValue)
-              }
-            } catch(_e){}
-          }
-        },300)
-      }
-    } catch(e) { alert('No se pudo acceder a la cámara') }
-  }
+  useEffect(()=>()=>stopScanner(),[])
 
   const handleQRResult=async(raw:string)=>{
     setLoading(true);setResult(null);setCheckedIn(false)
     try {
-      const data=JSON.parse(raw)
-      const registroId=data.registroId||data.id
-      if(!registroId) { setResult({error:'QR inválido'}); setLoading(false); return }
+      let registroId=''
+      try {
+        const data=JSON.parse(raw)
+        registroId=data.registroId||data.id||''
+      } catch { registroId=raw.trim() }
+
+      if(!registroId){setResult({error:'QR inválido'});setLoading(false);return}
 
       const tablas=['registrations_5k','expositor_reservations','toldos_reservations','sports_team_registrations','sponsor_inquiries']
-      for(const t of tablas) {
-        const {data:rec}=await supabase.from(t).select('*').eq('id',registroId).maybeSingle()
-        if(rec) {
-          setResult({record:rec,table:t})
-          setLoading(false)
-          return
-        }
+      for(const t of tablas){
+        const{data:rec}=await supabase.from(t).select('*').eq('id',registroId).maybeSingle()
+        if(rec){setResult({record:rec,table:t});setLoading(false);return}
       }
       setResult({error:'Registro no encontrado'})
-    } catch { setResult({error:'QR inválido o ilegible'}) }
+    } catch{setResult({error:'QR inválido o ilegible'})}
     setLoading(false)
   }
 
-  const handleManualInput=(e:React.FormEvent<HTMLFormElement>)=>{
+  const handleManualSubmit=(e:React.FormEvent)=>{
     e.preventDefault()
-    const form=e.currentTarget
-    const val=(form.elements.namedItem('qrInput') as HTMLInputElement).value
-    if(val) handleQRResult(val)
+    if(manualInput.trim()) handleQRResult(manualInput.trim())
   }
 
   const handleCheckIn=async()=>{
@@ -1699,7 +1698,7 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
       checked_in_by:user?.name||user?.email||'Staff'
     }).eq('id',result.record.id)
     setCheckedIn(true)
-    setResult({...result,record:{...result.record,checked_in_at:new Date().toISOString()}})
+    setResult((prev:any)=>({...prev,record:{...prev.record,checked_in_at:new Date().toISOString()}}))
   }
 
   const r=result?.record
@@ -1722,96 +1721,98 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
       {/* Botón escanear */}
       {!scanning&&!result&&(
         <div className="space-y-4">
-          <button onClick={startCamera}
-            className="w-full py-6 rounded-2xl font-bold text-white text-lg"
-            style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
+          <button onClick={startScanner}
+            style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)',width:'100%',padding:'24px',borderRadius:16,fontWeight:700,color:'white',fontSize:18,border:'none',cursor:'pointer'}}>
             📷 Escanear QR
           </button>
-          <form onSubmit={handleManualInput} className="flex gap-2">
-            <input name="qrInput" placeholder="O pega el contenido del QR aquí..."
-              className="flex-1 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              style={{background:card,border:`1px solid ${br}`,color:tp}}/>
-            <button type="submit" className="px-4 rounded-xl font-bold text-white" style={{background:'#00BCD4'}}>Buscar</button>
+
+          {/* Scanner div - oculto hasta activarse */}
+          <div id={scannerDivId} style={{display:'none'}}/>
+
+          <form onSubmit={handleManualSubmit} style={{display:'flex',gap:8}}>
+            <input
+              value={manualInput}
+              onChange={e=>setManualInput(e.target.value)}
+              placeholder="O pega el contenido del QR aquí..."
+              style={{flex:1,borderRadius:12,padding:'10px 14px',fontSize:14,background:card,border:`1px solid ${br}`,color:tp,outline:'none'}}/>
+            <button type="submit"
+              style={{padding:'10px 16px',borderRadius:12,fontWeight:700,color:'white',background:'#00BCD4',border:'none',cursor:'pointer'}}>
+              Buscar
+            </button>
           </form>
         </div>
       )}
 
-      {/* Video cámara */}
+      {/* Scanner activo */}
       {scanning&&(
         <div className="space-y-4">
-          <div className="relative rounded-2xl overflow-hidden" style={{aspectRatio:'1',background:'#000'}}>
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover"/>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-48 h-48 border-4 rounded-2xl" style={{borderColor:'#00BCD4'}}/>
-            </div>
-          </div>
-          <button onClick={stopCamera} className="w-full py-3 rounded-xl text-sm border" style={{color:ts,borderColor:br}}>Cancelar</button>
+          <div id={scannerDivId} style={{borderRadius:16,overflow:'hidden',background:'#000'}}/>
+          <button onClick={stopScanner}
+            style={{width:'100%',padding:12,borderRadius:12,fontSize:14,color:tp,background:'transparent',border:`1px solid ${br}`,cursor:'pointer',fontWeight:600}}>
+            ✕ Cancelar
+          </button>
         </div>
       )}
 
       {/* Loading */}
-      {loading&&<div className="text-center py-12" style={{color:ts}}>⏳ Buscando registro...</div>}
+      {loading&&<div style={{textAlign:'center',padding:'48px 0',color:ts}}>⏳ Buscando registro...</div>}
 
       {/* Resultado */}
       {result&&!loading&&(
-        <div className="space-y-4">
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
           {result.error
-            ? <div className="p-6 rounded-2xl text-center" style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)'}}>
-                <div className="text-4xl mb-2">❌</div>
-                <div className="font-bold text-red-400">{result.error}</div>
+            ? <div style={{padding:24,borderRadius:16,textAlign:'center',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)'}}>
+                <div style={{fontSize:40,marginBottom:8}}>❌</div>
+                <div style={{fontWeight:700,color:'#f87171'}}>{result.error}</div>
               </div>
             : <>
-                {/* Status principal */}
-                <div className="p-6 rounded-2xl text-center" style={{
+                <div style={{
+                  padding:24,borderRadius:16,textAlign:'center',
                   background:isCheckedIn?'rgba(76,175,80,0.1)':isPaid?'rgba(0,188,212,0.1)':'rgba(245,158,11,0.1)',
                   border:`1px solid ${isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}`
                 }}>
-                  <div className="text-5xl mb-2">{isCheckedIn?'✅':isPaid?'🎫':'⚠️'}</div>
-                  <div className="font-black text-xl" style={{color:isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}}>
+                  <div style={{fontSize:48,marginBottom:8}}>{isCheckedIn?'✅':isPaid?'🎫':'⚠️'}</div>
+                  <div style={{fontWeight:900,fontSize:20,color:isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}}>
                     {isCheckedIn?'¡Ingreso registrado!':isPaid?'Ticket válido':'Pago pendiente'}
                   </div>
                 </div>
 
-                {/* Datos */}
-                <div className="rounded-2xl p-4 space-y-3" style={{background:card,border:`1px solid ${br}`}}>
-                  <div className="text-lg font-black" style={{color:tp}}>{nombre}</div>
-                  <div className="text-sm font-bold" style={{color:'#00BCD4'}}>{tipo}</div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-xl p-2" style={{background:'rgba(255,255,255,0.05)'}}>
-                      <div style={{color:ts}}>Pago</div>
-                      <div className={`font-bold ${isPaid?'text-emerald-400':'text-amber-400'}`}>{isPaid?'✅ Pagado':'⏳ Pendiente'}</div>
+                <div style={{borderRadius:16,padding:16,background:card,border:`1px solid ${br}`}}>
+                  <div style={{fontSize:18,fontWeight:900,color:tp,marginBottom:4}}>{nombre}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:'#00BCD4',marginBottom:12}}>{tipo}</div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    <div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Pago</div>
+                      <div style={{fontWeight:700,color:isPaid?'#4ade80':'#fbbf24'}}>{isPaid?'✅ Pagado':'⏳ Pendiente'}</div>
                     </div>
-                    <div className="rounded-xl p-2" style={{background:'rgba(255,255,255,0.05)'}}>
-                      <div style={{color:ts}}>Consentimiento</div>
-                      <div className={`font-bold ${isSigned?'text-emerald-400':'text-amber-400'}`}>{isSigned?'✅ Firmado':'⏳ Pendiente'}</div>
+                    <div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Consentimiento</div>
+                      <div style={{fontWeight:700,color:isSigned?'#4ade80':'#fbbf24'}}>{isSigned?'✅ Firmado':'⏳ Pendiente'}</div>
                     </div>
-                    {r?.stand_id&&<div className="rounded-xl p-2 col-span-2" style={{background:'rgba(255,255,255,0.05)'}}>
-                      <div style={{color:ts}}>Stand</div>
-                      <div className="font-bold" style={{color:tp}}>{r.stand_id}</div>
+                    {r?.stand_id&&<div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)',gridColumn:'span 2'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Stand</div>
+                      <div style={{fontWeight:700,color:tp}}>{r.stand_id}</div>
                     </div>}
-                    {r?.team_name&&<div className="rounded-xl p-2 col-span-2" style={{background:'rgba(255,255,255,0.05)'}}>
-                      <div style={{color:ts}}>Equipo</div>
-                      <div className="font-bold" style={{color:tp}}>{r.team_name}</div>
+                    {r?.team_name&&<div style={{borderRadius:12,padding:8,background:'rgba(255,255,255,0.05)',gridColumn:'span 2'}}>
+                      <div style={{fontSize:10,color:ts,marginBottom:2}}>Equipo</div>
+                      <div style={{fontWeight:700,color:tp}}>{r.team_name}</div>
                     </div>}
-                    {isCheckedIn&&r?.checked_in_at&&<div className="rounded-xl p-2 col-span-2" style={{background:'rgba(76,175,80,0.1)',border:'1px solid rgba(76,175,80,0.3)'}}>
-                      <div className="text-emerald-400/60 text-xs">Ingresó el</div>
-                      <div className="font-bold text-emerald-400 text-xs">{new Date(r.checked_in_at).toLocaleString('es-CO')}</div>
+                    {isCheckedIn&&r?.checked_in_at&&<div style={{borderRadius:12,padding:8,background:'rgba(76,175,80,0.1)',border:'1px solid rgba(76,175,80,0.3)',gridColumn:'span 2'}}>
+                      <div style={{fontSize:10,color:'rgba(74,222,128,0.6)',marginBottom:2}}>Ingresó el</div>
+                      <div style={{fontWeight:700,color:'#4ade80',fontSize:12}}>{new Date(r.checked_in_at).toLocaleString('es-CO')}</div>
                     </div>}
                   </div>
                 </div>
 
-                {/* Botones */}
-                <div className="space-y-2">
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   {!isCheckedIn&&isPaid&&(
                     <button onClick={handleCheckIn}
-                      className="w-full py-3 rounded-xl font-bold text-white text-sm"
-                      style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
+                      style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,color:'white',fontSize:14,background:'linear-gradient(135deg,#4CAF50,#388E3C)',border:'none',cursor:'pointer'}}>
                       ✅ Validar ingreso
                     </button>
                   )}
-                  <button onClick={()=>{setResult(null);setCheckedIn(false)}}
-                    className="w-full py-3 rounded-xl font-bold text-sm border"
-                    style={{color:ts,borderColor:br}}>
+                  <button onClick={()=>{setResult(null);setCheckedIn(false);setManualInput('')}}
+                    style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,fontSize:14,color:tp,background:'transparent',border:`1px solid ${br}`,cursor:'pointer'}}>
                     📷 Escanear otro QR
                   </button>
                 </div>
