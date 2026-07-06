@@ -1696,7 +1696,36 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
     setResult((prev:any)=>({...prev,record:{...prev.record,checked_in_at:new Date().toISOString()}}))
   }
 
-  const resetAll=()=>{setResult(null);setCheckedIn(false);setManualInput('');stopScanner()}
+  const [sendingEmail,setSendingEmail]=useState(false)
+  const [emailSent,setEmailSent]=useState<string|null>(null)
+
+  const sendEmail=async(tipo:'pago'|'firma')=>{
+    if(!r)return
+    setSendingEmail(true)
+    const email=r.email||r.captain_email||''
+    const nombre2=r.full_name||r.responsible_name||r.captain_name||''
+    if(!email){alert('Este registro no tiene email registrado.');setSendingEmail(false);return}
+    let subject='',html=''
+    if(tipo==='pago'){
+      subject='⚠️ Tienes un pago pendiente — Latido y Huella 2026'
+      html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden"><div style="padding:24px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:50px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h2 style="color:#0D1B6E">Hola ${nombre2} 👋</h2><p>Tienes un pago pendiente para completar tu registro en <strong>Latido y Huella 2026</strong>. Sin el pago confirmado no podrás ingresar al evento.</p><p style="color:#666;font-size:12px">Latido y Huella 2026 · eventos@latidoyhuella.co</p></div></div>`
+    } else {
+      const token=r.contract_token||''
+      const link=`${window.location.origin}/contrato/${token}`
+      subject='✍️ Tienes un documento pendiente de firma — Latido y Huella 2026'
+      html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden"><div style="padding:24px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:50px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h2 style="color:#0D1B6E">Hola ${nombre2} 👋</h2><p>Tienes un consentimiento pendiente de firma para poder ingresar al evento <strong>Latido y Huella 2026</strong>.</p><div style="text-align:center;margin:24px 0"><a href="${link}" style="background:linear-gradient(135deg,#00BCD4,#0097A7);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">✍️ Firmar documento</a></div><p style="color:#666;font-size:12px">Latido y Huella 2026 · eventos@latidoyhuella.co</p></div></div>`
+    }
+    const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
+      body:JSON.stringify({to:email,subject,html,from:'eventos@latidoyhuella.co',type:'staff'})
+    })
+    if(res.ok) setEmailSent(tipo==='pago'?'Email de pago enviado':'Email de firma enviado')
+    else alert('Error al enviar el email')
+    setSendingEmail(false)
+  }
+
+  const resetAll=()=>{setResult(null);setCheckedIn(false);setManualInput('');setEmailSent(null);stopScanner()}
 
   const r=result?.record
   const isPaid=r?.status==='paid'||r?.status==='approved'
@@ -1756,23 +1785,28 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
                 <div style={{fontWeight:700,color:'#f87171',fontSize:16}}>{result.error}</div>
               </div>
             : <>
-                <div style={{padding:24,borderRadius:16,textAlign:'center',background:isCheckedIn?'rgba(76,175,80,0.1)':isPaid?'rgba(0,188,212,0.1)':'rgba(245,158,11,0.1)',border:`2px solid ${isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}`}}>
-                  <div style={{fontSize:48,marginBottom:8}}>{isCheckedIn?'✅':isPaid?'🎫':'⚠️'}</div>
-                  <div style={{fontWeight:900,fontSize:22,color:isCheckedIn?'#4CAF50':isPaid?'#00BCD4':'#FFB300'}}>
-                    {isCheckedIn?'¡Ingreso registrado!':isPaid?'Ticket válido':'Pago pendiente'}
+                {/* Estado principal */}
+                <div style={{padding:24,borderRadius:16,textAlign:'center',
+                  background:isCheckedIn?'rgba(76,175,80,0.1)':!isPaid?'rgba(239,68,68,0.1)':!isSigned?'rgba(245,158,11,0.1)':'rgba(0,188,212,0.1)',
+                  border:`2px solid ${isCheckedIn?'#4CAF50':!isPaid?'#f87171':!isSigned?'#FFB300':'#00BCD4'}`}}>
+                  <div style={{fontSize:48,marginBottom:8}}>{isCheckedIn?'✅':!isPaid?'❌':!isSigned?'⚠️':'🎫'}</div>
+                  <div style={{fontWeight:900,fontSize:20,color:isCheckedIn?'#4CAF50':!isPaid?'#f87171':!isSigned?'#FFB300':'#00BCD4'}}>
+                    {isCheckedIn?'¡Ingreso registrado!':!isPaid?'Pago pendiente':!isSigned?'Consentimiento pendiente':'Ticket válido'}
                   </div>
                 </div>
+
+                {/* Datos */}
                 <div style={{borderRadius:16,padding:16,background:card,border:`1px solid ${br}`}}>
                   <div style={{fontSize:20,fontWeight:900,color:tp,marginBottom:4}}>{nombre}</div>
                   <div style={{fontSize:14,fontWeight:700,color:'#00BCD4',marginBottom:12}}>{tipo}</div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                     <div style={{borderRadius:12,padding:10,background:'rgba(255,255,255,0.05)'}}>
                       <div style={{fontSize:10,color:ts,marginBottom:3}}>Pago</div>
-                      <div style={{fontWeight:700,fontSize:13,color:isPaid?'#4ade80':'#fbbf24'}}>{isPaid?'✅ Pagado':'⏳ Pendiente'}</div>
+                      <div style={{fontWeight:700,fontSize:13,color:isPaid?'#4ade80':'#f87171'}}>{isPaid?'✅ Pagado':'❌ Pendiente'}</div>
                     </div>
                     <div style={{borderRadius:12,padding:10,background:'rgba(255,255,255,0.05)'}}>
                       <div style={{fontSize:10,color:ts,marginBottom:3}}>Consentimiento</div>
-                      <div style={{fontWeight:700,fontSize:13,color:isSigned?'#4ade80':'#fbbf24'}}>{isSigned?'✅ Firmado':'⏳ Pendiente'}</div>
+                      <div style={{fontWeight:700,fontSize:13,color:isSigned?'#4ade80':'#fbbf24'}}>{isSigned?'✅ Firmado':'⚠️ Pendiente'}</div>
                     </div>
                     {r?.stand_id&&<div style={{borderRadius:12,padding:10,background:'rgba(255,255,255,0.05)',gridColumn:'span 2'}}>
                       <div style={{fontSize:10,color:ts,marginBottom:3}}>Stand</div>
@@ -1788,14 +1822,37 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
                     </div>}
                   </div>
                 </div>
+
+                {/* Email enviado */}
+                {emailSent&&<div style={{padding:12,borderRadius:12,textAlign:'center',background:'rgba(76,175,80,0.1)',border:'1px solid rgba(76,175,80,0.3)',color:'#4ade80',fontWeight:700,fontSize:13}}>✅ {emailSent}</div>}
+
+                {/* Botones de acción */}
                 <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                  {!isCheckedIn&&isPaid&&(
-                    <button onClick={handleCheckIn}
-                      style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,color:'white',fontSize:15,background:'linear-gradient(135deg,#4CAF50,#388E3C)',border:'none',cursor:'pointer'}}>
-                      ✅ Validar ingreso
+                  {/* Pago pendiente — NO puede ingresar */}
+                  {!isPaid&&!isCheckedIn&&(
+                    <button onClick={()=>sendEmail('pago')} disabled={sendingEmail}
+                      style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,color:'white',fontSize:14,background:'linear-gradient(135deg,#f59e0b,#d97706)',border:'none',cursor:'pointer',opacity:sendingEmail?0.6:1}}>
+                      {sendingEmail?'Enviando...':'📧 Enviar link de pago'}
                     </button>
                   )}
-                  <button onClick={()=>{setResult(null);setCheckedIn(false);setManualInput('')}}
+
+                  {/* Consentimiento pendiente — advertencia */}
+                  {isPaid&&!isSigned&&!isCheckedIn&&(
+                    <button onClick={()=>sendEmail('firma')} disabled={sendingEmail}
+                      style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,color:'white',fontSize:14,background:'linear-gradient(135deg,#f59e0b,#d97706)',border:'none',cursor:'pointer',opacity:sendingEmail?0.6:1}}>
+                      {sendingEmail?'Enviando...':'📧 Enviar link de firma'}
+                    </button>
+                  )}
+
+                  {/* Validar ingreso — solo si pagó */}
+                  {isPaid&&!isCheckedIn&&(
+                    <button onClick={handleCheckIn}
+                      style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,color:'white',fontSize:15,background:isSigned?'linear-gradient(135deg,#4CAF50,#388E3C)':'rgba(76,175,80,0.3)',border:isSigned?'none':'1px solid rgba(76,175,80,0.5)',cursor:'pointer'}}>
+                      {isSigned?'✅ Validar ingreso':'⚠️ Validar de todas formas (sin firma)'}
+                    </button>
+                  )}
+
+                  <button onClick={()=>{setResult(null);setCheckedIn(false);setManualInput('');setEmailSent(null)}}
                     style={{width:'100%',padding:16,borderRadius:12,fontWeight:700,fontSize:15,color:'white',background:'linear-gradient(135deg,#00BCD4,#0097A7)',border:'none',cursor:'pointer'}}>
                     📷 Escanear otro QR
                   </button>
