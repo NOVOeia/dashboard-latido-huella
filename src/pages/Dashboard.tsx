@@ -1707,8 +1707,16 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
     if(!email){alert('Este registro no tiene email registrado.');setSendingEmail(false);return}
     let subject='',html=''
     if(tipo==='pago'){
+      // Generar link de pago dinámico usando supabase client
+      let paymentUrl=''
+      try{
+        const {data:plData,error:plError}=await supabase.functions.invoke('generate-payment-link',{
+          body:{record_id:r.id}
+        })
+        if(!plError&&plData?.payment_url) paymentUrl=plData.payment_url
+      }catch(_e){}
       subject='⚠️ Tienes un pago pendiente — Latido y Huella 2026'
-      html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden"><div style="padding:24px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:50px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h2 style="color:#0D1B6E">Hola ${nombre2} 👋</h2><p>Tienes un pago pendiente para completar tu registro en <strong>Latido y Huella 2026</strong>. Sin el pago confirmado no podrás ingresar al evento.</p><p style="color:#666;font-size:12px">Latido y Huella 2026 · eventos@latidoyhuella.co</p></div></div>`
+      html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden"><div style="padding:24px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:50px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h2 style="color:#0D1B6E">Hola ${nombre2} 👋</h2><p>Tienes un pago pendiente para completar tu registro en <strong>Latido y Huella 2026</strong>. Sin el pago confirmado no podrás ingresar al evento.</p>${paymentUrl?`<div style="text-align:center;margin:24px 0"><a href="${paymentUrl}" style="background:linear-gradient(135deg,#0D1B6E,#00BCD4);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">💳 Completar pago ahora</a></div>`:'<p><strong>Contacta al organizador para completar tu pago.</strong></p>'}<p style="color:#666;font-size:12px">Latido y Huella 2026 · eventos@latidoyhuella.co · WhatsApp: +57 333 277 7912</p></div></div>`
     } else {
       const token=r.contract_token||''
       const link=`${window.location.origin}/contrato/${token}`
@@ -1720,7 +1728,7 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
       headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
       body:JSON.stringify({to:email,subject,html,from:'eventos@latidoyhuella.co',type:'staff'})
     })
-    if(res.ok) setEmailSent(tipo==='pago'?'Email de pago enviado':'Email de firma enviado')
+    if(res.ok) setEmailSent(tipo==='pago'?'Email de pago enviado ✅':'Email de firma enviado ✅')
     else alert('Error al enviar el email')
     setSendingEmail(false)
   }
