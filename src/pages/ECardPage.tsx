@@ -121,7 +121,7 @@ export function ECardPage() {
   const avatarPhoto = record.photo_url || null
 
   const ICON_URL = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/expositor-documents/assets/icono_blanco_latido.png'
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(id!)}&bgcolor=0D1B6E&color=00BCD4&qzone=1&format=png`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(id!)}&bgcolor=0D1B6E&color=ffffff&qzone=2&format=png`
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: '#0a0f2c' }}>

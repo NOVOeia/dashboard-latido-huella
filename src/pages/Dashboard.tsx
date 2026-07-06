@@ -1812,8 +1812,12 @@ function StaffPage({user,dark,br,tp,ts,card}:{user:any;dark:boolean;br:string;tp
                     </button>
                   )}
                   <button onClick={()=>{setResult(null);setCheckedIn(false);setManualInput('')}}
-                    style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,fontSize:14,color:tp,background:'transparent',border:`1px solid ${br}`,cursor:'pointer'}}>
+                    style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,fontSize:14,color:'white',background:'linear-gradient(135deg,#00BCD4,#0097A7)',border:'none',cursor:'pointer'}}>
                     📷 Escanear otro QR
+                  </button>
+                  <button onClick={()=>{setResult(null);setCheckedIn(false);setManualInput('');stopScanner()}}
+                    style={{width:'100%',padding:12,borderRadius:12,fontWeight:700,fontSize:14,color:tp,background:'transparent',border:`1px solid ${br}`,cursor:'pointer'}}>
+                    ← Regresar al inicio
                   </button>
                 </div>
               </>
