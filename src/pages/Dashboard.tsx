@@ -1199,6 +1199,7 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
   const [fromEmail,setFromEmail]=useState('eventos@latidoyhuella.co')
   const [sendResult,setSendResult]=useState<{ok:boolean;msg:string}|null>(null)
   const [activeTab,setActiveTab]=useState<'plantillas'|'historial'>('plantillas')
+  const [previewEmail,setPreviewEmail]=useState<any>(null)
 
   const FROM_OPTIONS=['eventos@latidoyhuella.co','contacto@latidoyhuella.co','noresponder@latidoyhuella.co']
 
@@ -1617,7 +1618,7 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
 
       {activeTab==='historial'&&(
         <div className="mt-4">
-          <DTable headers={['Plantilla','Para','Categoría','Fecha','']} empty={!logs.length}>
+          <DTable headers={['Plantilla','Para','Categoría','Fecha','Estado','']} empty={!logs.length}>
             {logs.map((l,i)=>(
               <TR key={i}>
                 <TD cls="font-medium text-sm">{l.template_name}</TD>
@@ -1625,10 +1626,40 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
                 <TD><span className="text-xs px-2 py-0.5 rounded-full" style={{background:'rgba(0,188,212,0.15)',color:'#00BCD4'}}>{CAT_LABELS[l.category]||l.category}</span></TD>
                 <TD cls="text-xs" style={{color:ts}}>{fmtDate(l.sent_at)}</TD>
                 <TD><span className="text-xs font-bold text-emerald-400">✓ Enviado</span></TD>
+                <TD><div className="flex gap-1">
+                  {l.body_html&&<Btn icon="👁️" color="bg-white/5 text-gray-400 hover:bg-white/10" onClick={()=>setPreviewEmail(l)}/>}
+                  <Btn icon="↩️" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={async()=>{
+                    if(!l.to_email||!l.subject||!l.body_html) return
+                    await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
+                      method:'POST',
+                      headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
+                      body:JSON.stringify({to:l.to_email,subject:`[Reenvío] ${l.subject}`,html:l.body_html,from:'eventos@latidoyhuella.co',type:l.category})
+                    })
+                    alert(`Email reenviado a ${l.to_email}`)
+                  }}/>
+                </div></TD>
               </TR>
             ))}
           </DTable>
         </div>
+      )}
+
+      {/* Preview email modal */}
+      {previewEmail&&(
+        <Modal onClose={()=>setPreviewEmail(null)}>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-sm font-bold" style={{color:tp}}>{previewEmail.subject}</div>
+                <div className="text-xs" style={{color:ts}}>Para: {previewEmail.to_email}</div>
+              </div>
+              <button onClick={()=>setPreviewEmail(null)} className="text-gray-500 hover:text-white text-xl">×</button>
+            </div>
+            <div className="rounded-xl overflow-hidden" style={{maxHeight:500,overflowY:'auto'}}>
+              <iframe srcDoc={previewEmail.body_html} style={{width:'100%',minHeight:400,border:'none',borderRadius:8,background:'white'}} title="Preview email"/>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {sendModal&&(
