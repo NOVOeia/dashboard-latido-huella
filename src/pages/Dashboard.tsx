@@ -1948,10 +1948,10 @@ export function Dashboard() {
   const [devConfig,setDevConfig]=useState({
     supabaseUrl:'https://adkqijensfxzzftylktm.supabase.co',
     supabaseKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFka3FpamVuc2Z4enpmdHlsa3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzQ1OTMsImV4cCI6MjA5Mzc1MDU5M30.Yk7hafWIWMsKQtcCZ4f03_hCVtAUgoTt4soxEgEuLrY',
-    wompiPublicKey:'pub_test_L3NPjcWK62uxOU6FtoQrTfuLNw4JbCoT',
-    wompiIntegrityKey:'test_integrity_UbYRUmWZ4uBR9mgcS0aCGiVgFDiZqRni',
+    wompiPublicKey:'pub_prod_c3KnNzhHf9P0aRWwfeTzggSDX7UOl1Sr',
+    wompiIntegrityKey:'prod_integrity_gFwVI13EBqz9Khb672Ve042FU41xEvse',
     wompiEventsSecret:'prod_events_SFG13B4vgYJy9kj0RuuYTrjYyFDnvj8y',
-    wompiMode:'test',
+    wompiMode:'prod',
     webhookUrl:'https://adkqijensfxzzftylktm.supabase.co/functions/v1/wompi-webhook',
   })
   const [devSaved,setDevSaved]=useState(false)
