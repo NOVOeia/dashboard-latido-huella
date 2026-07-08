@@ -244,108 +244,158 @@ function ApproveModal({record,table,onClose,onSaved}:{record:any;table:string;on
 }
 
 // ─── CONTRACT MODAL ───────────────────────────────────────────────────────────
-function ContractModal({name,email,recordId,table,contractToken,contractSignedAt,contractPdfUrl,onClose}:{
+function ContractModal({name,email,recordId,table,contractToken,contractSignedAt,contractPdfUrl,email1SentAt,onClose}:{
   name:string;email:string;recordId:string;table:string;
-  contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;onClose:()=>void
+  contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;email1SentAt?:string;onClose:()=>void
 }) {
-  const [sending,setSending]=useState(false)
-  const [sent,setSent]=useState(false)
+  const [sending,setSending]=useState<string|null>(null)
+  const [sentLog,setSentLog]=useState<Record<string,string>>({})
   const [error,setError]=useState('')
   const isSigned=!!contractSignedAt
+  const hasToken=!!contractToken
   const contractUrl=contractToken?`${window.location.origin}/contrato/${contractToken}`:''
   const ecardUrl=`${window.location.origin}/ecard/${recordId}`
 
-  const sendContractEmail=async()=>{
-    if(!email||!contractToken) return
-    setSending(true);setError('')
-    try {
-      const html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden">
-        <div style="padding:32px;text-align:center">
-          <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px" alt="Latido y Huella"/>
-        </div>
-        <div style="background:white;padding:32px;border-radius:0 0 16px 16px">
-          <h1 style="color:#0D1B6E">Hola ${name} 👋</h1>
-          <p>Tienes un documento pendiente de firma para completar tu registro en <strong>Latido y Huella 2026</strong>.</p>
-          <p>Por favor firma el documento antes del evento para que tu registro esté 100% completo.</p>
-          <div style="text-align:center;margin:24px 0">
-            <a href="${contractUrl}" style="background:linear-gradient(135deg,#00BCD4,#0097A7);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">✍️ Firmar documento</a>
-          </div>
-          <p style="color:#666;font-size:12px;text-align:center">Latido y Huella 2026 · eventos@latidoyhuella.co</p>
-        </div>
-      </div>`
+  const fmtDate=(d?:string)=>d?new Date(d).toLocaleString('es-CO',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):''
+
+  const sendEmail=async(tipo:'email1'|'email2'|'recordatorio')=>{
+    if(!email) return
+    setSending(tipo);setError('')
+    try{
+      let subject='',html=''
+      if(tipo==='email1'){
+        subject='🎉 Tu registro en Latido y Huella 2026 está confirmado'
+        html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden"><div style="padding:32px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h1 style="color:#0D1B6E">Hola ${name} 🎉</h1><p>Tu registro para <strong>Latido y Huella 2026</strong> está confirmado. Para completar tu proceso debes firmar el consentimiento.</p><div style="text-align:center;margin:24px 0"><a href="${contractUrl}" style="background:linear-gradient(135deg,#00BCD4,#0097A7);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">✍️ Firmar consentimiento</a></div><p style="color:#666;font-size:12px;text-align:center">Latido y Huella 2026 · 26 Jul 2026 · Llanogrande · eventos@latidoyhuella.co</p></div></div>`
+      } else if(tipo==='recordatorio'){
+        subject='⏰ Recuerda firmar tu consentimiento — Latido y Huella 2026'
+        html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden"><div style="padding:32px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h1 style="color:#0D1B6E">Hola ${name} 👋</h1><p>Te recordamos que tienes un consentimiento pendiente de firma para el evento <strong>Latido y Huella 2026</strong>. Sin esta firma tu registro no estará completo.</p><div style="background:#fff3e0;border-radius:12px;padding:16px;margin:16px 0"><p style="color:#e65100;font-weight:bold;margin:0">⚠️ El evento es el 26 de julio — no olvides firmar</p></div><div style="text-align:center;margin:24px 0"><a href="${contractUrl}" style="background:linear-gradient(135deg,#00BCD4,#0097A7);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">✍️ Firmar ahora</a></div><p style="color:#666;font-size:12px;text-align:center">Latido y Huella 2026 · eventos@latidoyhuella.co</p></div></div>`
+      } else if(tipo==='email2'){
+        subject='✅ Tu registro en Latido y Huella 2026 está completo'
+        html=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0D1B6E;border-radius:16px;overflow:hidden"><div style="padding:32px;text-align:center"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h1 style="color:#0D1B6E">Hola ${name} 🎫</h1><p>Tu registro está 100% completo. Aquí está tu E-Card de ingreso al evento.</p><div style="text-align:center;margin:24px 0"><a href="${ecardUrl}" style="background:linear-gradient(135deg,#0D1B6E,#00BCD4);color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;display:inline-block">🎫 Ver mi E-Card</a></div>${contractPdfUrl?`<div style="text-align:center;margin:12px 0"><a href="${contractPdfUrl}" style="color:#0D1B6E;font-size:13px">📄 Ver documento firmado</a></div>`:''}<p style="color:#666;font-size:12px;text-align:center">Latido y Huella 2026 · 26 Jul 2026 · Llanogrande</p></div></div>`
+      }
       const res=await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`,{
         method:'POST',
         headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
-        body:JSON.stringify({to:email,subject:`✍️ Tienes un documento pendiente — Latido y Huella 2026`,html,from:'eventos@latidoyhuella.co',type:'contrato'})
+        body:JSON.stringify({to:email,subject,html,from:'eventos@latidoyhuella.co',type:'contrato'})
       })
-      if(res.ok){setSent(true);setTimeout(()=>{onClose()},2000)}
-      else setError('Error al enviar. Intenta de nuevo.')
-    } catch { setError('Error de conexión.') }
-    setSending(false)
+      if(res.ok){
+        const now=new Date().toISOString()
+        setSentLog(p=>({...p,[tipo]:now}))
+        if(tipo==='email1'){
+          await supabase.from(table).update({email1_sent_at:now}).eq('id',recordId)
+        }
+      } else setError('Error al enviar. Intenta de nuevo.')
+    }catch{setError('Error de conexión.')}
+    setSending(null)
   }
+
+  const email1Date=email1SentAt||sentLog['email1']
+  const email2Date=sentLog['email2']
+  const recDate=sentLog['recordatorio']
 
   return (
     <Modal onClose={onClose}>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-bold text-white">{isSigned?'✅ Contrato firmado':'📝 Contrato pendiente'}</h3>
+      <div className="p-6 space-y-3" style={{minWidth:320}}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-white">📋 Gestión del contrato</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none">×</button>
         </div>
 
-        <div className="bg-white/5 rounded-xl p-3 mb-4 border border-white/10">
-          <div className="text-xs text-gray-500">Participante</div>
+        {/* Participante */}
+        <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+          <div className="text-xs text-gray-500 mb-0.5">Participante</div>
           <div className="text-sm font-semibold text-white">{name}</div>
           <div className="text-xs text-gray-400">{email}</div>
         </div>
 
-        {isSigned
-          ? <div className="space-y-3">
-              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
-                <div className="text-emerald-400 font-bold text-sm">✅ Firmado</div>
-                <div className="text-xs text-gray-400 mt-1">{new Date(contractSignedAt!).toLocaleString('es-CO')}</div>
-              </div>
-              {contractPdfUrl&&<a href={contractPdfUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{background:'linear-gradient(135deg,#0D1B6E,#00BCD4)'}}>
-                📄 Descargar PDF firmado
-              </a>}
-              <a href={ecardUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold border"
-                style={{color:'#00BCD4',borderColor:'rgba(0,188,212,0.3)'}}>
-                🎫 Ver E-Card
-              </a>
+        {/* Estado general */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className={`rounded-xl p-2.5 text-center border ${isSigned?'bg-emerald-500/10 border-emerald-500/30':'bg-amber-500/10 border-amber-500/30'}`}>
+            <div className={`text-xs font-bold ${isSigned?'text-emerald-400':'text-amber-400'}`}>{isSigned?'✅ Firmado':'⏳ Sin firmar'}</div>
+            {isSigned&&<div className="text-xs text-gray-500 mt-0.5">{fmtDate(contractSignedAt)}</div>}
+          </div>
+          <div className={`rounded-xl p-2.5 text-center border ${hasToken?'bg-emerald-500/10 border-emerald-500/30':'bg-red-500/10 border-red-500/30'}`}>
+            <div className={`text-xs font-bold ${hasToken?'text-emerald-400':'text-red-400'}`}>{hasToken?'✅ Con token':'❌ Sin token'}</div>
+            {email1Date&&<div className="text-xs text-gray-500 mt-0.5">Email 1: {fmtDate(email1Date)}</div>}
+          </div>
+        </div>
+
+        {error&&<div className="text-red-400 text-xs text-center p-2 bg-red-500/10 rounded-xl">{error}</div>}
+
+        {/* BOTONES */}
+        <div className="space-y-2">
+
+          {/* Email 1 — solo si tiene token */}
+          {hasToken&&(
+            <button onClick={()=>sendEmail('email1')} disabled={!!sending}
+              className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 flex items-center justify-between px-4"
+              style={{background:'linear-gradient(135deg,#0D1B6E,#1a2d8a)'}}>
+              <span>{sending==='email1'?'Enviando...':'📧 Enviar Email 1 — Bienvenida + firma'}</span>
+              {email1Date&&<span className="text-xs text-white/50">✓ {fmtDate(email1Date)}</span>}
+            </button>
+          )}
+
+          {/* Recordatorio — solo si tiene token y no ha firmado */}
+          {hasToken&&!isSigned&&(
+            <button onClick={()=>sendEmail('recordatorio')} disabled={!!sending}
+              className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 flex items-center justify-between px-4"
+              style={{background:'linear-gradient(135deg,#f59e0b,#d97706)'}}>
+              <span>{sending==='recordatorio'?'Enviando...':'⏰ Enviar recordatorio de firma'}</span>
+              {recDate&&<span className="text-xs text-white/50">✓ {fmtDate(recDate)}</span>}
+            </button>
+          )}
+
+          {/* Email 2 — solo si ya firmó */}
+          {isSigned&&(
+            <button onClick={()=>sendEmail('email2')} disabled={!!sending}
+              className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 flex items-center justify-between px-4"
+              style={{background:'linear-gradient(135deg,#4CAF50,#388E3C)'}}>
+              <span>{sending==='email2'?'Enviando...':'🎫 Enviar Email 2 — eCard + PDF'}</span>
+              {email2Date&&<span className="text-xs text-white/50">✓ {fmtDate(email2Date)}</span>}
+            </button>
+          )}
+
+          {/* Ver contrato */}
+          {hasToken&&(
+            <a href={contractUrl} target="_blank" rel="noopener noreferrer"
+              className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border"
+              style={{color:'#00BCD4',borderColor:'rgba(0,188,212,0.3)'}}>
+              👁️ Ver contrato
+            </a>
+          )}
+
+          {/* Ver eCard */}
+          <a href={ecardUrl} target="_blank" rel="noopener noreferrer"
+            className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border"
+            style={{color:'#00BCD4',borderColor:'rgba(0,188,212,0.3)'}}>
+            🎫 Ver E-Card
+          </a>
+
+          {/* Descargar PDF */}
+          {contractPdfUrl&&(
+            <a href={contractPdfUrl} target="_blank" rel="noopener noreferrer"
+              className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border"
+              style={{color:'#4CAF50',borderColor:'rgba(76,175,80,0.3)'}}>
+              📄 Descargar PDF firmado
+            </a>
+          )}
+
+          {/* Sin token */}
+          {!hasToken&&(
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
+              <div className="text-red-400 text-sm font-bold">⚠️ Sin token de contrato</div>
+              <div className="text-xs text-gray-400 mt-1">El usuario debe completar el pago primero</div>
             </div>
-          : <div className="space-y-3">
-              {contractToken
-                ? <>
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-center">
-                      <div className="text-amber-400 font-bold text-sm">⏳ Pendiente de firma</div>
-                    </div>
-                    {sent
-                      ? <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center text-emerald-400 text-sm font-bold">✅ Email enviado</div>
-                      : <button onClick={sendContractEmail} disabled={sending}
-                          className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50"
-                          style={{background:'linear-gradient(135deg,#00BCD4,#0097A7)'}}>
-                          {sending?'Enviando...':'📤 Enviar link de firma por email'}
-                        </button>
-                    }
-                    <div className="flex gap-2">
-                      <input readOnly value={contractUrl}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none"/>
-                      <button onClick={()=>navigator.clipboard.writeText(contractUrl)}
-                        className="px-3 py-2 rounded-xl text-xs border border-white/10 text-gray-400 hover:bg-white/5">
-                        📋
-                      </button>
-                    </div>
-                    {error&&<div className="text-red-400 text-xs text-center">{error}</div>}
-                  </>
-                : <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
-                    <div className="text-red-400 text-sm font-bold">⚠️ Sin token de contrato</div>
-                    <div className="text-xs text-gray-400 mt-1">El usuario debe pagar primero para generar el link</div>
-                  </div>
-              }
+          )}
+
+          {/* Copiar link */}
+          {hasToken&&(
+            <div className="flex gap-2">
+              <input readOnly value={contractUrl} className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none"/>
+              <button onClick={()=>navigator.clipboard.writeText(contractUrl)} className="px-3 py-2 rounded-xl text-xs border border-white/10 text-gray-400 hover:bg-white/5">📋</button>
             </div>
-        }
+          )}
+        </div>
       </div>
     </Modal>
   )
@@ -1957,7 +2007,7 @@ export function Dashboard() {
   const [devSaved,setDevSaved]=useState(false)
 
   // Modals
-  const [contractM,setContractM]=useState<{name:string;email:string;recordId:string;table:string;contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string}|null>(null)
+  const [contractM,setContractM]=useState<{name:string;email:string;recordId:string;table:string;contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;email1SentAt?:string}|null>(null)
   const [editM,setEditM]=useState<{record:any;table:string;fields:any[];title?:string}|null>(null)
   const [approveM,setApproveM]=useState<{record:any;table:string}|null>(null)
   const [profileM,setProfileM]=useState<{record:any;table:string}|null>(null)
@@ -2264,7 +2314,7 @@ export function Dashboard() {
                               </div>
                             </TD>
                             <TD cls="text-xs font-bold text-emerald-400">{r.amount_cents?fmtCOP(r.amount_cents):r.total_amount?fmtCOP(r.total_amount):'—'}</TD>
-                            <TD>{r.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email,recordId:r.id,table:'registrations_5k',contractToken:r.contract_token,contractSignedAt:r.contract_signed_at,contractPdfUrl:r.contract_pdf_url})}/></TD>
+                            <TD>{r.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email,recordId:r.id,table:'registrations_5k',contractToken:r.contract_token,contractSignedAt:r.contract_signed_at,contractPdfUrl:r.contract_pdf_url,email1SentAt:r.email1_sent_at})}/></TD>
                             <TD cls="text-xs" style={{color:ts}}>{fmtDate(r.created_at)}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
@@ -2984,7 +3034,7 @@ export function Dashboard() {
 
       {/* MODALS */}
       <AnimatePresence>
-        {contractM&&<ContractModal name={contractM.name} email={contractM.email} recordId={contractM.recordId} table={contractM.table} contractToken={contractM.contractToken} contractSignedAt={contractM.contractSignedAt} contractPdfUrl={contractM.contractPdfUrl} onClose={()=>setContractM(null)}/>}
+        {contractM&&<ContractModal name={contractM.name} email={contractM.email} recordId={contractM.recordId} table={contractM.table} contractToken={contractM.contractToken} contractSignedAt={contractM.contractSignedAt} contractPdfUrl={contractM.contractPdfUrl} email1SentAt={contractM.email1SentAt} onClose={()=>setContractM(null)}/>}
         {editM&&<EditModal record={editM.record} table={editM.table} fields={editM.fields} title={editM.title} onClose={()=>setEditM(null)} onSaved={fetchAll}/>}
         {approveM&&<ApproveModal record={approveM.record} table={approveM.table} onClose={()=>setApproveM(null)} onSaved={fetchAll}/>}
         {profileM&&(
@@ -2998,7 +3048,7 @@ export function Dashboard() {
               if(data) setProfileM(prev=>prev?{...prev,record:data}:null)
             }}
             onApprove={()=>{setProfileM(null);setApproveM({record:profileM.record,table:profileM.table})}}
-            onContract={()=>{const n=profileM.record.full_name||profileM.record.responsible_name||profileM.record.company_name||profileM.record.captain_name||'';const e=profileM.record.email||profileM.record.captain_email||'';setProfileM(null);setContractM({name:n,email:e,recordId:profileM.record.id,table:profileM.table,contractToken:profileM.record.contract_token,contractSignedAt:profileM.record.contract_signed_at,contractPdfUrl:profileM.record.contract_pdf_url})}}
+            onContract={()=>{const n=profileM.record.full_name||profileM.record.responsible_name||profileM.record.company_name||profileM.record.captain_name||'';const e=profileM.record.email||profileM.record.captain_email||'';setProfileM(null);setContractM({name:n,email:e,recordId:profileM.record.id,table:profileM.table,contractToken:profileM.record.contract_token,contractSignedAt:profileM.record.contract_signed_at,contractPdfUrl:profileM.record.contract_pdf_url,email1SentAt:profileM.record.email1_sent_at})}}
           />
         )}
         {logoEditM&&<LogoEditModal logo={logoEditM} onClose={()=>setLogoEditM(null)} onSaved={fetchAll}/>}
