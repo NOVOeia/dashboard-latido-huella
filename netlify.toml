@@ -1,6 +1,10 @@
 [build]
-  publish = "dist"
+  base = "codigo web fronter"
   command = "npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "codigo web fronter/netlify/functions"
 
 [[redirects]]
   from = "/*"
