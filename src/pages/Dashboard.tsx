@@ -284,6 +284,17 @@ function ContractModal({name,email,recordId,table,contractToken,contractSignedAt
         if(tipo==='email1'){
           await supabase.from(table).update({email1_sent_at:now}).eq('id',recordId)
         }
+        // Guardar en email_logs
+        await supabase.from('email_logs').insert({
+          template_name: tipo==='email1'?'Email 1 — Bienvenida':tipo==='email2'?'Email 2 — eCard + Kit':'Recordatorio de firma',
+          to_email: email,
+          to_name: name,
+          category: 'contrato',
+          subject,
+          sent_at: now,
+          status: 'sent',
+          body_html: html
+        })
       } else setError('Error al enviar. Intenta de nuevo.')
     }catch{setError('Error de conexión.')}
     setSending(null)
@@ -959,25 +970,16 @@ function HardDeleteModal({record,table,onClose,onDeleted}:{record:any;table:stri
 function StandStatusBtn({record,table,onSaved}:{record:any;table:string;onSaved:()=>void}) {
   const [open,setOpen]=useState(false)
   const [saving,setSaving]=useState(false)
-  const [pos,setPos]=useState({top:0,left:0})
-  const btnRef=useRef<HTMLButtonElement>(null)
 
   const STAND_STATES=[
     {value:'available',label:'Disponible',color:'#10b981',bg:'rgba(16,185,129,0.15)'},
     {value:'pending_payment',label:'Reservado',color:'#f59e0b',bg:'rgba(245,158,11,0.15)'},
     {value:'approved',label:'Vendido',color:'#60a5fa',bg:'rgba(59,130,246,0.15)'},
+    {value:'paid',label:'Pagado',color:'#4ade80',bg:'rgba(74,222,128,0.15)'},
     {value:'expired',label:'Expirado',color:'#fb923c',bg:'rgba(249,115,22,0.15)'},
     {value:'declined',label:'Rechazado',color:'#f87171',bg:'rgba(239,68,68,0.15)'},
   ]
   const current=STAND_STATES.find(s=>s.value===record.status)||STAND_STATES[1]
-
-  const handleOpen=()=>{
-    if(btnRef.current){
-      const rect=btnRef.current.getBoundingClientRect()
-      setPos({top:rect.bottom+window.scrollY+4,left:rect.left+window.scrollX})
-    }
-    setOpen(!open)
-  }
 
   const changeStatus=async(newStatus:string)=>{
     setSaving(true);setOpen(false)
@@ -986,28 +988,26 @@ function StandStatusBtn({record,table,onSaved}:{record:any;table:string;onSaved:
   }
 
   return (
-    <div className="relative">
-      <button ref={btnRef} onClick={handleOpen} disabled={saving}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all hover:opacity-80"
-        style={{background:current.bg,color:current.color,border:`1px solid ${current.color}40`}}>
+    <div style={{position:'relative',display:'inline-block'}}>
+      <button onClick={()=>setOpen(!open)} disabled={saving}
+        style={{display:'flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:8,fontSize:11,fontWeight:700,background:current.bg,color:current.color,border:`1px solid ${current.color}40`,cursor:'pointer',whiteSpace:'nowrap'}}>
         {saving?'...':<>{current.label} ▾</>}
       </button>
-      {open&&typeof document!=='undefined'&&ReactDOM.createPortal(
+      {open&&(
         <>
-          <div className="fixed inset-0 z-[998]" onClick={()=>setOpen(false)}/>
-          <div className="fixed z-[999] rounded-xl overflow-hidden shadow-2xl min-w-[140px]"
-            style={{top:pos.top,left:pos.left,background:'#12122a',border:'1px solid rgba(255,255,255,0.15)'}}>
+          <div style={{position:'fixed',inset:0,zIndex:998}} onClick={()=>setOpen(false)}/>
+          <div style={{position:'absolute',top:'100%',left:0,marginTop:4,zIndex:999,borderRadius:12,overflow:'hidden',boxShadow:'0 8px 32px rgba(0,0,0,0.4)',background:'#12122a',border:'1px solid rgba(255,255,255,0.15)',minWidth:140}}>
             {STAND_STATES.map(s=>(
               <button key={s.value} onClick={()=>changeStatus(s.value)}
-                className="w-full text-left px-3 py-2.5 text-xs font-bold hover:bg-white/10 transition-colors flex items-center gap-2"
-                style={{color:s.color}}>
-                <span className="w-3">{s.value===record.status?'✓':''}</span>
+                style={{display:'flex',alignItems:'center',gap:8,width:'100%',padding:'8px 12px',fontSize:12,fontWeight:600,color:s.color,background:'transparent',border:'none',cursor:'pointer',textAlign:'left'}}
+                onMouseOver={e=>(e.currentTarget.style.background='rgba(255,255,255,0.05)')}
+                onMouseOut={e=>(e.currentTarget.style.background='transparent')}>
+                <span style={{width:8,height:8,borderRadius:'50%',background:s.color,display:'inline-block',flexShrink:0}}/>
                 {s.label}
               </button>
             ))}
           </div>
-        </>,
-        document.body
+        </>
       )}
     </div>
   )
@@ -1215,6 +1215,17 @@ function EmailsPage({dark,br,tp,ts,card,regs5k,expositores,toldos,sponsors,teams
   },[])
 
   useEffect(()=>{loadAll()},[loadAll])
+
+  // Real-time email logs
+  useEffect(()=>{
+    const channel=supabase.channel('email_logs_rt')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'email_logs'},()=>{
+        supabase.from('email_logs').select('*').order('sent_at',{ascending:false}).limit(100)
+          .then(({data})=>{if(data)setLogs(data)})
+      })
+      .subscribe()
+    return ()=>{supabase.removeChannel(channel)}
+  },[])
 
   const saveTemplate=async()=>{
     if(!editingTpl) return
@@ -2135,7 +2146,7 @@ export function Dashboard() {
 
   const navItems=[
     {id:'home',icon:'⌂',label:'Inicio'},
-    {id:'5k',icon:'🐾',label:'Caminata 5K',count:regs5k.length},
+    {id:'5k',icon:'🐾',label:'Caminata 5K',count:regs5k.length + attendees.length},
     {id:'mascotas',icon:'🐶',label:'Mascotas',count:pets.length},
     {id:'comercial',icon:'🏪',label:'Comercial',count:expositores.length+toldos.length},
     {id:'deportes',icon:'⚽',label:'Deportes',count:teams.length},
@@ -2308,7 +2319,7 @@ export function Dashboard() {
                 {page==='5k'&&(
                   <div>
                     <div className="flex items-center justify-between mb-6">
-                      <div><h1 className="text-2xl font-black" style={{color:tp}}>🐾 Caminata 5K</h1><p className="text-sm mt-0.5" style={{color:ts}}>{regs5k.length} inscritos</p></div>
+                      <div><h1 className="text-2xl font-black" style={{color:tp}}>🐾 Caminata 5K</h1><p className="text-sm mt-0.5" style={{color:ts}}>{regs5k.length} registros · {regs5k.length + attendees.length} personas</p></div>
                       <div className="flex items-center gap-2">
                         <span className="px-3 py-1 rounded-xl text-xs font-bold" style={{background:'rgba(16,185,129,0.15)',color:'#10b981'}}>{regs5k.filter(r=>isOk(r.status)).length} ✅</span>
                         <span className="px-3 py-1 rounded-xl text-xs font-bold" style={{background:'rgba(245,158,11,0.15)',color:'#f59e0b'}}>{regs5k.filter(r=>r.status==='pending_payment').length} ⏳</span>
