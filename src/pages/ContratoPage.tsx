@@ -434,6 +434,26 @@ export function ContratoPage() {
               <a href="${pdfUrl}" style="color:#0D1B6E;font-size:13px;text-decoration:underline">📄 Ver documento firmado (PDF)</a>
             </div>` : ''}
 
+            <!-- Kit pickup -->
+            <div style="background:#fff3e0;border-radius:14px;padding:24px;margin:24px 0;border:1px solid #FFB300">
+              <h3 style="color:#e65100;font-size:16px;margin:0 0 8px">👕 ¿Dónde recoges tu Kit Caminata Canina?</h3>
+              <p style="color:#555;font-size:14px;margin:0 0 20px;line-height:1.6">Selecciona el punto de entrega más conveniente para ti. Tu elección quedará registrada.</p>
+              <div style="background:white;border-radius:10px;padding:16px;margin:0 0 12px;border:1px solid #ffe0b2">
+                <p style="color:#0D1B6E;font-weight:700;font-size:15px;margin:0 0 6px">🏙️ Medellín</p>
+                <p style="color:#333;font-size:13px;margin:0 0 4px">📍 <strong>Vitrina Chery</strong> — Calle 31 # 43-73</p>
+                <p style="color:#555;font-size:13px;margin:0 0 4px">📅 Viernes 24 Jul: 9:00 AM – 4:00 PM</p>
+                <p style="color:#555;font-size:13px;margin:0 0 14px">📅 Sábado 25 Jul: 9:00 AM – 12:00 M</p>
+                <a href="https://admin-latidoyhuella.netlify.app/kit/${record.id}/medellin" style="background:#0D1B6E;color:white;padding:11px 24px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:13px;display:inline-block">👕 Recoger en Medellín</a>
+              </div>
+              <div style="background:white;border-radius:10px;padding:16px;border:1px solid #ffe0b2">
+                <p style="color:#0D1B6E;font-weight:700;font-size:15px;margin:0 0 6px">🌄 Llanogrande</p>
+                <p style="color:#333;font-size:13px;margin:0 0 4px">📍 <strong>La Finca de Rigo</strong> — Glorieta El Tablazo, Llanogrande (Rionegro)</p>
+                <p style="color:#555;font-size:13px;margin:0 0 4px">📅 Viernes 24 Jul: 9:00 AM – 4:00 PM</p>
+                <p style="color:#555;font-size:13px;margin:0 0 14px">📅 Sábado 25 Jul: 9:00 AM – 12:00 M</p>
+                <a href="https://admin-latidoyhuella.netlify.app/kit/${record.id}/llanogrande" style="background:#00BCD4;color:white;padding:11px 24px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:13px;display:inline-block">👕 Recoger en Llanogrande</a>
+              </div>
+            </div>
+
             <!-- Tips -->
             <div style="background:#fff8e1;border-radius:12px;padding:20px;margin:24px 0">
               <h3 style="color:#F57F17;margin:0 0 12px;font-size:15px">💡 Recuerda el día del evento</h3>
