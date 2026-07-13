@@ -2146,7 +2146,7 @@ export function Dashboard() {
 
   const navItems=[
     {id:'home',icon:'⌂',label:'Inicio'},
-    {id:'5k',icon:'🐾',label:'Caminata 5K',count:regs5k.length + attendees.length},
+    {id:'5k',icon:'🐾',label:'Caminata 5K',count:attendees.length},
     {id:'mascotas',icon:'🐶',label:'Mascotas',count:pets.length},
     {id:'comercial',icon:'🏪',label:'Comercial',count:expositores.length+toldos.length},
     {id:'deportes',icon:'⚽',label:'Deportes',count:teams.length},
@@ -2319,7 +2319,25 @@ export function Dashboard() {
                 {page==='5k'&&(
                   <div>
                     <div className="flex items-center justify-between mb-6">
-                      <div><h1 className="text-2xl font-black" style={{color:tp}}>🐾 Caminata 5K</h1><p className="text-sm mt-0.5" style={{color:ts}}>{regs5k.length} registros · {regs5k.length + attendees.length} personas</p></div>
+                      <div><h1 className="text-2xl font-black" style={{color:tp}}>🐾 Caminata 5K</h1><p className="text-sm mt-0.5" style={{color:ts}}>{regs5k.length} registros · {attendees.length} personas</p></div>
+                      <div className="flex gap-3 flex-wrap mt-2">
+                        <div className="rounded-xl px-4 py-2 text-center" style={{background:'rgba(96,165,250,0.1)',border:'1px solid rgba(96,165,250,0.2)'}}>
+                          <div className="text-xl font-black text-blue-400">{attendees.filter(a=>!a.is_minor).length}</div>
+                          <div className="text-xs" style={{color:ts}}>👤 Adultos</div>
+                        </div>
+                        <div className="rounded-xl px-4 py-2 text-center" style={{background:'rgba(251,191,36,0.1)',border:'1px solid rgba(251,191,36,0.2)'}}>
+                          <div className="text-xl font-black text-amber-400">{attendees.filter(a=>a.is_minor).length}</div>
+                          <div className="text-xs" style={{color:ts}}>👶 Niños</div>
+                        </div>
+                        <div className="rounded-xl px-4 py-2 text-center" style={{background:'rgba(16,185,129,0.1)',border:'1px solid rgba(16,185,129,0.2)'}}>
+                          <div className="text-xl font-black text-emerald-400">{pets.length}</div>
+                          <div className="text-xs" style={{color:ts}}>🐾 Mascotas</div>
+                        </div>
+                        <div className="rounded-xl px-4 py-2 text-center" style={{background:'rgba(0,188,212,0.1)',border:'1px solid rgba(0,188,212,0.2)'}}>
+                          <div className="text-xl font-black" style={{color:'#00BCD4'}}>{attendees.length}</div>
+                          <div className="text-xs" style={{color:ts}}>🧮 Total personas</div>
+                        </div>
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="px-3 py-1 rounded-xl text-xs font-bold" style={{background:'rgba(16,185,129,0.15)',color:'#10b981'}}>{regs5k.filter(r=>isOk(r.status)).length} ✅</span>
                         <span className="px-3 py-1 rounded-xl text-xs font-bold" style={{background:'rgba(245,158,11,0.15)',color:'#f59e0b'}}>{regs5k.filter(r=>r.status==='pending_payment').length} ⏳</span>
