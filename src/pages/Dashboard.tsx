@@ -244,9 +244,9 @@ function ApproveModal({record,table,onClose,onSaved}:{record:any;table:string;on
 }
 
 // ─── CONTRACT MODAL ───────────────────────────────────────────────────────────
-function ContractModal({name,email,recordId,table,contractToken,contractSignedAt,contractPdfUrl,email1SentAt,onClose}:{
+function ContractModal({name,email,recordId,table,contractToken,contractSignedAt,contractPdfUrl,email1SentAt,email2SentAt,onClose}:{
   name:string;email:string;recordId:string;table:string;
-  contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;email1SentAt?:string;onClose:()=>void
+  contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;email1SentAt?:string;email2SentAt?:string;onClose:()=>void
 }) {
   const [sending,setSending]=useState<string|null>(null)
   const [sentLog,setSentLog]=useState<Record<string,string>>({})
@@ -284,6 +284,9 @@ function ContractModal({name,email,recordId,table,contractToken,contractSignedAt
         if(tipo==='email1'){
           await supabase.from(table).update({email1_sent_at:now}).eq('id',recordId)
         }
+        if(tipo==='email2'){
+          await supabase.from(table).update({email2_sent_at:now}).eq('id',recordId)
+        }
         // Guardar en email_logs
         await supabase.from('email_logs').insert({
           template_name: tipo==='email1'?'Email 1 — Bienvenida':tipo==='email2'?'Email 2 — eCard + Kit':'Recordatorio de firma',
@@ -301,7 +304,7 @@ function ContractModal({name,email,recordId,table,contractToken,contractSignedAt
   }
 
   const email1Date=email1SentAt||sentLog['email1']
-  const email2Date=sentLog['email2']
+  const email2Date=email2SentAt||sentLog['email2']
   const recDate=sentLog['recordatorio']
 
   return (
@@ -2049,7 +2052,7 @@ export function Dashboard() {
   const [devSaved,setDevSaved]=useState(false)
 
   // Modals
-  const [contractM,setContractM]=useState<{name:string;email:string;recordId:string;table:string;contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;email1SentAt?:string}|null>(null)
+  const [contractM,setContractM]=useState<{name:string;email:string;recordId:string;table:string;contractToken?:string;contractSignedAt?:string;contractPdfUrl?:string;email1SentAt?:string;email2SentAt?:string}|null>(null)
   const [editM,setEditM]=useState<{record:any;table:string;fields:any[];title?:string}|null>(null)
   const [approveM,setApproveM]=useState<{record:any;table:string}|null>(null)
   const [profileM,setProfileM]=useState<{record:any;table:string}|null>(null)
@@ -2374,7 +2377,7 @@ export function Dashboard() {
                               </div>
                             </TD>
                             <TD cls="text-xs font-bold text-emerald-400">{r.amount_cents?fmtCOP(r.amount_cents):r.total_amount?fmtCOP(r.total_amount):'—'}</TD>
-                            <TD>{r.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email,recordId:r.id,table:'registrations_5k',contractToken:r.contract_token,contractSignedAt:r.contract_signed_at,contractPdfUrl:r.contract_pdf_url,email1SentAt:r.email1_sent_at})}/></TD>
+                            <TD>{r.contract_signed_at?<span className="text-xs font-bold text-emerald-400">✓ Firmado</span>:<span className="text-xs font-bold text-amber-400">⏳</span>}<Btn icon="📝" color="bg-blue-500/15 text-blue-400" onClick={()=>setContractM({name:r.full_name,email:r.email,recordId:r.id,table:'registrations_5k',contractToken:r.contract_token,contractSignedAt:r.contract_signed_at,contractPdfUrl:r.contract_pdf_url,email1SentAt:r.email1_sent_at,email2SentAt:r.email2_sent_at})}/></TD>
                             <TD cls="text-xs" style={{color:ts}}>{fmtDate(r.created_at)}</TD>
                             <TD><div className="flex gap-1">
                               <Btn icon="👤" color="bg-blue-500/15 text-blue-400 hover:bg-blue-500/25" onClick={()=>setProfileM({record:r,table:'registrations_5k'})}/>
@@ -3094,7 +3097,7 @@ export function Dashboard() {
 
       {/* MODALS */}
       <AnimatePresence>
-        {contractM&&<ContractModal name={contractM.name} email={contractM.email} recordId={contractM.recordId} table={contractM.table} contractToken={contractM.contractToken} contractSignedAt={contractM.contractSignedAt} contractPdfUrl={contractM.contractPdfUrl} email1SentAt={contractM.email1SentAt} onClose={()=>setContractM(null)}/>}
+        {contractM&&<ContractModal name={contractM.name} email={contractM.email} recordId={contractM.recordId} table={contractM.table} contractToken={contractM.contractToken} contractSignedAt={contractM.contractSignedAt} contractPdfUrl={contractM.contractPdfUrl} email1SentAt={contractM.email1SentAt} email2SentAt={contractM.email2SentAt} onClose={()=>setContractM(null)}/>}
         {editM&&<EditModal record={editM.record} table={editM.table} fields={editM.fields} title={editM.title} onClose={()=>setEditM(null)} onSaved={fetchAll}/>}
         {approveM&&<ApproveModal record={approveM.record} table={approveM.table} onClose={()=>setApproveM(null)} onSaved={fetchAll}/>}
         {profileM&&(
@@ -3108,7 +3111,7 @@ export function Dashboard() {
               if(data) setProfileM(prev=>prev?{...prev,record:data}:null)
             }}
             onApprove={()=>{setProfileM(null);setApproveM({record:profileM.record,table:profileM.table})}}
-            onContract={()=>{const n=profileM.record.full_name||profileM.record.responsible_name||profileM.record.company_name||profileM.record.captain_name||'';const e=profileM.record.email||profileM.record.captain_email||'';setProfileM(null);setContractM({name:n,email:e,recordId:profileM.record.id,table:profileM.table,contractToken:profileM.record.contract_token,contractSignedAt:profileM.record.contract_signed_at,contractPdfUrl:profileM.record.contract_pdf_url,email1SentAt:profileM.record.email1_sent_at})}}
+            onContract={()=>{const n=profileM.record.full_name||profileM.record.responsible_name||profileM.record.company_name||profileM.record.captain_name||'';const e=profileM.record.email||profileM.record.captain_email||'';setProfileM(null);setContractM({name:n,email:e,recordId:profileM.record.id,table:profileM.table,contractToken:profileM.record.contract_token,contractSignedAt:profileM.record.contract_signed_at,contractPdfUrl:profileM.record.contract_pdf_url,email1SentAt:profileM.record.email1_sent_at,email2SentAt:profileM.record.email2_sent_at})}}
           />
         )}
         {logoEditM&&<LogoEditModal logo={logoEditM} onClose={()=>setLogoEditM(null)} onSaved={fetchAll}/>}
