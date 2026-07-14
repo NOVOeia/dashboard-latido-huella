@@ -16,6 +16,60 @@ const emptyMember = (): StaffMember => ({ full_name:'', cedula:'', cedula_url:''
 
 type StaffType = 'montaje' | 'servicio'
 
+function MemberForm({ list, setList, type, termsChecked, setTermsChecked, saving, error, uploadingKey, uploadFile, saveStaff }: {
+  list: any[]; setList: any; type: 'montaje'|'servicio';
+  termsChecked: boolean; setTermsChecked: any; saving: boolean; error: string;
+  uploadingKey: string|null; uploadFile: any; saveStaff: any;
+}) {
+  const CYAN = '#00BCD4'
+  const emptyMember = () => ({ full_name:'', cedula:'', cedula_url:'', phone:'', eps_name:'', arl_name:'', arl_eps_url:'' })
+  const updateMember = (idx: number, field: string, value: string) => {
+    setList((prev: any[]) => prev.map((m: any, i: number) => i === idx ? { ...m, [field]: value } : m))
+  }
+  const UploadBtn = ({ value, onUrl, keyId }: { value:string; onUrl:(u:string)=>void; keyId:string }) => (
+    value
+      ? <a href={value} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'#4ade80',whiteSpace:'nowrap' as const}}>✅ Ver</a>
+      : <label style={{cursor:'pointer',padding:'6px 8px',background:'rgba(0,188,212,0.15)',border:'1px solid rgba(0,188,212,0.3)',borderRadius:6,display:'flex',alignItems:'center',gap:4,whiteSpace:'nowrap' as const}}>
+          <span style={{fontSize:11,color:CYAN}}>{uploadingKey===keyId?'⏳':'📷'}</span>
+          <input type="file" accept="image/*,.pdf" style={{display:'none'}} onChange={e=>e.target.files?.[0]&&uploadFile(e.target.files[0],keyId,onUrl)}/>
+        </label>
+  )
+  const inp = () => ({ style: { width:'100%', fontSize:13, padding:'7px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.07)', color:'white', outline:'none', boxSizing:'border-box' as const } })
+  return (
+    <div>
+      {list.map((m: any, idx: number) => (
+        <div key={idx} style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12,fontWeight:600}}>Empleado {idx+1}</span>
+            {list.length>1&&<button onClick={()=>setList((p: any[])=>p.filter((_: any,i: number)=>i!==idx))} style={{background:'rgba(239,68,68,0.1)',border:'none',color:'#f87171',borderRadius:6,padding:'2px 8px',cursor:'pointer',fontSize:11}}>✕</button>}
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1.5fr auto',gap:8,marginBottom:8,alignItems:'center'}}>
+            <input {...inp()} placeholder="Nombre completo *" value={m.full_name} onChange={(e: any)=>updateMember(idx,'full_name',e.target.value)}/>
+            <input {...inp()} placeholder="Cédula *" value={m.cedula} onChange={(e: any)=>updateMember(idx,'cedula',e.target.value)}/>
+            <input {...inp()} placeholder="Teléfono *" value={m.phone} onChange={(e: any)=>updateMember(idx,'phone',e.target.value)}/>
+            <UploadBtn value={m.cedula_url} onUrl={(url: string)=>updateMember(idx,'cedula_url',url)} keyId={`${idx}-cedula`}/>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1.5fr 1.5fr auto',gap:8,alignItems:'center'}}>
+            <input {...inp()} placeholder="EPS" value={m.eps_name} onChange={(e: any)=>updateMember(idx,'eps_name',e.target.value)}/>
+            <input {...inp()} placeholder="ARL" value={m.arl_name} onChange={(e: any)=>updateMember(idx,'arl_name',e.target.value)}/>
+            <UploadBtn value={m.arl_eps_url} onUrl={(url: string)=>updateMember(idx,'arl_eps_url',url)} keyId={`${idx}-arl`}/>
+          </div>
+        </div>
+      ))}
+      <button onClick={()=>setList((p: any[])=>[...p,emptyMember()])} style={{width:'100%',padding:'8px',borderRadius:8,background:'transparent',border:'1px dashed rgba(0,188,212,0.4)',color:CYAN,cursor:'pointer',fontSize:12,marginBottom:12}}>+ Agregar empleado</button>
+      {type==='servicio'&&list.length>=4&&<p style={{color:'#fbbf24',fontSize:11,textAlign:'center',marginBottom:8}}>⚠️ Máximo 4 empleados de servicio</p>}
+      <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}}>
+        <input type="checkbox" checked={termsChecked} onChange={(e: any)=>setTermsChecked(e.target.checked)} style={{marginTop:2,flexShrink:0}}/>
+        <span style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>Certifico que la información es correcta y acepto los términos de Latido y Huella 2026</span>
+      </div>
+      {error&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>{error}</div>}
+      <button onClick={()=>saveStaff(type)} disabled={saving} style={{width:'100%',padding:12,borderRadius:10,background:'linear-gradient(135deg,#00BCD4,#0097A7)',color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:14,opacity:saving?0.7:1}}>
+        {saving?'⏳ Guardando...':`✅ Registrar ${list.length} empleado${list.length>1?'s':''}`}
+      </button>
+    </div>
+  )
+}
+
 export function StaffRegisterPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [selected, setSelected] = useState<Empresa|null>(null)
@@ -95,53 +149,6 @@ export function StaffRegisterPage() {
     else setServicioSaved(true)
     setActiveModal(null); setSaving(false)
   }
-
-  const inp = (style={}) => ({ style: { width:'100%', fontSize:13, padding:'7px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.07)', color:'white', outline:'none', boxSizing:'border-box' as const, ...style } })
-
-  const UploadBtn = ({ value, onUrl, keyId }: { value:string; onUrl:(u:string)=>void; keyId:string }) => (
-    value
-      ? <a href={value} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'#4ade80',whiteSpace:'nowrap' as const}}>✅ Ver</a>
-      : <label style={{cursor:'pointer',padding:'6px 8px',background:'rgba(0,188,212,0.15)',border:'1px solid rgba(0,188,212,0.3)',borderRadius:6,display:'flex',alignItems:'center',gap:4,whiteSpace:'nowrap' as const}}>
-          <span style={{fontSize:11,color:CYAN}}>{uploadingKey===keyId?'⏳':'📷'}</span>
-          <input type="file" accept="image/*,.pdf" style={{display:'none'}} onChange={e=>e.target.files?.[0]&&uploadFile(e.target.files[0],keyId,onUrl)}/>
-        </label>
-  )
-
-  const MemberForm = ({ list, setList, type }: { list:StaffMember[]; setList:React.Dispatch<React.SetStateAction<StaffMember[]>>; type:StaffType }) => (
-    <div>
-      {list.map((m, idx) => (
-        <div key={idx} style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12,fontWeight:600}}>Empleado {idx+1}</span>
-            {list.length>1&&<button onClick={()=>setList(p=>p.filter((_,i)=>i!==idx))} style={{background:'rgba(239,68,68,0.1)',border:'none',color:'#f87171',borderRadius:6,padding:'2px 8px',cursor:'pointer',fontSize:11}}>✕</button>}
-          </div>
-          {/* Fila 1 */}
-          <div style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1.5fr auto',gap:8,marginBottom:8,alignItems:'center'}}>
-            <input {...inp()} placeholder="Nombre completo *" value={m.full_name} onChange={e=>updateMember(list,setList,idx,'full_name',e.target.value)}/>
-            <input {...inp()} placeholder="Cédula *" value={m.cedula} onChange={e=>updateMember(list,setList,idx,'cedula',e.target.value)}/>
-            <input {...inp()} placeholder="Teléfono *" value={m.phone} onChange={e=>updateMember(list,setList,idx,'phone',e.target.value)}/>
-            <UploadBtn value={m.cedula_url} onUrl={url=>updateMember(list,setList,idx,'cedula_url',url)} keyId={`${idx}-cedula`}/>
-          </div>
-          {/* Fila 2 */}
-          <div style={{display:'grid',gridTemplateColumns:'1.5fr 1.5fr auto',gap:8,alignItems:'center'}}>
-            <input {...inp()} placeholder="EPS" value={m.eps_name} onChange={e=>updateMember(list,setList,idx,'eps_name',e.target.value)}/>
-            <input {...inp()} placeholder="ARL" value={m.arl_name} onChange={e=>updateMember(list,setList,idx,'arl_name',e.target.value)}/>
-            <UploadBtn value={m.arl_eps_url} onUrl={url=>updateMember(list,setList,idx,'arl_eps_url',url)} keyId={`${idx}-arl`}/>
-          </div>
-        </div>
-      ))}
-      <button onClick={()=>setList(p=>[...p,emptyMember()])} style={{width:'100%',padding:'8px',borderRadius:8,background:'transparent',border:'1px dashed rgba(0,188,212,0.4)',color:CYAN,cursor:'pointer',fontSize:12,marginBottom:12}}>+ Agregar empleado</button>
-      {type==='servicio'&&servicioList.length>=4&&<p style={{color:'#fbbf24',fontSize:11,textAlign:'center',marginBottom:8}}>⚠️ Máximo 4 empleados de servicio</p>}
-      <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}}>
-        <input type="checkbox" checked={termsChecked} onChange={e=>setTermsChecked(e.target.checked)} style={{marginTop:2,flexShrink:0}}/>
-        <span style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>Certifico que la información es correcta y acepto los términos de Latido y Huella 2026</span>
-      </div>
-      {error&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>{error}</div>}
-      <button onClick={()=>saveStaff(type)} disabled={saving} style={{width:'100%',padding:12,borderRadius:10,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:14,opacity:saving?0.7:1}}>
-        {saving?'⏳ Guardando...':`✅ Registrar ${list.length} empleado${list.length>1?'s':''}`}
-      </button>
-    </div>
-  )
 
   if (loading) return <div style={{minHeight:'100vh',background:NAVY,display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{color:'white',textAlign:'center'}}><div style={{fontSize:40}}>⏳</div><p>Cargando...</p></div></div>
 
@@ -265,7 +272,7 @@ export function StaffRegisterPage() {
                 <h3 style={{color:'white',fontSize:15,fontWeight:700,margin:'0 0 16px'}}>
                   {activeModal==='montaje'?'🔧 Registrar staff de montaje':'👔 Registrar staff de servicio'}
                 </h3>
-                <MemberForm list={activeModal==='montaje'?montajeList:servicioList} setList={activeModal==='montaje'?setMontajeList:setServicioList} type={activeModal}/>
+                <MemberForm list={activeModal==='montaje'?montajeList:servicioList} setList={activeModal==='montaje'?setMontajeList:setServicioList} type={activeModal} termsChecked={termsChecked} setTermsChecked={setTermsChecked} saving={saving} error={error} uploadingKey={uploadingKey} uploadFile={uploadFile} saveStaff={saveStaff}/>
               </div>
             )}
           </>
