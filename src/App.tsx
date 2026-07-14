@@ -27,6 +27,7 @@ export function App() {
       <Route path="/contrato/:token" element={<ContratoPage />} />
       <Route path="/ecard/:id" element={<ECardPage />} />
       <Route path="/kit/:id/:location" element={<KitPage />} />
+      <Route path="/registro-staff" element={<StaffRegisterPage />} />
       <Route path="/registro-staff/:id" element={<StaffRegisterPage />} />
       <Route path="/" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><HomePage /></main><Footer /><WhatsAppButton /><NovoeiaModal /><DiverxoModal /></div>} />
       <Route path="/caminata-5k" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><Caminata5KPage /></main><Footer /><WhatsAppButton /></div>} />
