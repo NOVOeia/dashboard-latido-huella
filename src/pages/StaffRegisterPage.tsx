@@ -138,7 +138,7 @@ export function StaffRegisterPage() {
       </div>
       {error&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>{error}</div>}
       <button onClick={()=>saveStaff(type)} disabled={saving} style={{width:'100%',padding:12,borderRadius:10,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:14,opacity:saving?0.7:1}}>
-        {saving?'⏳ Guardando...`:`✅ Registrar ${list.length} empleado${list.length>1?'s':''}`}
+        {saving?'⏳ Guardando...':`✅ Registrar ${list.length} empleado${list.length>1?'s':''}`}
       </button>
     </div>
   )
