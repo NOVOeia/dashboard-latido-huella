@@ -93,7 +93,7 @@ export function StaffRegisterPage() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [terms, setTerms] = useState(false)
-  const [uploadingKey, setUploadingKey] = useState<string|null>(null)
+  const [showContractModal, setShowContractModal] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -321,11 +321,10 @@ export function StaffRegisterPage() {
                     {empresa.contract_signed_at?'✅ Firmado':'🔴 Pendiente'}
                   </span>
                   {empresa.contract_token&&!empresa.contract_signed_at&&(
-                    <a href={`${window.location.origin}/contrato/${empresa.contract_token}`} target="_blank" rel="noopener noreferrer"
-                      onClick={e=>e.stopPropagation()}
-                      style={{padding:'5px 10px',borderRadius:8,background:CYAN,color:'white',textDecoration:'none',fontSize:12,fontWeight:700,whiteSpace:'nowrap'as const}}>
-                      ✍️ Ir a firmar
-                    </a>
+                    <button onClick={()=>setShowContractModal(true)}
+                      style={{padding:'5px 10px',borderRadius:8,background:CYAN,color:'white',border:'none',cursor:'pointer',fontSize:12,fontWeight:700,whiteSpace:'nowrap'as const}}>
+                      ✍️ Firmar contrato
+                    </button>
                   )}
                   {empresa.contract_signed_at&&(
                     <a href={`${window.location.origin}/ecard/${empresa.id}`} target="_blank" rel="noopener noreferrer"
@@ -384,6 +383,26 @@ export function StaffRegisterPage() {
           Latido y Huella 2026 · eventos@latidoyhuella.co · WhatsApp +57 333 277 7912
         </p>
       </div>
+
+      {/* Modal contrato */}
+      {showContractModal&&empresa?.contract_token&&(
+        <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(0,0,0,0.85)',display:'flex',flexDirection:'column'as const,alignItems:'center',justifyContent:'center',padding:16}}>
+          <div style={{width:'100%',maxWidth:700,background:'white',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column'as const,maxHeight:'90vh'}}>
+            <div style={{background:NAVY,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+              <span style={{color:'white',fontWeight:700,fontSize:15}}>📄 Contrato — {empresa.brand_name}</span>
+              <button onClick={()=>{setShowContractModal(false);window.location.reload()}}
+                style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'4px 12px',cursor:'pointer',fontSize:13}}>
+                ✕ Cerrar
+              </button>
+            </div>
+            <iframe
+              src={`${window.location.origin}/contrato/${empresa.contract_token}`}
+              style={{flex:1,border:'none',minHeight:600}}
+              title="Contrato"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
