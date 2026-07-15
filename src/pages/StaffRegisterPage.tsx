@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import jsPDF from 'jspdf'
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -340,12 +341,13 @@ export function StaffRegisterPage() {
 
   const printPDF = async () => {
     if (!empresa||!existingMontaje.length) return
-    const { jsPDF } = await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' as any)
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'letter' })
-    const W = 215.9, navy = [13,27,110], cyan = [0,188,212], amber = [255,179,0]
+    const W = 215.9
+    const navy: [number,number,number] = [13,27,110]
+    const cyan: [number,number,number] = [0,188,212]
 
     // Header navy
-    doc.setFillColor(...navy as [number,number,number])
+    doc.setFillColor(13,27,110)
     doc.rect(0, 0, W, 38, 'F')
 
     // Logo text (no podemos cargar imagen externa fácil, usamos texto)
@@ -359,7 +361,7 @@ export function StaffRegisterPage() {
     doc.text('26 Jul 2026 · Parque COMFAMA Llanogrande', 14, 36)
 
     // Cyan bar
-    doc.setFillColor(...cyan as [number,number,number])
+    doc.setFillColor(0,188,212)
     doc.rect(0, 38, W, 8, 'F')
     doc.setTextColor(255,255,255)
     doc.setFontSize(9); doc.setFont('helvetica','bold')
@@ -382,7 +384,7 @@ export function StaffRegisterPage() {
     const cols = ['#','Nombre completo','Cédula','Teléfono','EPS','ARL']
     const colW = [10, 60, 30, 28, 30, 30]
     let x = 14
-    doc.setFillColor(...navy as [number,number,number])
+    doc.setFillColor(13,27,110)
     doc.rect(14, startY, W-28, 8, 'F')
     doc.setTextColor(255,255,255)
     doc.setFontSize(8); doc.setFont('helvetica','bold')
@@ -411,7 +413,7 @@ export function StaffRegisterPage() {
 
     // Footer navy
     const footerY = 240
-    doc.setFillColor(...navy as [number,number,number])
+    doc.setFillColor(13,27,110)
     doc.rect(0, footerY, W, 32, 'F')
     doc.setTextColor(255,255,255)
     doc.setFontSize(10); doc.setFont('helvetica','bold')
