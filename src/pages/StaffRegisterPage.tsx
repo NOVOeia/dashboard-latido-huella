@@ -115,6 +115,7 @@ export function StaffRegisterPage() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [terms, setTerms] = useState(false)
+  const [vehicle, setVehicle] = useState({ placa:'', tipo_vehiculo:'', marca:'' })
   const [uploadingKey, setUploadingKey] = useState<string|null>(null)
   const [showContractModal, setShowContractModal] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
@@ -245,8 +246,7 @@ export function StaffRegisterPage() {
     }
     if (!terms) { setSaveError('Debes aceptar los términos'); return }
     setSaving(true)
-    const inserts = montaje.map(m => ({
-      expositor_id: empresa?.tipo==='expositor' ? empresa.id : null,
+    const inserts = montaje.map(m => ({      expositor_id: empresa?.tipo==='expositor' ? empresa.id : null,
       sponsor_id: empresa?.tipo==='patrocinador' ? empresa.id : null,
       full_name:m.full_name, cedula:m.cedula, cedula_url:m.cedula_url,
       phone:m.phone, eps_name:m.eps_name, arl_name:m.arl_name,
@@ -306,6 +306,18 @@ export function StaffRegisterPage() {
         body: JSON.stringify({ to:empresa?.email, subject:`✅ Staff de montaje registrado — ${empresa?.brand_name} — Latido y Huella 2026`, html, from:'eventos@latidoyhuella.co', type:'staff' })
       })
     } catch(_e){}
+
+    // Guardar vehículo si se ingresó
+    if (vehicle.placa && vehicle.tipo_vehiculo && vehicle.marca) {
+      await supabase.from('stand_vehicles').insert({
+        expositor_id: empresa?.tipo==='expositor' ? empresa.id : null,
+        sponsor_id: empresa?.tipo==='patrocinador' ? empresa.id : null,
+        placa: vehicle.placa.toUpperCase(),
+        tipo_vehiculo: vehicle.tipo_vehiculo,
+        marca: vehicle.marca,
+      })
+    }
+
     await loadExistingStaff(empresa!.id)
     setSaving(false)
   }
@@ -599,6 +611,36 @@ export function StaffRegisterPage() {
                   style={{width:'100%',padding:'9px',borderRadius:8,background:'transparent',border:`1px dashed rgba(0,188,212,0.4)`,color:CYAN,cursor:'pointer',fontSize:13,marginBottom:14}}>
                   + Agregar empleado
                 </button>
+                {/* Sección vehículo */}
+                <div style={{background:'rgba(0,188,212,0.06)',border:'1px solid rgba(0,188,212,0.2)',borderRadius:12,padding:16,marginBottom:14}}>
+                  <div style={{color:CYAN,fontSize:13,fontWeight:700,marginBottom:4}}>🚗 Vehículo de ingreso al parque</div>
+                  <div style={{background:'rgba(255,179,0,0.1)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:8,padding:'8px 12px',marginBottom:12}}>
+                    <p style={{color:'#fbbf24',fontSize:12,margin:0,fontWeight:600}}>⚠️ Solo se permite 1 vehículo por empresa dentro del Parque COMFAMA.</p>
+                    <p style={{color:'rgba(255,255,255,0.5)',fontSize:11,margin:'4px 0 0'}}>Los demás vehículos deben estacionarse en los parqueaderos cercanos al parque.</p>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+                    <div>
+                      <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Placa *</div>
+                      <input style={inp} placeholder="AAA000" value={vehicle.placa} onChange={e=>setVehicle(v=>({...v,placa:e.target.value.toUpperCase()}))}/>
+                    </div>
+                    <div>
+                      <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Tipo de vehículo *</div>
+                      <select value={vehicle.tipo_vehiculo} onChange={e=>setVehicle(v=>({...v,tipo_vehiculo:e.target.value}))}
+                        style={{...inp,background:'rgba(255,255,255,0.07)'}}>
+                        <option value="">Selecciona...</option>
+                        <option value="Carro">Carro</option>
+                        <option value="Camioneta">Camioneta</option>
+                        <option value="Van">Van</option>
+                        <option value="Camión">Camión</option>
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Marca / Modelo *</div>
+                      <input style={inp} placeholder="Ej: Renault Duster" value={vehicle.marca} onChange={e=>setVehicle(v=>({...v,marca:e.target.value}))}/>
+                    </div>
+                  </div>
+                </div>
+
                 <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}}>
                   <input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)} style={{marginTop:2,flexShrink:0}}/>
                   <span style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>
