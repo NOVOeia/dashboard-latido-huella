@@ -94,6 +94,7 @@ export function StaffRegisterPage() {
   const [saveError, setSaveError] = useState('')
   const [terms, setTerms] = useState(false)
   const [showContractModal, setShowContractModal] = useState(false)
+  const [uploadingKey, setUploadingKey] = useState<string|null>(null)
 
   useEffect(() => {
     const load = async () => {
