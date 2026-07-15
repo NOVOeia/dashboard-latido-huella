@@ -338,81 +338,90 @@ export function StaffRegisterPage() {
     setRegDocs({ cedula_url:'', rut_url:'', camara_url:'' })
   }
 
-  const printPDF = () => {
+  const printPDF = async () => {
     if (!empresa||!existingMontaje.length) return
-    const rows = existingMontaje.map((s,i) => `
-      <tr>
-        <td style="padding:10px 14px;font-size:13px;color:#666;border-bottom:1px solid #eef0f8">${i+1}</td>
-        <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#0D1B6E;border-bottom:1px solid #eef0f8">${s.full_name}</td>
-        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.cedula}</td>
-        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.phone}</td>
-        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.eps_name||'—'}</td>
-        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.arl_name||'—'}</td>
-        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #eef0f8">${s.cedula_url?`<a href="${s.cedula_url}" style="color:#00BCD4;font-weight:700">CC</a>`:''} ${s.arl_eps_url?`<a href="${s.arl_eps_url}" style="color:#00BCD4;font-weight:700">ARL</a>`:''}</td>
-      </tr>`).join('')
+    const { jsPDF } = await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' as any)
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'letter' })
+    const W = 215.9, navy = [13,27,110], cyan = [0,188,212], amber = [255,179,0]
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Staff Montaje — ${empresa.brand_name}</title></head>
-    <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:white">
-      
-      <!-- HEADER NAVY -->
-      <div style="background:#0D1B6E;padding:28px 40px;display:flex;align-items:center;justify-content:space-between">
-        <img src="${LOGO}" style="height:52px" alt="Latido y Huella"/>
-        <div style="text-align:right">
-          <div style="color:white;font-size:18px;font-weight:800;margin-bottom:4px">Personal de Montaje</div>
-          <div style="color:rgba(255,255,255,0.7);font-size:12px">${empresa.brand_name}${empresa.stand_id?' · Stand '+empresa.stand_id:''}</div>
-          <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px">Latido y Huella 2026 · 26 Jul · Llanogrande</div>
-        </div>
-      </div>
+    // Header navy
+    doc.setFillColor(...navy as [number,number,number])
+    doc.rect(0, 0, W, 38, 'F')
 
-      <!-- BARRA CYAN -->
-      <div style="background:#00BCD4;padding:8px 40px;display:flex;gap:32px">
-        <span style="color:white;font-size:12px;font-weight:700">${empresa.brand_name}</span>
-        ${empresa.stand_id?`<span style="color:rgba(255,255,255,0.8);font-size:12px">Stand: ${empresa.stand_id}</span>`:''}
-        <span style="color:rgba(255,255,255,0.8);font-size:12px">${existingMontaje.length} empleado${existingMontaje.length>1?'s':''}</span>
-        <span style="color:rgba(255,255,255,0.8);font-size:12px;margin-left:auto">${new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</span>
-      </div>
+    // Logo text (no podemos cargar imagen externa fácil, usamos texto)
+    doc.setTextColor(255,255,255)
+    doc.setFontSize(18); doc.setFont('helvetica','bold')
+    doc.text('LATIDO Y HUELLA 2026', 14, 16)
+    doc.setFontSize(10); doc.setFont('helvetica','normal')
+    doc.text('Personal de Montaje', 14, 24)
+    doc.setTextColor(180,200,255)
+    doc.text(`${empresa.brand_name}${empresa.stand_id?' · Stand '+empresa.stand_id:''}`, 14, 30)
+    doc.text('26 Jul 2026 · Parque COMFAMA Llanogrande', 14, 36)
 
-      <!-- BODY -->
-      <div style="padding:28px 40px">
-        
-        <div style="background:#fff8e1;border-left:4px solid #FFB300;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:24px">
-          <strong style="color:#e65100;font-size:13px">⚠️ Importante:</strong>
-          <span style="color:#555;font-size:12px"> Este documento autoriza el ingreso del personal al Parque COMFAMA Llanogrande durante las labores de montaje y desmontaje. Preséntelo en la entrada el día del montaje.</span>
-        </div>
+    // Cyan bar
+    doc.setFillColor(...cyan as [number,number,number])
+    doc.rect(0, 38, W, 8, 'F')
+    doc.setTextColor(255,255,255)
+    doc.setFontSize(9); doc.setFont('helvetica','bold')
+    doc.text(empresa.brand_name, 14, 44)
+    doc.text(`${existingMontaje.length} empleado${existingMontaje.length>1?'s':''}`, W-40, 44)
 
-        <table style="width:100%;border-collapse:collapse">
-          <thead>
-            <tr style="background:#0D1B6E">
-              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">#</th>
-              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Nombre completo</th>
-              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Cédula</th>
-              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Teléfono</th>
-              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">EPS</th>
-              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">ARL</th>
-              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Docs</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-      </div>
+    // Aviso
+    doc.setFillColor(255, 248, 225)
+    doc.rect(14, 52, W-28, 12, 'F')
+    doc.setDrawColor(...amber as [number,number,number])
+    doc.rect(14, 52, 2, 12, 'F')
+    doc.setTextColor(180, 80, 0)
+    doc.setFontSize(8); doc.setFont('helvetica','bold')
+    doc.text('⚠ Importante:', 18, 57)
+    doc.setFont('helvetica','normal')
+    doc.text('Este documento autoriza el ingreso al Parque COMFAMA durante el montaje y desmontaje.', 18, 62)
 
-      <!-- FOOTER NAVY -->
-      <div style="background:#0D1B6E;padding:20px 40px;text-align:center;margin-top:20px">
-        <p style="color:white;font-size:13px;font-weight:700;margin:0 0 6px">🐾 ¡Gracias por ser parte de Latido y Huella 2026!</p>
-        <p style="color:rgba(255,255,255,0.6);font-size:11px;margin:0 0 4px">Este documento certifica el registro de su personal de montaje y autoriza su ingreso al Parque COMFAMA Llanogrande.</p>
-        <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0">26 de julio de 2026 · Llanogrande, Antioquia · eventos@latidoyhuella.co · WhatsApp +57 333 277 7912</p>
-      </div>
-    </body></html>`
+    // Tabla header
+    const startY = 70
+    const cols = ['#','Nombre completo','Cédula','Teléfono','EPS','ARL']
+    const colW = [10, 60, 30, 28, 30, 30]
+    let x = 14
+    doc.setFillColor(...navy as [number,number,number])
+    doc.rect(14, startY, W-28, 8, 'F')
+    doc.setTextColor(255,255,255)
+    doc.setFontSize(8); doc.setFont('helvetica','bold')
+    cols.forEach((c,i) => { doc.text(c, x+2, startY+5.5); x+=colW[i] })
 
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const w = window.open(url, '_blank')
-    if (w) {
-      setTimeout(() => { w.document.title = `Staff-Montaje-${empresa.brand_name}` }, 500)
-    }
-    URL.revokeObjectURL(url)
+    // Tabla rows
+    existingMontaje.forEach((s, i) => {
+      const y = startY + 8 + i*9
+      if (i%2===0) {
+        doc.setFillColor(248, 249, 255)
+        doc.rect(14, y, W-28, 9, 'F')
+      }
+      doc.setTextColor(50,50,80)
+      doc.setFontSize(8); doc.setFont('helvetica','normal')
+      let x2 = 14
+      const vals = [`${i+1}`, s.full_name, s.cedula, s.phone, s.eps_name||'—', s.arl_name||'—']
+      vals.forEach((v,vi) => {
+        const maxW = colW[vi]-3
+        const txt = doc.splitTextToSize(v, maxW)[0]
+        doc.text(txt, x2+2, y+5.5)
+        x2+=colW[vi]
+      })
+      doc.setDrawColor(220,225,240)
+      doc.line(14, y+9, W-14, y+9)
+    })
+
+    // Footer navy
+    const footerY = 240
+    doc.setFillColor(...navy as [number,number,number])
+    doc.rect(0, footerY, W, 32, 'F')
+    doc.setTextColor(255,255,255)
+    doc.setFontSize(10); doc.setFont('helvetica','bold')
+    doc.text('¡Gracias por ser parte de Latido y Huella 2026!', W/2, footerY+10, {align:'center'})
+    doc.setFontSize(8); doc.setFont('helvetica','normal')
+    doc.setTextColor(180,200,255)
+    doc.text('Este documento certifica el registro de su personal de montaje.', W/2, footerY+17, {align:'center'})
+    doc.text('eventos@latidoyhuella.co · WhatsApp +57 333 277 7912', W/2, footerY+23, {align:'center'})
+
+    doc.save(`Staff-Montaje-${empresa.brand_name.replace(/\s+/g,'-')}.pdf`)
   }
 
   if (loading) return (
