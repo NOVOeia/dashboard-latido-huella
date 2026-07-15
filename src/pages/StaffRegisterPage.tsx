@@ -408,10 +408,10 @@ export function StaffRegisterPage() {
 
     const blob = new Blob([html], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Staff-Montaje-${empresa.brand_name.replace(/\s+/g,'-')}.html`
-    a.click()
+    const w = window.open(url, '_blank')
+    if (w) {
+      setTimeout(() => { w.document.title = `Staff-Montaje-${empresa.brand_name}` }, 500)
+    }
     URL.revokeObjectURL(url)
   }
 
@@ -442,6 +442,23 @@ export function StaffRegisterPage() {
       </div>
 
       <div style={{maxWidth:900,margin:'0 auto',padding:'24px 16px'}}>
+
+        {/* 3 Pasos */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:20}}>
+          {[
+            { num:'①', title:'Busca tu empresa', desc:'Escribe el nombre de tu stand o empresa en el buscador para encontrarla', color:'#00BCD4' },
+            { num:'②', title:'¿No apareces?', desc:'Regístrate aquí como Expositor o Patrocinador — el proceso es rápido', color:'#4ade80' },
+            { num:'③', title:'Completa cada sección', desc:'Staff de montaje · Contrato · Puedes volver cuando quieras a revisar tu información', color:'#fbbf24' },
+          ].map(s=>(
+            <div key={s.num} style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${s.color}25`,borderRadius:12,padding:'14px 16px',display:'flex',gap:12,alignItems:'flex-start'}}>
+              <div style={{background:`${s.color}20`,border:`1px solid ${s.color}40`,borderRadius:10,width:36,height:36,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0,color:s.color,fontWeight:800}}>{s.num}</div>
+              <div>
+                <div style={{color:'white',fontSize:13,fontWeight:700,marginBottom:4}}>{s.title}</div>
+                <div style={{color:'rgba(255,255,255,0.45)',fontSize:12,lineHeight:1.5}}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Selector empresa */}
         <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:16,marginBottom:16}}>
