@@ -371,7 +371,7 @@ export function StaffRegisterPage() {
     // Aviso
     doc.setFillColor(255, 248, 225)
     doc.rect(14, 52, W-28, 12, 'F')
-    doc.setDrawColor(...amber as [number,number,number])
+    doc.setDrawColor(255,179,0)
     doc.rect(14, 52, 2, 12, 'F')
     doc.setTextColor(180, 80, 0)
     doc.setFontSize(8); doc.setFont('helvetica','bold')
