@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -11,61 +11,89 @@ const NAVY = '#0D1B6E'
 const CYAN = '#00BCD4'
 const WA = '+573332777912'
 
-interface Empresa { id:string; brand_name:string; responsible_name:string; email:string; tipo:'expositor'|'patrocinador'; stand_id?:string; contract_token?:string; contract_signed_at?:string; nit?:string; phone?:string }
-interface StaffMember { full_name:string; cedula:string; cedula_url:string; phone:string; eps_name:string; arl_name:string; arl_eps_url:string }
+interface Empresa {
+  id:string; brand_name:string; responsible_name:string; email:string;
+  tipo:'expositor'|'patrocinador'; stand_id?:string; contract_token?:string;
+  contract_signed_at?:string; nit?:string; phone?:string
+}
+interface StaffMember {
+  full_name:string; cedula:string; cedula_url:string;
+  phone:string; eps_name:string; arl_name:string; arl_eps_url:string
+}
 const empty = (): StaffMember => ({ full_name:'', cedula:'', cedula_url:'', phone:'', eps_name:'', arl_name:'', arl_eps_url:'' })
-const inp = { width:'100%', fontSize:13, padding:'7px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.07)', color:'white', outline:'none', boxSizing:'border-box' as const }
 
-function UploadBtn({ label, value, uploading, onFile }: { label:string; value:string; uploading:boolean; onFile:(f:File)=>void }) {
-  if (value) return <span style={{fontSize:11,color:'#4ade80',padding:'6px 8px',background:'rgba(74,222,128,0.1)',border:'1px solid rgba(74,222,128,0.3)',borderRadius:6,display:'inline-block'}}>✅ Subido</span>
+const inp = {
+  width:'100%', fontSize:13, padding:'8px 12px', borderRadius:8,
+  border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.07)',
+  color:'white', outline:'none', boxSizing:'border-box' as const
+}
+
+const inpDark = {
+  ...inp, background:'rgba(255,255,255,0.05)', color:'white'
+}
+
+function UploadBtn({ label, value, uploading, onFile }: {
+  label:string; value:string; uploading:boolean; onFile:(f:File)=>void
+}) {
+  if (value) return (
+    <div style={{display:'flex',alignItems:'center',gap:6}}>
+      <span style={{fontSize:11,color:'#4ade80'}}>✅ Subido</span>
+      <a href={value} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:CYAN}}>Ver</a>
+    </div>
+  )
   return (
-    <label style={{cursor:'pointer',padding:'6px 10px',background:'rgba(0,188,212,0.1)',border:'1px solid rgba(0,188,212,0.3)',borderRadius:6,display:'flex',alignItems:'center',gap:4,whiteSpace:'nowrap'as const,fontSize:11,color:CYAN}}>
-      {uploading ? '⏳' : label}
+    <label style={{cursor:'pointer',padding:'7px 12px',background:'rgba(0,188,212,0.1)',border:'1px solid rgba(0,188,212,0.3)',borderRadius:8,display:'inline-flex',alignItems:'center',gap:6,fontSize:12,color:CYAN}}>
+      {uploading ? '⏳ Subiendo...' : label}
       <input type="file" accept="image/*,.pdf" style={{display:'none'}} onChange={e=>e.target.files?.[0]&&onFile(e.target.files[0])}/>
     </label>
   )
 }
 
 function MemberRow({ m, idx, total, onChange, onRemove, onUpload, uploadingKey }: {
-  m:StaffMember; idx:number; total:number; onChange:(f:keyof StaffMember,v:string)=>void;
-  onRemove:()=>void; onUpload:(f:File,field:'cedula_url'|'arl_eps_url')=>void; uploadingKey:string|null
+  m:StaffMember; idx:number; total:number;
+  onChange:(f:keyof StaffMember,v:string)=>void;
+  onRemove:()=>void;
+  onUpload:(f:File,field:'cedula_url'|'arl_eps_url')=>void;
+  uploadingKey:string|null
 }) {
   return (
-    <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
+    <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:'14px',marginBottom:10}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-        <span style={{color:'rgba(255,255,255,0.7)',fontSize:13,fontWeight:600}}>Empleado {idx+1}</span>
-        {total>1&&<button onClick={onRemove} style={{background:'rgba(239,68,68,0.1)',border:'none',color:'#f87171',borderRadius:6,padding:'2px 8px',cursor:'pointer',fontSize:11}}>✕ Eliminar</button>}
+        <span style={{color:'white',fontSize:13,fontWeight:700}}>Empleado {idx+1}</span>
+        {total>1&&<button onClick={onRemove} style={{background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#f87171',borderRadius:6,padding:'3px 10px',cursor:'pointer',fontSize:12}}>✕ Eliminar</button>}
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'2fr 1.5fr auto',gap:8,marginBottom:8,alignItems:'end'}}>
+      {/* Fila 1: Nombre · Cédula · Foto CC */}
+      <div style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1fr',gap:10,marginBottom:10,alignItems:'end'}}>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:3}}>Nombre completo *</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Nombre completo *</div>
           <input style={inp} placeholder="Nombre y apellidos" value={m.full_name} onChange={e=>onChange('full_name',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:3}}>Número de cédula *</div>
-          <input style={inp} placeholder="CC" value={m.cedula} onChange={e=>onChange('cedula',e.target.value)}/>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Cédula *</div>
+          <input style={inp} placeholder="Número de cédula" value={m.cedula} onChange={e=>onChange('cedula',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:3}}>Foto cédula</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>📷 Foto cédula</div>
           <UploadBtn label="📷 Subir CC" value={m.cedula_url} uploading={uploadingKey===`${idx}-cc`} onFile={f=>onUpload(f,'cedula_url')}/>
         </div>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'1.5fr 1.5fr 1.5fr auto',gap:8,alignItems:'end'}}>
+      {/* Fila 2: Teléfono · EPS · ARL · Doc seguro */}
+      <div style={{display:'grid',gridTemplateColumns:'1.5fr 1.5fr 1.5fr 1fr',gap:10,alignItems:'end'}}>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:3}}>Teléfono *</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Teléfono *</div>
           <input style={inp} placeholder="300 000 0000" value={m.phone} onChange={e=>onChange('phone',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:3}}>EPS</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>EPS</div>
           <input style={inp} placeholder="Nombre EPS" value={m.eps_name} onChange={e=>onChange('eps_name',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:3}}>ARL</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>ARL</div>
           <input style={inp} placeholder="Nombre ARL" value={m.arl_name} onChange={e=>onChange('arl_name',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:3}}>Doc seguro</div>
-          <UploadBtn label="📄 ARL/EPS" value={m.arl_eps_url} uploading={uploadingKey===`${idx}-arl`} onFile={f=>onUpload(f,'arl_eps_url')}/>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>📄 Doc seguro</div>
+          <UploadBtn label="📄 Subir ARL/EPS" value={m.arl_eps_url} uploading={uploadingKey===`${idx}-arl`} onFile={f=>onUpload(f,'arl_eps_url')}/>
         </div>
       </div>
     </div>
@@ -77,7 +105,6 @@ export function StaffRegisterPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showList, setShowList] = useState(false)
-  const [selectedId, setSelectedId] = useState('')
   const [empresa, setEmpresa] = useState<Empresa|null>(null)
   const [nitInput, setNitInput] = useState('')
   const [verified, setVerified] = useState(false)
@@ -90,71 +117,93 @@ export function StaffRegisterPage() {
   const [terms, setTerms] = useState(false)
   const [uploadingKey, setUploadingKey] = useState<string|null>(null)
   const [showContractModal, setShowContractModal] = useState(false)
-
+  const [showRegisterModal, setShowRegisterModal] = useState(false)
+  const [regTipo, setRegTipo] = useState<'expositor'|'patrocinador'>('expositor')
+  const [regForm, setRegForm] = useState({ brand_name:'', responsible_name:'', document_id:'', email:'', phone:'' })
+  const [regDocs, setRegDocs] = useState({ cedula_url:'', rut_url:'', camara_url:'' })
+  const [regUploading, setRegUploading] = useState<string|null>(null)
+  const [regSaving, setRegSaving] = useState(false)
+  const [regError, setRegError] = useState('')
   const filteredEmpresas = empresas.filter(e => e.brand_name.toLowerCase().includes(search.toLowerCase()))
 
-  useEffect(() => {
-    const load = async () => {
-      const [{ data: exps }, { data: spons }] = await Promise.all([
-        supabase.from('expositor_reservations').select('id,brand_name,responsible_name,email,phone,stand_id,contract_token,contract_signed_at,document_id').in('status',['paid','approved']),
-        supabase.from('sponsor_inquiries').select('id,company_name,contact_name,email,contract_token,contract_signed_at,document_id').in('status',['paid','approved'])
-      ])
-      const list: Empresa[] = [
-        ...(exps||[]).map((e:any) => ({ id:e.id, brand_name:e.brand_name, responsible_name:e.responsible_name, email:e.email, phone:e.phone, tipo:'expositor'as const, stand_id:e.stand_id, contract_token:e.contract_token, contract_signed_at:e.contract_signed_at, nit:e.document_id })),
-        ...(spons||[]).map((s:any) => ({ id:s.id, brand_name:s.company_name, responsible_name:s.contact_name, email:s.email, tipo:'patrocinador'as const, contract_token:s.contract_token, contract_signed_at:s.contract_signed_at, nit:s.document_id }))
-      ]
-      setEmpresas(list)
+  const loadEmpresas = async () => {
+    const [{ data: exps }, { data: spons }] = await Promise.all([
+      supabase.from('expositor_reservations').select('id,brand_name,responsible_name,email,phone,stand_id,contract_token,contract_signed_at,document_id').in('status',['paid','approved','pending_payment']),
+      supabase.from('sponsor_inquiries').select('id,company_name,contact_name,email,contract_token,contract_signed_at,document_id').in('status',['paid','approved','pending_payment'])
+    ])
+    const list: Empresa[] = [
+      ...(exps||[]).map((e:any) => ({ id:e.id, brand_name:e.brand_name, responsible_name:e.responsible_name, email:e.email, phone:e.phone, tipo:'expositor'as const, stand_id:e.stand_id, contract_token:e.contract_token, contract_signed_at:e.contract_signed_at, nit:e.document_id })),
+      ...(spons||[]).map((s:any) => ({ id:s.id, brand_name:s.company_name, responsible_name:s.contact_name, email:s.email, tipo:'patrocinador'as const, contract_token:s.contract_token, contract_signed_at:s.contract_signed_at, nit:s.document_id }))
+    ]
+    return list
+  }
 
-      // Restaurar sesión
+  useEffect(() => {
+    const init = async () => {
+      const list = await loadEmpresas()
+      setEmpresas(list)
       const savedId = sessionStorage.getItem('staff_verified_id')
       if (savedId) {
         const emp = list.find(e => e.id === savedId)
         if (emp) {
           setEmpresa(emp)
-          setSelectedId(emp.id)
           setSearch(emp.brand_name)
           setVerified(true)
-          loadExistingStaff(savedId)
+          await loadExistingStaff(savedId)
         }
       }
       setLoading(false)
     }
-    load()
+    init()
   }, [])
 
   const loadExistingStaff = async (empId: string) => {
-    const { data } = await supabase.from('stand_staff').select('*').or(`expositor_id.eq.${empId},sponsor_id.eq.${empId}`).eq('staff_type','montaje')
+    const { data } = await supabase.from('stand_staff').select('*')
+      .or(`expositor_id.eq.${empId},sponsor_id.eq.${empId}`)
+      .eq('staff_type','montaje')
+      .order('created_at',{ascending:true})
     if (data && data.length > 0) {
       setExistingMontaje(data)
       setMontajeSaved(true)
+    } else {
+      setExistingMontaje([])
+      setMontajeSaved(false)
     }
   }
 
+  const refresh = async () => {
+    if (!empresa) return
+    const list = await loadEmpresas()
+    setEmpresas(list)
+    const updated = list.find(e => e.id === empresa.id)
+    if (updated) setEmpresa(updated)
+    await loadExistingStaff(empresa.id)
+  }
+
   const selectEmpresa = (emp: Empresa) => {
-    setSelectedId(emp.id)
+    setEmpresa(emp)
     setSearch(emp.brand_name)
     setShowList(false)
     setVerified(false)
     setNitInput('')
     setVerifyError('')
-    setEmpresa(emp)
     setExistingMontaje([])
     setMontajeSaved(false)
+    sessionStorage.removeItem('staff_verified_id')
   }
 
   const handleVerify = async () => {
     if (!empresa) return
-    const input = nitInput.trim().replace(/[.\-\s]/g, '').toLowerCase()
-    const nit = (empresa.nit || '').trim().replace(/[.\-\s]/g, '').toLowerCase()
-    const email = (empresa.email || '').trim().toLowerCase()
-    const phone = (empresa.phone || '').trim().replace(/[.\-\s+]/g, '')
-    const inputPhone = nitInput.trim().replace(/[.\-\s+]/g, '')
-
-    if ((nit && input === nit) || (email && nitInput.trim().toLowerCase() === email) || (phone && inputPhone === phone)) {
+    const input = nitInput.trim().replace(/[.\-\s]/g,'').toLowerCase()
+    const nit = (empresa.nit||'').trim().replace(/[.\-\s]/g,'').toLowerCase()
+    const email = (empresa.email||'').trim().toLowerCase()
+    const phone = (empresa.phone||'').trim().replace(/[.\-\s+]/g,'')
+    const inputPhone = nitInput.trim().replace(/[.\-\s+]/g,'')
+    if ((nit&&input===nit)||(email&&nitInput.trim().toLowerCase()===email)||(phone&&inputPhone===phone)) {
       setVerified(true)
       setVerifyError('')
       sessionStorage.setItem('staff_verified_id', empresa.id)
-      loadExistingStaff(empresa.id)
+      await loadExistingStaff(empresa.id)
     } else {
       setVerifyError('Dato incorrecto. Verifica el NIT, email o número de celular registrado.')
     }
@@ -165,59 +214,190 @@ export function StaffRegisterPage() {
     setUploadingKey(key)
     const ext = file.name.split('.').pop()
     const path = `staff-docs/${empresa?.id}_${Date.now()}_${key}.${ext}`
-    const { error } = await supabase.storage.from('expositor-documents').upload(path, file, { upsert: true })
-    if (error) { setUploadingKey(null); return }
+    await supabase.storage.from('expositor-documents').upload(path, file, { upsert:true })
     const { data } = supabase.storage.from('expositor-documents').getPublicUrl(path)
-    setMontaje(prev => prev.map((m, i) => i === idx ? { ...m, [field]: data.publicUrl } : m))
+    setMontaje(prev => prev.map((m,i) => i===idx ? {...m,[field]:data.publicUrl} : m))
     setUploadingKey(null)
   }
 
+  const uploadRegDoc = async (file: File, field: 'cedula_url'|'rut_url'|'camara_url') => {
+    setRegUploading(field)
+    const ext = file.name.split('.').pop()
+    const path = `reg-docs/${Date.now()}_${field}.${ext}`
+    await supabase.storage.from('expositor-documents').upload(path, file, { upsert:true })
+    const { data } = supabase.storage.from('expositor-documents').getPublicUrl(path)
+    setRegDocs(prev => ({...prev,[field]:data.publicUrl}))
+    setRegUploading(null)
+  }
+
   const updateMember = (idx: number, field: keyof StaffMember, value: string) => {
-    setMontaje(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m))
+    setMontaje(prev => prev.map((m,i) => i===idx ? {...m,[field]:value} : m))
   }
 
   const saveMontaje = async () => {
     setSaveError('')
-    for (let i = 0; i < montaje.length; i++) {
-      if (!montaje[i].full_name || !montaje[i].cedula || !montaje[i].phone) {
+    for (let i=0; i<montaje.length; i++) {
+      if (!montaje[i].full_name||!montaje[i].cedula||!montaje[i].phone) {
         setSaveError(`Empleado ${i+1}: nombre, cédula y teléfono son obligatorios`); return
       }
     }
-    if (!terms) { setSaveError('Debes aceptar los términos y condiciones'); return }
+    if (!terms) { setSaveError('Debes aceptar los términos'); return }
     setSaving(true)
     const inserts = montaje.map(m => ({
-      expositor_id: empresa?.tipo === 'expositor' ? empresa.id : null,
-      sponsor_id: empresa?.tipo === 'patrocinador' ? empresa.id : null,
-      full_name: m.full_name, cedula: m.cedula, cedula_url: m.cedula_url,
-      phone: m.phone, eps_name: m.eps_name, arl_name: m.arl_name,
-      arl_eps_url: m.arl_eps_url, arl_eps: `${m.eps_name} / ${m.arl_name}`,
-      staff_type: 'montaje'
+      expositor_id: empresa?.tipo==='expositor' ? empresa.id : null,
+      sponsor_id: empresa?.tipo==='patrocinador' ? empresa.id : null,
+      full_name:m.full_name, cedula:m.cedula, cedula_url:m.cedula_url,
+      phone:m.phone, eps_name:m.eps_name, arl_name:m.arl_name,
+      arl_eps_url:m.arl_eps_url, arl_eps:`${m.eps_name} / ${m.arl_name}`,
+      staff_type:'montaje'
     }))
     const { error } = await supabase.from('stand_staff').insert(inserts)
     if (error) { setSaveError('Error al guardar. Intenta de nuevo.'); setSaving(false); return }
-
-    // Email confirmación mejorado
+    // Email con tabla
     try {
-      const rows = montaje.map((m,i) => `<tr style="border-bottom:1px solid #eee"><td style="padding:8px 12px;font-size:13px">${i+1}</td><td style="padding:8px 12px;font-size:13px">${m.full_name}</td><td style="padding:8px 12px;font-size:13px">${m.cedula}</td><td style="padding:8px 12px;font-size:13px">${m.phone}</td><td style="padding:8px 12px;font-size:13px">${m.eps_name||'—'} / ${m.arl_name||'—'}</td></tr>`).join('')
-      const html = `<div style="font-family:Arial,sans-serif;max-width:650px;margin:0 auto;background:#f5f5f5"><div style="background:#0D1B6E;padding:32px;text-align:center;border-radius:16px 16px 0 0"><img src="${LOGO}" style="height:55px"/></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h2 style="color:#0D1B6E;margin:0 0 8px">✅ Staff de montaje registrado</h2><p style="color:#555;font-size:14px;margin:0 0 20px">El siguiente personal fue registrado para <strong>${empresa?.brand_name}</strong> como staff de montaje y desmontaje.</p><div style="background:#fff3e0;border-left:4px solid #FFB300;padding:14px 16px;border-radius:0 10px 10px 0;margin:0 0 20px"><p style="color:#e65100;font-weight:700;margin:0 0 4px;font-size:14px">⚠️ Fecha límite: 20 de julio de 2026</p><p style="color:#555;font-size:13px;margin:0">Esta lista será entregada a las directivas del Parque COMFAMA Llanogrande el 20 de julio. <strong>No podrá ser modificada</strong> después de esta fecha. Para cambios contacta: WhatsApp +57 333 277 7912</p></div><table style="width:100%;border-collapse:collapse;margin:0 0 20px"><thead><tr style="background:#0D1B6E;color:white"><th style="padding:10px 12px;text-align:left;font-size:12px">#</th><th style="padding:10px 12px;text-align:left;font-size:12px">Nombre</th><th style="padding:10px 12px;text-align:left;font-size:12px">Cédula</th><th style="padding:10px 12px;text-align:left;font-size:12px">Teléfono</th><th style="padding:10px 12px;text-align:left;font-size:12px">EPS / ARL</th></tr></thead><tbody>${rows}</tbody></table><p style="color:#888;font-size:12px;text-align:center">Latido y Huella 2026 · 26 Jul · Llanogrande · eventos@latidoyhuella.co</p></div></div>`
+      const rows = montaje.map((m,i) => `
+        <tr style="border-bottom:1px solid #eee">
+          <td style="padding:10px 12px;font-size:13px;color:#555">${i+1}</td>
+          <td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1B6E">${m.full_name}</td>
+          <td style="padding:10px 12px;font-size:13px;color:#555">${m.cedula}</td>
+          <td style="padding:10px 12px;font-size:13px;color:#555">${m.phone}</td>
+          <td style="padding:10px 12px;font-size:13px;color:#555">${m.eps_name||'—'}</td>
+          <td style="padding:10px 12px;font-size:13px;color:#555">${m.arl_name||'—'}</td>
+          <td style="padding:10px 12px;font-size:13px">
+            ${m.cedula_url?`<a href="${m.cedula_url}" style="color:#00BCD4;font-size:12px">📋 CC</a>`:'—'}
+            ${m.arl_eps_url?` · <a href="${m.arl_eps_url}" style="color:#00BCD4;font-size:12px">📋 ARL</a>`:''}
+          </td>
+        </tr>`).join('')
+      const html = `
+        <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f5f5f5">
+          <div style="background:#0D1B6E;padding:32px;text-align:center;border-radius:16px 16px 0 0">
+            <img src="${LOGO}" style="height:55px"/>
+          </div>
+          <div style="background:white;padding:32px;border-radius:0 0 16px 16px">
+            <h2 style="color:#0D1B6E;margin:0 0 6px">✅ Staff de montaje registrado</h2>
+            <p style="color:#555;font-size:14px;margin:0 0 6px">Empresa: <strong>${empresa?.brand_name}</strong>${empresa?.stand_id?' · Stand: '+empresa.stand_id:''}</p>
+            <p style="color:#555;font-size:14px;margin:0 0 24px">${montaje.length} empleado${montaje.length>1?'s':''} registrado${montaje.length>1?'s':''}</p>
+            <div style="background:#fff3e0;border-left:4px solid #FFB300;padding:14px 16px;border-radius:0 10px 10px 0;margin:0 0 24px">
+              <p style="color:#e65100;font-weight:700;margin:0 0 4px;font-size:14px">⚠️ Fecha límite: 20 de julio de 2026</p>
+              <p style="color:#666;font-size:13px;margin:0">Esta lista no podrá modificarse después de esta fecha. Para cambios: WhatsApp +57 333 277 7912</p>
+            </div>
+            <table style="width:100%;border-collapse:collapse;margin:0 0 24px">
+              <thead>
+                <tr style="background:#0D1B6E">
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">#</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Nombre</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Cédula</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Teléfono</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">EPS</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">ARL</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Docs</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+            <p style="color:#888;font-size:12px;text-align:center;margin:0">Latido y Huella 2026 · 26 de julio · Llanogrande, Antioquia · eventos@latidoyhuella.co</p>
+          </div>
+        </div>`
       await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
         method:'POST',
         headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
-        body: JSON.stringify({ to: empresa?.email, subject: `✅ Staff de montaje registrado — ${empresa?.brand_name} — Latido y Huella 2026`, html, from:'eventos@latidoyhuella.co', type:'staff' })
+        body: JSON.stringify({ to:empresa?.email, subject:`✅ Staff de montaje registrado — ${empresa?.brand_name} — Latido y Huella 2026`, html, from:'eventos@latidoyhuella.co', type:'staff' })
       })
-    } catch(_e) {}
-
+    } catch(_e){}
     await loadExistingStaff(empresa!.id)
-    setMontajeSaved(true)
     setSaving(false)
   }
 
-  const btnStyle = (color: string) => ({ display:'flex',justifyContent:'space-between'as const,alignItems:'center'as const,background:'rgba(255,255,255,0.04)',border:`1px solid ${color}`,borderRadius:12,padding:'14px 16px',cursor:'pointer',width:'100%',textAlign:'left'as const })
+  const registerNewEmpresa = async () => {
+    setRegError('')
+    if (!regForm.brand_name||!regForm.responsible_name||!regForm.email) {
+      setRegError('Nombre empresa, responsable y email son obligatorios'); return
+    }
+    setRegSaving(true)
+    const token = crypto.randomUUID()
+    const table = regTipo==='expositor' ? 'expositor_reservations' : 'sponsor_inquiries'
+    const insData = regTipo==='expositor'
+      ? { brand_name:regForm.brand_name, responsible_name:regForm.responsible_name, document_id:regForm.document_id, email:regForm.email, phone:regForm.phone, cedula_url:regDocs.cedula_url, rut_url:regDocs.rut_url, camara_comercio_url:regDocs.camara_url, contract_token:token, status:'pending_payment', category:'comercial' }
+      : { company_name:regForm.brand_name, contact_name:regForm.responsible_name, document_id:regForm.document_id, email:regForm.email, phone:regForm.phone, cedula_url:regDocs.cedula_url, rut_url:regDocs.rut_url, contract_token:token, status:'pending_payment' }
+    const { data, error } = await supabase.from(table).insert(insData).select().single()
+    if (error||!data) { setRegError('Error al registrar. Intenta de nuevo.'); setRegSaving(false); return }
+    const list = await loadEmpresas()
+    setEmpresas(list)
+    const newEmp = list.find(e=>e.id===data.id)
+    if (newEmp) {
+      setEmpresa(newEmp)
+      setSearch(newEmp.brand_name)
+      setVerified(true)
+      sessionStorage.setItem('staff_verified_id', newEmp.id)
+    }
+    setShowRegisterModal(false)
+    setRegSaving(false)
+    setRegForm({ brand_name:'', responsible_name:'', document_id:'', email:'', phone:'' })
+    setRegDocs({ cedula_url:'', rut_url:'', camara_url:'' })
+  }
 
-  if (loading) return <div style={{minHeight:'100vh',background:NAVY,display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{color:'white',textAlign:'center'}}><div style={{fontSize:36}}>⏳</div><p>Cargando...</p></div></div>
+  const printPDF = () => {
+    if (!empresa||!existingMontaje.length) return
+    const rows = existingMontaje.map((s,i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${s.full_name}</strong></td>
+        <td>${s.cedula}</td>
+        <td>${s.phone}</td>
+        <td>${s.eps_name||'—'}</td>
+        <td>${s.arl_name||'—'}</td>
+        <td>${s.cedula_url?`<a href="${s.cedula_url}">CC</a>`:''} ${s.arl_eps_url?`<a href="${s.arl_eps_url}">ARL</a>`:''}</td>
+      </tr>`).join('')
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Staff Montaje — ${empresa.brand_name}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:32px;color:#333}
+      .header{text-align:center;margin-bottom:28px}
+      .header img{height:55px;margin-bottom:10px}
+      .header h1{color:#0D1B6E;font-size:20px;margin:0 0 4px}
+      .header p{color:#666;font-size:13px;margin:0}
+      .info{background:#f0f4ff;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px}
+      table{width:100%;border-collapse:collapse;margin-bottom:24px}
+      th{background:#0D1B6E;color:white;padding:10px 12px;text-align:left;font-size:12px}
+      td{padding:9px 12px;font-size:12px;border-bottom:1px solid #eee}
+      tr:nth-child(even) td{background:#f9f9f9}
+      .footer{text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid #eee;color:#888;font-size:12px}
+      a{color:#00BCD4}
+      @media print{button{display:none}}
+    </style></head><body>
+    <div class="header">
+      <img src="${LOGO}" alt="Latido y Huella"/>
+      <h1>Staff de Montaje — ${empresa.brand_name}</h1>
+      <p>${empresa.stand_id?'Stand: '+empresa.stand_id+' · ':''} ${existingMontaje.length} empleado${existingMontaje.length>1?'s':''} registrados</p>
+    </div>
+    <div class="info">
+      <strong>Fecha límite de entrega:</strong> 20 de julio de 2026 &nbsp;·&nbsp;
+      <strong>Evento:</strong> Latido y Huella 2026 &nbsp;·&nbsp;
+      <strong>Lugar:</strong> Parque COMFAMA Llanogrande
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>EPS</th><th>ARL</th><th>Documentos</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="footer">
+      <p>¡Gracias por ser parte de Latido y Huella 2026! 🐾 Este documento certifica el registro de su personal de montaje.</p>
+      <p>Preséntelo en la entrada del Parque COMFAMA Llanogrande el día del montaje previo al evento.</p>
+      <p>26 de julio de 2026 · Llanogrande, Antioquia · eventos@latidoyhuella.co</p>
+    </div>
+    <script>window.print()</script>
+    </body></html>`
+    const w = window.open('','_blank')
+    if (w) { w.document.write(html); w.document.close() }
+  }
+
+  if (loading) return (
+    <div style={{minHeight:'100vh',background:NAVY,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <div style={{color:'white',textAlign:'center'}}><div style={{fontSize:40,marginBottom:12}}>⏳</div><p>Cargando...</p></div>
+    </div>
+  )
 
   return (
     <div style={{minHeight:'100vh',background:'#080d22',paddingBottom:60}}>
+      {/* Header */}
       <div style={{background:NAVY,padding:'28px 24px',textAlign:'center'}}>
         <img src={LOGO} style={{height:50,marginBottom:14}} alt="Latido y Huella"/>
         <h1 style={{color:'white',fontSize:20,fontWeight:700,margin:'0 0 4px'}}>Registro Administrativo</h1>
@@ -228,37 +408,47 @@ export function StaffRegisterPage() {
 
         {/* Selector empresa */}
         <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:16,marginBottom:16}}>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:6}}>Busca tu empresa o stand</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:8}}>Busca tu empresa o stand</div>
           <div style={{position:'relative'}}>
-            <input style={{...inp,fontSize:14,padding:'9px 12px'}} placeholder="Escribe el nombre de tu empresa..."
-              value={search} onChange={e=>{setSearch(e.target.value);setShowList(true);if(!e.target.value){setSelectedId('');setEmpresa(null);setVerified(false);sessionStorage.removeItem('staff_verified_id')}}}
+            <input style={{...inp,fontSize:14,padding:'10px 14px'}}
+              placeholder="Escribe el nombre de tu empresa..."
+              value={search}
+              onChange={e=>{setSearch(e.target.value);setShowList(true);if(!e.target.value){setEmpresa(null);setVerified(false);sessionStorage.removeItem('staff_verified_id')}}}
               onFocus={()=>setShowList(true)}/>
             {showList&&search&&filteredEmpresas.length>0&&(
-              <div style={{position:'absolute',top:'100%',left:0,right:0,background:'#1a2050',border:'1px solid rgba(255,255,255,0.15)',borderRadius:8,zIndex:100,maxHeight:200,overflowY:'auto'as const,marginTop:4}}>
+              <div style={{position:'absolute',top:'100%',left:0,right:0,background:'#1a2050',border:'1px solid rgba(255,255,255,0.15)',borderRadius:8,zIndex:100,maxHeight:220,overflowY:'auto'as const,marginTop:4,boxShadow:'0 8px 24px rgba(0,0,0,0.4)'}}>
                 {filteredEmpresas.map(e=>(
                   <div key={e.id} onClick={()=>selectEmpresa(e)}
-                    style={{padding:'10px 14px',cursor:'pointer',color:'white',fontSize:13,borderBottom:'1px solid rgba(255,255,255,0.06)'}}
+                    style={{padding:'11px 16px',cursor:'pointer',color:'white',fontSize:13,borderBottom:'1px solid rgba(255,255,255,0.06)'}}
                     onMouseOver={el=>(el.currentTarget.style.background='rgba(255,255,255,0.08)')}
                     onMouseOut={el=>(el.currentTarget.style.background='transparent')}>
-                    {e.brand_name} {e.tipo==='expositor'?'🏪':'⭐'}
+                    <span style={{fontWeight:600}}>{e.brand_name}</span>
+                    <span style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginLeft:8}}>{e.tipo==='expositor'?'🏪 Expositor':'⭐ Patrocinador'}{e.stand_id?' · Stand '+e.stand_id:''}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
+          {/* No encontrada */}
           {search&&filteredEmpresas.length===0&&(
-            <div style={{marginTop:12,padding:12,background:'rgba(0,188,212,0.06)',border:'1px solid rgba(0,188,212,0.15)',borderRadius:10,textAlign:'center'}}>
-              <p style={{color:'rgba(255,255,255,0.4)',fontSize:12,margin:'0 0 10px'}}>¿Tu empresa no aparece en la lista?</p>
-              <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap'as const}}>
-                <a href="https://latidoyhuella.com/expositores" target="_blank" rel="noopener noreferrer" style={{padding:'8px 16px',borderRadius:8,background:CYAN,color:'white',textDecoration:'none',fontSize:13,fontWeight:700}}>🏪 Registrarme como Expositor</a>
-                <a href="https://latidoyhuella.com/patrocinadores" target="_blank" rel="noopener noreferrer" style={{padding:'8px 16px',borderRadius:8,background:'rgba(255,255,255,0.1)',color:'white',textDecoration:'none',fontSize:13,fontWeight:700,border:'1px solid rgba(255,255,255,0.2)'}}>⭐ Registrarme como Patrocinador</a>
+            <div style={{marginTop:14,padding:14,background:'rgba(0,188,212,0.06)',border:'1px solid rgba(0,188,212,0.2)',borderRadius:10,textAlign:'center'}}>
+              <p style={{color:'rgba(255,255,255,0.5)',fontSize:13,margin:'0 0 12px'}}>¿Tu empresa no aparece? Regístrate aquí</p>
+              <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'as const}}>
+                <button onClick={()=>{setRegTipo('expositor');setShowRegisterModal(true)}}
+                  style={{padding:'10px 20px',borderRadius:10,background:CYAN,color:'white',border:'none',cursor:'pointer',fontSize:13,fontWeight:700}}>
+                  🏪 Registrarme como Expositor
+                </button>
+                <button onClick={()=>{setRegTipo('patrocinador');setShowRegisterModal(true)}}
+                  style={{padding:'10px 20px',borderRadius:10,background:'rgba(255,255,255,0.1)',color:'white',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:13,fontWeight:700}}>
+                  ⭐ Registrarme como Patrocinador
+                </button>
               </div>
             </div>
           )}
 
           {empresa&&(
-            <div style={{marginTop:10,display:'flex',gap:8,flexWrap:'wrap'as const}}>
+            <div style={{marginTop:10,display:'flex',gap:8,flexWrap:'wrap'as const,alignItems:'center'}}>
               <span style={{background:'rgba(0,188,212,0.15)',color:CYAN,fontSize:11,padding:'3px 10px',borderRadius:20}}>{empresa.tipo==='expositor'?'🏪 Expositor':'⭐ Patrocinador'}</span>
               {empresa.stand_id&&<span style={{background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.6)',fontSize:11,padding:'3px 10px',borderRadius:20}}>Stand {empresa.stand_id}</span>}
             </div>
@@ -268,93 +458,126 @@ export function StaffRegisterPage() {
         {/* Verificación */}
         {empresa&&!verified&&(
           <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:14,padding:16,marginBottom:16}}>
-            <div style={{color:'#fbbf24',fontSize:13,fontWeight:600,marginBottom:4}}>🔐 Verificación de identidad</div>
-            <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:12}}>Ingresa el NIT de la empresa, email o número de celular registrado</div>
-            <div style={{display:'flex',gap:8}}>
-              <input style={{...inp,flex:1}} placeholder="NIT, email o celular" value={nitInput} onChange={e=>setNitInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleVerify()}/>
-              <button onClick={handleVerify} style={{padding:'7px 16px',borderRadius:8,background:CYAN,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:13,whiteSpace:'nowrap'as const}}>Verificar</button>
+            <div style={{color:'#fbbf24',fontSize:14,fontWeight:700,marginBottom:6}}>🔐 Verificación de identidad</div>
+            <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:12}}>
+              Ingresa el NIT de la empresa, email o número de celular registrado para acceder
             </div>
-            {verifyError&&<div style={{color:'#f87171',fontSize:12,marginTop:8}}>{verifyError}</div>}
+            <div style={{display:'flex',gap:8}}>
+              <input style={{...inp,flex:1}} placeholder="NIT, email o celular"
+                value={nitInput} onChange={e=>setNitInput(e.target.value)}
+                onKeyDown={e=>e.key==='Enter'&&handleVerify()}/>
+              <button onClick={handleVerify}
+                style={{padding:'8px 20px',borderRadius:8,background:CYAN,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:13,whiteSpace:'nowrap'as const}}>
+                Verificar
+              </button>
+            </div>
+            {verifyError&&<div style={{color:'#f87171',fontSize:12,marginTop:8}}>⚠️ {verifyError}</div>}
           </div>
         )}
 
-        {/* Panel principal */}
+        {/* Panel verificado */}
         {empresa&&verified&&(
           <>
-            {/* Aviso importante */}
-            <div style={{background:'rgba(255,179,0,0.08)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:12,padding:'12px 16px',marginBottom:16}}>
-              <p style={{color:'#fbbf24',fontSize:13,fontWeight:700,margin:'0 0 4px'}}>⚠️ Información importante</p>
-              <p style={{color:'rgba(255,255,255,0.6)',fontSize:12,margin:0}}>La lista de personal será entregada a las directivas del <strong style={{color:'white'}}>Parque COMFAMA Llanogrande el 20 de julio</strong>. Una vez enviada no podrá modificarse. Para cambios: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
+            {/* Aviso + Refrescar */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12,marginBottom:16,flexWrap:'wrap'as const}}>
+              <div style={{flex:1,background:'rgba(255,179,0,0.08)',border:'1px solid rgba(255,179,0,0.25)',borderRadius:12,padding:'12px 16px'}}>
+                <p style={{color:'#fbbf24',fontSize:13,fontWeight:700,margin:'0 0 4px'}}>⚠️ Información importante</p>
+                <p style={{color:'rgba(255,255,255,0.55)',fontSize:12,margin:0}}>
+                  Las listas de personal serán entregadas a COMFAMA el <strong style={{color:'white'}}>20 de julio</strong>. Una vez enviadas no podrán modificarse.
+                  Para cambios: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a>
+                </p>
+              </div>
+              <button onClick={refresh}
+                style={{padding:'10px 16px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.15)',color:'white',cursor:'pointer',fontSize:13,whiteSpace:'nowrap'as const,flexShrink:0}}>
+                🔄 Actualizar
+              </button>
             </div>
 
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:12,marginBottom:16}}>
+            {/* Botones de acción */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:12,marginBottom:20}}>
 
               {/* Staff montaje */}
-              <button style={btnStyle(montajeSaved?'#4CAF50':'rgba(239,68,68,0.4)')} onClick={()=>{}}>
-                <div>
-                  <div style={{color:'white',fontSize:14,fontWeight:600}}>🔧 Staff de montaje</div>
-                  <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Personal de montaje y desmontaje · ilimitado</div>
-                  <div style={{color:'#fbbf24',fontSize:11,marginTop:2}}>📅 Límite: 20 de julio</div>
+              <div style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${montajeSaved?'#4CAF50':'rgba(239,68,68,0.4)'}`,borderRadius:12,padding:14}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                  <div>
+                    <div style={{color:'white',fontSize:14,fontWeight:700}}>🔧 Staff de montaje</div>
+                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Personal de montaje y desmontaje · ilimitado</div>
+                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>📅 Límite: 20 de julio de 2026</div>
+                  </div>
+                  <span style={{background:montajeSaved?'rgba(76,175,80,0.2)':'rgba(239,68,68,0.15)',color:montajeSaved?'#4ade80':'#f87171',fontSize:11,padding:'3px 8px',borderRadius:20,flexShrink:0}}>
+                    {montajeSaved?`✅ ${existingMontaje.length} registrados`:'🔴 Pendiente'}
+                  </span>
                 </div>
-                <span style={{background:montajeSaved?'rgba(76,175,80,0.2)':'rgba(239,68,68,0.15)',color:montajeSaved?'#4ade80':'#f87171',fontSize:11,padding:'3px 8px',borderRadius:20,flexShrink:0}}>
-                  {montajeSaved?`✅ ${existingMontaje.length} registrados`:'🔴 Pendiente'}
-                </span>
-              </button>
+                {montajeSaved&&(
+                  <button onClick={printPDF}
+                    style={{width:'100%',padding:'7px',borderRadius:8,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',color:'white',cursor:'pointer',fontSize:12,marginTop:4}}>
+                    📥 Descargar / Imprimir PDF
+                  </button>
+                )}
+              </div>
 
               {/* Contrato */}
-              <div style={{...btnStyle(empresa.contract_signed_at?'#4CAF50':'rgba(239,68,68,0.4)'),cursor:'default'}}>
-                <div>
-                  <div style={{color:'white',fontSize:14,fontWeight:600}}>📄 Contrato + Staff de servicio</div>
-                  <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Consentimiento y personal del día del evento</div>
-                  <div style={{color:'#fbbf24',fontSize:11,marginTop:2}}>📅 Límite: 22 de julio</div>
-                </div>
-                <div style={{display:'flex',flexDirection:'column'as const,gap:6,alignItems:'flex-end'}}>
-                  <span style={{background:empresa.contract_signed_at?'rgba(76,175,80,0.2)':'rgba(239,68,68,0.15)',color:empresa.contract_signed_at?'#4ade80':'#f87171',fontSize:11,padding:'3px 8px',borderRadius:20,whiteSpace:'nowrap'as const}}>
+              <div style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${empresa.contract_signed_at?'#4CAF50':'rgba(239,68,68,0.4)'}`,borderRadius:12,padding:14}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                  <div>
+                    <div style={{color:'white',fontSize:14,fontWeight:700}}>📄 Contrato + Staff de servicio</div>
+                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Consentimiento y personal del día del evento</div>
+                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>📅 Límite: 22 de julio de 2026</div>
+                  </div>
+                  <span style={{background:empresa.contract_signed_at?'rgba(76,175,80,0.2)':'rgba(239,68,68,0.15)',color:empresa.contract_signed_at?'#4ade80':'#f87171',fontSize:11,padding:'3px 8px',borderRadius:20,flexShrink:0}}>
                     {empresa.contract_signed_at?'✅ Firmado':'🔴 Pendiente'}
                   </span>
-                  {empresa.contract_token&&!empresa.contract_signed_at&&(
-                    <button onClick={()=>setShowContractModal(true)} style={{padding:'5px 10px',borderRadius:8,background:CYAN,color:'white',border:'none',cursor:'pointer',fontSize:12,fontWeight:700,whiteSpace:'nowrap'as const}}>✍️ Firmar contrato</button>
-                  )}
-                  {empresa.contract_signed_at&&(
-                    <a href={`${window.location.origin}/ecard/${empresa.id}`} target="_blank" rel="noopener noreferrer" style={{padding:'5px 10px',borderRadius:8,background:'rgba(255,255,255,0.1)',color:'white',textDecoration:'none',fontSize:12,whiteSpace:'nowrap'as const}}>🎟️ Ver E-Card</a>
-                  )}
                 </div>
+                {empresa.contract_token&&!empresa.contract_signed_at&&(
+                  <button onClick={()=>setShowContractModal(true)}
+                    style={{width:'100%',padding:'7px',borderRadius:8,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontSize:13,fontWeight:700,marginTop:4}}>
+                    ✍️ Firmar contrato
+                  </button>
+                )}
+                {empresa.contract_signed_at&&(
+                  <a href={`${window.location.origin}/ecard/${empresa.id}`} target="_blank" rel="noopener noreferrer"
+                    style={{display:'block',textAlign:'center',padding:'7px',borderRadius:8,background:'rgba(255,255,255,0.08)',color:'white',textDecoration:'none',fontSize:12,marginTop:4,border:'1px solid rgba(255,255,255,0.15)'}}>
+                    🎟️ Ver E-Card de ingreso
+                  </a>
+                )}
               </div>
             </div>
 
-            {/* Lista existente montaje */}
+            {/* Lista existente */}
             {montajeSaved&&existingMontaje.length>0&&(
               <div style={{background:'rgba(76,175,80,0.05)',border:'1px solid rgba(76,175,80,0.2)',borderRadius:14,padding:16,marginBottom:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
                   <div>
-                    <div style={{color:'#4ade80',fontSize:14,fontWeight:700}}>✅ Staff de montaje registrado</div>
+                    <div style={{color:'#4ade80',fontSize:14,fontWeight:700}}>✅ Personal de montaje registrado</div>
                     <div style={{color:'rgba(255,255,255,0.4)',fontSize:12,marginTop:2}}>{existingMontaje.length} empleado{existingMontaje.length>1?'s':''} · Solo lectura</div>
                   </div>
+                  <button onClick={printPDF} style={{padding:'8px 14px',borderRadius:8,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontSize:12,fontWeight:700}}>
+                    📥 PDF
+                  </button>
                 </div>
                 <div style={{overflowX:'auto'as const}}>
                   <table style={{width:'100%',borderCollapse:'collapse'as const,fontSize:12}}>
                     <thead>
-                      <tr style={{background:'rgba(255,255,255,0.05)'}}>
-                        <th style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600}}>#</th>
-                        <th style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600}}>Nombre</th>
-                        <th style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600}}>Cédula</th>
-                        <th style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600}}>Teléfono</th>
-                        <th style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600}}>EPS / ARL</th>
-                        <th style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600}}>Docs</th>
+                      <tr style={{background:'rgba(255,255,255,0.06)'}}>
+                        {['#','Nombre','Cédula','Teléfono','EPS','ARL','Docs'].map(h=>(
+                          <th key={h} style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600,fontSize:11}}>{h}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
                       {existingMontaje.map((s,i)=>(
                         <tr key={s.id} style={{borderTop:'1px solid rgba(255,255,255,0.05)'}}>
-                          <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)'}}>{i+1}</td>
-                          <td style={{padding:'8px 10px',color:'white',fontWeight:600}}>{s.full_name}</td>
-                          <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.7)'}}>{s.cedula}</td>
-                          <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.7)'}}>{s.phone}</td>
-                          <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.6)'}}>{s.arl_eps||'—'}</td>
-                          <td style={{padding:'8px 10px'}}>
-                            <div style={{display:'flex',gap:4}}>
-                              {s.cedula_url&&<a href={s.cedula_url} target="_blank" rel="noopener noreferrer" style={{fontSize:10,color:CYAN}}>CC</a>}
-                              {s.arl_eps_url&&<a href={s.arl_eps_url} target="_blank" rel="noopener noreferrer" style={{fontSize:10,color:CYAN}}>ARL</a>}
+                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.4)'}}>{i+1}</td>
+                          <td style={{padding:'9px 10px',color:'white',fontWeight:600}}>{s.full_name}</td>
+                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.7)'}}>{s.cedula}</td>
+                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.7)'}}>{s.phone}</td>
+                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.6)'}}>{s.eps_name||'—'}</td>
+                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.6)'}}>{s.arl_name||'—'}</td>
+                          <td style={{padding:'9px 10px'}}>
+                            <div style={{display:'flex',gap:6}}>
+                              {s.cedula_url&&<a href={s.cedula_url} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:CYAN,background:'rgba(0,188,212,0.1)',padding:'2px 6px',borderRadius:4}}>CC</a>}
+                              {s.arl_eps_url&&<a href={s.arl_eps_url} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:CYAN,background:'rgba(0,188,212,0.1)',padding:'2px 6px',borderRadius:4}}>ARL</a>}
+                              {!s.cedula_url&&!s.arl_eps_url&&<span style={{color:'rgba(255,255,255,0.3)',fontSize:11}}>—</span>}
                             </div>
                           </td>
                         </tr>
@@ -363,16 +586,16 @@ export function StaffRegisterPage() {
                   </table>
                 </div>
                 <div style={{marginTop:10,padding:'10px 14px',background:'rgba(255,179,0,0.08)',border:'1px solid rgba(255,179,0,0.2)',borderRadius:8}}>
-                  <p style={{color:'#fbbf24',fontSize:11,margin:0}}>⚠️ Esta lista ya fue enviada. Para modificaciones contacta: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
+                  <p style={{color:'#fbbf24',fontSize:11,margin:0}}>⚠️ Lista enviada. Para cambios: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
                 </div>
               </div>
             )}
 
-            {/* Formulario montaje (solo si no está guardado) */}
+            {/* Formulario montaje */}
             {!montajeSaved&&(
               <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:20,marginBottom:16}}>
-                <h3 style={{color:'white',fontSize:15,fontWeight:700,margin:'0 0 14px'}}>🔧 Registrar staff de montaje</h3>
-                {montaje.map((m, idx) => (
+                <h3 style={{color:'white',fontSize:15,fontWeight:700,margin:'0 0 16px'}}>🔧 Registrar staff de montaje</h3>
+                {montaje.map((m,idx)=>(
                   <MemberRow key={idx} m={m} idx={idx} total={montaje.length}
                     onChange={(f,v)=>updateMember(idx,f,v)}
                     onRemove={()=>setMontaje(p=>p.filter((_,i)=>i!==idx))}
@@ -380,13 +603,19 @@ export function StaffRegisterPage() {
                     uploadingKey={uploadingKey}
                   />
                 ))}
-                <button onClick={()=>setMontaje(p=>[...p,empty()])} style={{width:'100%',padding:'8px',borderRadius:8,background:'transparent',border:`1px dashed rgba(0,188,212,0.4)`,color:CYAN,cursor:'pointer',fontSize:12,marginBottom:12}}>+ Agregar empleado</button>
+                <button onClick={()=>setMontaje(p=>[...p,empty()])}
+                  style={{width:'100%',padding:'9px',borderRadius:8,background:'transparent',border:`1px dashed rgba(0,188,212,0.4)`,color:CYAN,cursor:'pointer',fontSize:13,marginBottom:14}}>
+                  + Agregar empleado
+                </button>
                 <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}}>
                   <input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)} style={{marginTop:2,flexShrink:0}}/>
-                  <span style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>Certifico que la información es correcta. Una vez enviada <strong style={{color:'white'}}>no podrá modificarse</strong>. Esta lista será entregada a COMFAMA el 20 de julio.</span>
+                  <span style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>
+                    Certifico que la información es correcta. Una vez enviada <strong style={{color:'white'}}>no podrá modificarse</strong>. Esta lista será utilizada para el control de acceso al montaje.
+                  </span>
                 </div>
-                {saveError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>{saveError}</div>}
-                <button onClick={saveMontaje} disabled={saving} style={{width:'100%',padding:13,borderRadius:10,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:14,opacity:saving?0.7:1}}>
+                {saveError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>⚠️ {saveError}</div>}
+                <button onClick={saveMontaje} disabled={saving}
+                  style={{width:'100%',padding:14,borderRadius:10,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:15,opacity:saving?0.7:1}}>
                   {saving?'⏳ Guardando...':`✅ Registrar ${montaje.length} empleado${montaje.length>1?'s':''}`}
                 </button>
               </div>
@@ -394,18 +623,88 @@ export function StaffRegisterPage() {
           </>
         )}
 
-        <p style={{color:'rgba(255,255,255,0.2)',fontSize:11,textAlign:'center',marginTop:24}}>Latido y Huella 2026 · eventos@latidoyhuella.co · WhatsApp +57 333 277 7912</p>
+        <p style={{color:'rgba(255,255,255,0.2)',fontSize:11,textAlign:'center',marginTop:24}}>
+          Latido y Huella 2026 · eventos@latidoyhuella.co · WhatsApp +57 333 277 7912
+        </p>
       </div>
 
       {/* Modal contrato */}
       {showContractModal&&empresa?.contract_token&&(
-        <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(0,0,0,0.9)',display:'flex',flexDirection:'column'as const,alignItems:'center',justifyContent:'center',padding:16}}>
+        <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(0,0,0,0.92)',display:'flex',flexDirection:'column'as const,alignItems:'center',justifyContent:'center',padding:16}}>
           <div style={{width:'100%',maxWidth:720,background:'white',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column'as const,height:'90vh'}}>
-            <div style={{background:NAVY,padding:'12px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+            <div style={{background:NAVY,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
               <span style={{color:'white',fontWeight:700,fontSize:14}}>📄 Contrato — {empresa.brand_name}</span>
-              <button onClick={()=>setShowContractModal(false)} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'4px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>✕ Cerrar</button>
+              <button onClick={()=>{setShowContractModal(false);refresh()}}
+                style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'5px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>
+                ✕ Cerrar
+              </button>
             </div>
-            <iframe key={empresa.contract_token} src={`${window.location.origin}/contrato/${empresa.contract_token}`} style={{flex:1,border:'none',width:'100%'}} title="Contrato" allow="camera"/>
+            <iframe
+              key={empresa.contract_token}
+              src={`${window.location.origin}/contrato/${empresa.contract_token}`}
+              style={{flex:1,border:'none',width:'100%'}}
+              title="Contrato"
+              allow="camera"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Modal registro nueva empresa */}
+      {showRegisterModal&&(
+        <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(0,0,0,0.92)',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+          <div style={{width:'100%',maxWidth:580,background:'#0f1535',border:'1px solid rgba(255,255,255,0.1)',borderRadius:16,overflow:'hidden',maxHeight:'90vh',overflowY:'auto'as const}}>
+            <div style={{background:NAVY,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky'as const,top:0}}>
+              <span style={{color:'white',fontWeight:700,fontSize:14}}>
+                {regTipo==='expositor'?'🏪 Registro como Expositor':'⭐ Registro como Patrocinador'}
+              </span>
+              <button onClick={()=>setShowRegisterModal(false)}
+                style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'5px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>
+                ✕
+              </button>
+            </div>
+            <div style={{padding:24}}>
+              <div style={{display:'flex',gap:8,marginBottom:20}}>
+                <button onClick={()=>setRegTipo('expositor')} style={{flex:1,padding:'9px',borderRadius:8,background:regTipo==='expositor'?CYAN:'rgba(255,255,255,0.06)',color:'white',border:`1px solid ${regTipo==='expositor'?CYAN:'rgba(255,255,255,0.15)'}`,cursor:'pointer',fontSize:13,fontWeight:700}}>🏪 Expositor</button>
+                <button onClick={()=>setRegTipo('patrocinador')} style={{flex:1,padding:'9px',borderRadius:8,background:regTipo==='patrocinador'?CYAN:'rgba(255,255,255,0.06)',color:'white',border:`1px solid ${regTipo==='patrocinador'?CYAN:'rgba(255,255,255,0.15)'}`,cursor:'pointer',fontSize:13,fontWeight:700}}>⭐ Patrocinador</button>
+              </div>
+
+              {[
+                {key:'brand_name',label:'Nombre de la empresa *',placeholder:'Nombre comercial'},
+                {key:'responsible_name',label:'Responsable *',placeholder:'Nombre y apellidos'},
+                {key:'document_id',label:'NIT o cédula',placeholder:'Número sin puntos'},
+                {key:'email',label:'Email *',placeholder:'correo@empresa.com'},
+                {key:'phone',label:'Teléfono',placeholder:'300 000 0000'},
+              ].map(f=>(
+                <div key={f.key} style={{marginBottom:12}}>
+                  <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>{f.label}</div>
+                  <input style={inpDark} placeholder={f.placeholder}
+                    value={regForm[f.key as keyof typeof regForm]}
+                    onChange={e=>setRegForm(prev=>({...prev,[f.key]:e.target.value}))}/>
+                </div>
+              ))}
+
+              <div style={{marginTop:16,marginBottom:8,color:'rgba(255,255,255,0.5)',fontSize:12,fontWeight:600}}>Documentos (opcionales)</div>
+              <div style={{display:'flex',flexDirection:'column'as const,gap:10,marginBottom:20}}>
+                {[
+                  {key:'cedula_url',label:'📋 Cédula del representante'},
+                  {key:'rut_url',label:'📄 RUT de la empresa'},
+                  {key:'camara_url',label:'🏢 Cámara de Comercio'},
+                ].map(d=>(
+                  <div key={d.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:8,padding:'10px 14px'}}>
+                    <span style={{color:'rgba(255,255,255,0.7)',fontSize:13}}>{d.label}</span>
+                    <UploadBtn label="Subir" value={regDocs[d.key as keyof typeof regDocs]} uploading={regUploading===d.key} onFile={f=>uploadRegDoc(f,d.key as any)}/>
+                  </div>
+                ))}
+              </div>
+
+              {regError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'10px 14px',color:'#f87171',fontSize:12,marginBottom:14}}>⚠️ {regError}</div>}
+
+              <button onClick={registerNewEmpresa} disabled={regSaving}
+                style={{width:'100%',padding:14,borderRadius:10,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:15,opacity:regSaving?0.7:1}}>
+                {regSaving?'⏳ Registrando...':'✅ Completar registro'}
+              </button>
+            </div>
           </div>
         </div>
       )}
