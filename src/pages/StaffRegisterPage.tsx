@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { jsPDF } from 'jspdf'
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -341,89 +340,17 @@ export function StaffRegisterPage() {
 
   const printPDF = async () => {
     if (!empresa||!existingMontaje.length) return
-    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'letter' })
-    const W = 215.9
-    const navy: [number,number,number] = [13,27,110]
-    const cyan: [number,number,number] = [0,188,212]
-
-    // Header navy
-    doc.setFillColor(13,27,110)
-    doc.rect(0, 0, W, 38, 'F')
-
-    // Logo text (no podemos cargar imagen externa fácil, usamos texto)
-    doc.setTextColor(255,255,255)
-    doc.setFontSize(18); doc.setFont('helvetica','bold')
-    doc.text('LATIDO Y HUELLA 2026', 14, 16)
-    doc.setFontSize(10); doc.setFont('helvetica','normal')
-    doc.text('Personal de Montaje', 14, 24)
-    doc.setTextColor(180,200,255)
-    doc.text(`${empresa.brand_name}${empresa.stand_id?' · Stand '+empresa.stand_id:''}`, 14, 30)
-    doc.text('26 Jul 2026 · Parque COMFAMA Llanogrande', 14, 36)
-
-    // Cyan bar
-    doc.setFillColor(0,188,212)
-    doc.rect(0, 38, W, 8, 'F')
-    doc.setTextColor(255,255,255)
-    doc.setFontSize(9); doc.setFont('helvetica','bold')
-    doc.text(empresa.brand_name, 14, 44)
-    doc.text(`${existingMontaje.length} empleado${existingMontaje.length>1?'s':''}`, W-40, 44)
-
-    // Aviso
-    doc.setFillColor(255, 248, 225)
-    doc.rect(14, 52, W-28, 12, 'F')
-    doc.setDrawColor(255,179,0)
-    doc.rect(14, 52, 2, 12, 'F')
-    doc.setTextColor(180, 80, 0)
-    doc.setFontSize(8); doc.setFont('helvetica','bold')
-    doc.text('⚠ Importante:', 18, 57)
-    doc.setFont('helvetica','normal')
-    doc.text('Este documento autoriza el ingreso al Parque COMFAMA durante el montaje y desmontaje.', 18, 62)
-
-    // Tabla header
-    const startY = 70
-    const cols = ['#','Nombre completo','Cédula','Teléfono','EPS','ARL']
-    const colW = [10, 60, 30, 28, 30, 30]
-    let x = 14
-    doc.setFillColor(13,27,110)
-    doc.rect(14, startY, W-28, 8, 'F')
-    doc.setTextColor(255,255,255)
-    doc.setFontSize(8); doc.setFont('helvetica','bold')
-    cols.forEach((c,i) => { doc.text(c, x+2, startY+5.5); x+=colW[i] })
-
-    // Tabla rows
-    existingMontaje.forEach((s, i) => {
-      const y = startY + 8 + i*9
-      if (i%2===0) {
-        doc.setFillColor(248, 249, 255)
-        doc.rect(14, y, W-28, 9, 'F')
-      }
-      doc.setTextColor(50,50,80)
-      doc.setFontSize(8); doc.setFont('helvetica','normal')
-      let x2 = 14
-      const vals = [`${i+1}`, s.full_name, s.cedula, s.phone, s.eps_name||'—', s.arl_name||'—']
-      vals.forEach((v,vi) => {
-        const maxW = colW[vi]-3
-        const txt = doc.splitTextToSize(v, maxW)[0]
-        doc.text(txt, x2+2, y+5.5)
-        x2+=colW[vi]
-      })
-      doc.setDrawColor(220,225,240)
-      doc.line(14, y+9, W-14, y+9)
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-staff-pdf?empresa_id=${empresa.id}&tipo=montaje`
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` }
     })
-
-    // Footer navy
-    const footerY = 240
-    doc.setFillColor(13,27,110)
-    doc.rect(0, footerY, W, 32, 'F')
-    doc.setTextColor(255,255,255)
-    doc.setFontSize(10); doc.setFont('helvetica','bold')
-    doc.text('¡Gracias por ser parte de Latido y Huella 2026!', W/2, footerY+10, {align:'center'})
-    doc.setFontSize(8); doc.setFont('helvetica','normal')
-    doc.setTextColor(180,200,255)
-    doc.text('Este documento certifica el registro de su personal de montaje.', W/2, footerY+17, {align:'center'})
-    doc.text('eventos@latidoyhuella.co · WhatsApp +57 333 277 7912', W/2, footerY+23, {align:'center'})
-
-    doc.save(`Staff-Montaje-${empresa.brand_name.replace(/\s+/g,'-')}.pdf`)
+    if (!res.ok) { alert('Error generando PDF. Intenta de nuevo.'); return }
+    const blob = await res.blob()
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `Staff-Montaje-${empresa.brand_name.replace(/\s+/g,'-')}.pdf`
+    link.click()
+    URL.revokeObjectURL(link.href)
   }
 
   if (loading) return (
