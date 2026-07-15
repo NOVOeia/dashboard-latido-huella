@@ -169,6 +169,10 @@ export function StaffRegisterPage() {
     if (data && data.length > 0) {
       setExistingMontaje(data)
       setMontajeSaved(true)
+      setMontaje(data.map((s:any) => ({
+        full_name: s.full_name||'', cedula: s.cedula||'', cedula_url: s.cedula_url||'',
+        phone: s.phone||'', eps_name: s.eps_name||'', arl_name: s.arl_name||'', arl_eps_url: s.arl_eps_url||''
+      })))
     } else {
       setExistingMontaje([])
       setMontajeSaved(false)
@@ -249,6 +253,12 @@ export function StaffRegisterPage() {
     }
     if (!terms) { setSaveError('Debes aceptar los términos'); return }
     setSaving(true)
+    // Eliminar registros anteriores antes de guardar los nuevos
+    await supabase.from('stand_staff')
+      .delete()
+      .or(`expositor_id.eq.${empresa!.id},sponsor_id.eq.${empresa!.id}`)
+      .eq('staff_type','montaje')
+
     const inserts = montaje.map(m => ({      expositor_id: empresa?.tipo==='expositor' ? empresa.id : null,
       sponsor_id: empresa?.tipo==='patrocinador' ? empresa.id : null,
       full_name:m.full_name, cedula:m.cedula, cedula_url:m.cedula_url,
@@ -556,11 +566,17 @@ export function StaffRegisterPage() {
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
                   <div>
                     <div style={{color:'#4ade80',fontSize:14,fontWeight:700}}>✅ Personal de montaje registrado</div>
-                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:12,marginTop:2}}>{existingMontaje.length} empleado{existingMontaje.length>1?'s':''} · Solo lectura</div>
+                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:12,marginTop:2}}>{existingMontaje.length} empleado{existingMontaje.length>1?'s':''} · {isPastDeadline()?'Solo lectura — registro cerrado':'Puedes editar hasta el 20 de julio'}</div>
                   </div>
-                  <button onClick={printPDF} style={{padding:'8px 14px',borderRadius:8,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontSize:12,fontWeight:700}}>
-                    📥 PDF
-                  </button>
+                  <div style={{display:'flex',gap:8}}>
+                    {!isPastDeadline()&&<button onClick={()=>setMontajeSaved(false)}
+                      style={{padding:'8px 14px',borderRadius:8,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.2)',color:'white',cursor:'pointer',fontSize:12,fontWeight:600}}>
+                      ✏️ Editar
+                    </button>}
+                    <button onClick={printPDF} style={{padding:'8px 14px',borderRadius:8,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontSize:12,fontWeight:700}}>
+                      📥 PDF
+                    </button>
+                  </div>
                 </div>
                 <div style={{overflowX:'auto'as const}}>
                   <table style={{width:'100%',borderCollapse:'collapse'as const,fontSize:12}}>
