@@ -229,7 +229,7 @@ export function ContratoPage() {
           setCedulaUrl(data.cedula_url || null)
           setRutUrl(data.rut_url || null)
           setCamaraUrl(data.camara_comercio_url || null)
-          if (data.contract_signed_at || data.accepted_contract_at) setAlreadySigned(true)
+          if (data.contract_signed_at) setAlreadySigned(true)
           setLoading(false); return
         }
       }
