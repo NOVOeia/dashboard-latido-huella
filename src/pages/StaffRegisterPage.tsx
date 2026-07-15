@@ -96,6 +96,26 @@ export function StaffRegisterPage() {
   const [showContractModal, setShowContractModal] = useState(false)
   const [uploadingKey, setUploadingKey] = useState<string|null>(null)
 
+  // Persistir sesión verificada en sessionStorage
+  useEffect(() => {
+    const saved = sessionStorage.getItem('staff_verified_id')
+    if (saved && empresas.length > 0) {
+      const emp = empresas.find(e => e.id === saved)
+      if (emp) {
+        setEmpresa(emp)
+        setSelectedId(emp.id)
+        setSearch(emp.brand_name)
+        setVerified(true)
+      }
+    }
+  }, [empresas])
+
+  const handleVerifiedSuccess = (emp: Empresa) => {
+    setVerified(true)
+    setVerifyError('')
+    sessionStorage.setItem('staff_verified_id', emp.id)
+  }
+
   useEffect(() => {
     const load = async () => {
       const [{ data: exps }, { data: spons }] = await Promise.all([
@@ -140,8 +160,7 @@ export function StaffRegisterPage() {
       (email && nitInput.trim().toLowerCase() === email) ||
       (phone && inputPhone === phone)
     ) {
-      setVerified(true)
-      setVerifyError('')
+      handleVerifiedSuccess(empresa)
     } else {
       setVerifyError('Dato incorrecto. Verifica el NIT, email o teléfono registrado.')
     }
@@ -387,19 +406,22 @@ export function StaffRegisterPage() {
 
       {/* Modal contrato */}
       {showContractModal&&empresa?.contract_token&&(
-        <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(0,0,0,0.85)',display:'flex',flexDirection:'column'as const,alignItems:'center',justifyContent:'center',padding:16}}>
-          <div style={{width:'100%',maxWidth:700,background:'white',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column'as const,maxHeight:'90vh'}}>
-            <div style={{background:NAVY,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-              <span style={{color:'white',fontWeight:700,fontSize:15}}>📄 Contrato — {empresa.brand_name}</span>
-              <button onClick={()=>{setShowContractModal(false);window.location.reload()}}
-                style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'4px 12px',cursor:'pointer',fontSize:13}}>
+        <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(0,0,0,0.9)',display:'flex',flexDirection:'column'as const,alignItems:'center',justifyContent:'center',padding:16}}
+          onClick={e=>{if(e.target===e.currentTarget)setShowContractModal(false)}}>
+          <div style={{width:'100%',maxWidth:720,background:'white',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column'as const,height:'90vh'}}>
+            <div style={{background:NAVY,padding:'12px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+              <span style={{color:'white',fontWeight:700,fontSize:14}}>📄 Contrato — {empresa.brand_name}</span>
+              <button onClick={()=>setShowContractModal(false)}
+                style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'4px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>
                 ✕ Cerrar
               </button>
             </div>
             <iframe
+              key={empresa.contract_token}
               src={`${window.location.origin}/contrato/${empresa.contract_token}`}
-              style={{flex:1,border:'none',minHeight:600}}
+              style={{flex:1,border:'none',width:'100%'}}
               title="Contrato"
+              allow="camera"
             />
           </div>
         </div>
