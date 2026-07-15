@@ -100,6 +100,9 @@ function MemberRow({ m, idx, total, onChange, onRemove, onUpload, uploadingKey }
   )
 }
 
+const DEADLINE_MONTAJE = new Date('2026-07-20T23:59:59-05:00')
+const isPastDeadline = () => new Date() > DEADLINE_MONTAJE
+
 export function StaffRegisterPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
@@ -599,6 +602,12 @@ export function StaffRegisterPage() {
             {!montajeSaved&&(
               <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:20,marginBottom:16}}>
                 <h3 style={{color:'white',fontSize:15,fontWeight:700,margin:'0 0 16px'}}>🔧 Registrar staff de montaje</h3>
+                {isPastDeadline()&&(
+                  <div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.4)',borderRadius:10,padding:'12px 16px',marginBottom:16,textAlign:'center'}}>
+                    <p style={{color:'#f87171',fontSize:14,fontWeight:700,margin:'0 0 4px'}}>🔒 Registro cerrado</p>
+                    <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>La fecha límite de registro fue el 20 de julio de 2026. Para modificaciones contacta: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
+                  </div>
+                )}
                 {montaje.map((m,idx)=>(
                   <MemberRow key={idx} m={m} idx={idx} total={montaje.length}
                     onChange={(f,v)=>updateMember(idx,f,v)}
@@ -614,9 +623,10 @@ export function StaffRegisterPage() {
                 {/* Sección vehículo */}
                 <div style={{background:'rgba(0,188,212,0.06)',border:'1px solid rgba(0,188,212,0.2)',borderRadius:12,padding:16,marginBottom:14}}>
                   <div style={{color:CYAN,fontSize:13,fontWeight:700,marginBottom:4}}>🚗 Vehículo de ingreso al parque</div>
-                  <div style={{background:'rgba(255,179,0,0.1)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:8,padding:'8px 12px',marginBottom:12}}>
-                    <p style={{color:'#fbbf24',fontSize:12,margin:0,fontWeight:600}}>⚠️ Solo se permite 1 vehículo por empresa dentro del Parque COMFAMA.</p>
-                    <p style={{color:'rgba(255,255,255,0.5)',fontSize:11,margin:'4px 0 0'}}>Los demás vehículos deben estacionarse en los parqueaderos cercanos al parque.</p>
+                  <div style={{background:'rgba(255,179,0,0.1)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:8,padding:'10px 12px',marginBottom:12}}>
+                    <p style={{color:'#fbbf24',fontSize:12,margin:'0 0 4px',fontWeight:700}}>⚠️ Solo se permite 1 vehículo por empresa dentro del Parque COMFAMA.</p>
+                    <p style={{color:'rgba(255,255,255,0.55)',fontSize:11,margin:'0 0 4px'}}>Los demás vehículos deben estacionarse en los parqueaderos cercanos al parque.</p>
+                    <p style={{color:'#f87171',fontSize:11,margin:0,fontWeight:700}}>🗓️ Fecha límite de registro: 20 de julio de 2026. Después de esta fecha no se podrán hacer cambios.</p>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
                     <div>
@@ -626,12 +636,12 @@ export function StaffRegisterPage() {
                     <div>
                       <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Tipo de vehículo *</div>
                       <select value={vehicle.tipo_vehiculo} onChange={e=>setVehicle(v=>({...v,tipo_vehiculo:e.target.value}))}
-                        style={{...inp,background:'rgba(255,255,255,0.07)'}}>
-                        <option value="">Selecciona...</option>
-                        <option value="Carro">Carro</option>
-                        <option value="Camioneta">Camioneta</option>
-                        <option value="Van">Van</option>
-                        <option value="Camión">Camión</option>
+                        style={{...inp,background:'#1a2050',color:'white'}}>
+                        <option value="" style={{background:'#1a2050',color:'white'}}>Selecciona...</option>
+                        <option value="Carro" style={{background:'#1a2050',color:'white'}}>Carro</option>
+                        <option value="Camioneta" style={{background:'#1a2050',color:'white'}}>Camioneta</option>
+                        <option value="Van" style={{background:'#1a2050',color:'white'}}>Van</option>
+                        <option value="Camión" style={{background:'#1a2050',color:'white'}}>Camión</option>
                       </select>
                     </div>
                     <div>
@@ -648,9 +658,9 @@ export function StaffRegisterPage() {
                   </span>
                 </div>
                 {saveError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>⚠️ {saveError}</div>}
-                <button onClick={saveMontaje} disabled={saving}
-                  style={{width:'100%',padding:14,borderRadius:10,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:15,opacity:saving?0.7:1}}>
-                  {saving?'⏳ Guardando...':`✅ Registrar ${montaje.length} empleado${montaje.length>1?'s':''}`}
+                <button onClick={saveMontaje} disabled={saving||isPastDeadline()}
+                  style={{width:'100%',padding:14,borderRadius:10,background:isPastDeadline()?'rgba(255,255,255,0.1)':`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:isPastDeadline()?'not-allowed':'pointer',fontWeight:700,fontSize:15,opacity:saving?0.7:1}}>
+                {saving?'⏳ Guardando...':'✅ Confirmar registro'}
                 </button>
               </div>
             )}
