@@ -319,8 +319,8 @@ export function StaffRegisterPage() {
     const token = crypto.randomUUID()
     const table = regTipo==='expositor' ? 'expositor_reservations' : 'sponsor_inquiries'
     const insData = regTipo==='expositor'
-      ? { brand_name:regForm.brand_name, responsible_name:regForm.responsible_name, document_id:regForm.document_id, email:regForm.email, phone:regForm.phone, cedula_url:regDocs.cedula_url, rut_url:regDocs.rut_url, camara_comercio_url:regDocs.camara_url, contract_token:token, status:'pending_payment', category:'comercial' }
-      : { company_name:regForm.brand_name, contact_name:regForm.responsible_name, document_id:regForm.document_id, email:regForm.email, phone:regForm.phone, cedula_url:regDocs.cedula_url, rut_url:regDocs.rut_url, contract_token:token, status:'pending_payment' }
+      ? { brand_name:regForm.brand_name, responsible_name:regForm.responsible_name, document_id:regForm.document_id, email:regForm.email, phone:regForm.phone, cedula_url:regDocs.cedula_url, rut_url:regDocs.rut_url, camara_comercio_url:regDocs.camara_url, contract_token:token, status:'approved', category:'comercial' }
+      : { company_name:regForm.brand_name, contact_name:regForm.responsible_name, document_id:regForm.document_id, email:regForm.email, phone:regForm.phone, cedula_url:regDocs.cedula_url, rut_url:regDocs.rut_url, contract_token:token, status:'approved' }
     const { data, error } = await supabase.from(table).insert(insData).select().single()
     if (error||!data) { setRegError('Error al registrar. Intenta de nuevo.'); setRegSaving(false); return }
     const list = await loadEmpresas()
