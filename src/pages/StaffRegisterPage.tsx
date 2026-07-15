@@ -342,91 +342,77 @@ export function StaffRegisterPage() {
     if (!empresa||!existingMontaje.length) return
     const rows = existingMontaje.map((s,i) => `
       <tr>
-        <td>${i+1}</td>
-        <td><strong>${s.full_name}</strong></td>
-        <td>${s.cedula}</td>
-        <td>${s.phone}</td>
-        <td>${s.eps_name||'—'}</td>
-        <td>${s.arl_name||'—'}</td>
-        <td>${s.cedula_url?`<a href="${s.cedula_url}">CC</a>`:''} ${s.arl_eps_url?`<a href="${s.arl_eps_url}">ARL</a>`:''}</td>
+        <td style="padding:10px 14px;font-size:13px;color:#666;border-bottom:1px solid #eef0f8">${i+1}</td>
+        <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#0D1B6E;border-bottom:1px solid #eef0f8">${s.full_name}</td>
+        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.cedula}</td>
+        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.phone}</td>
+        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.eps_name||'—'}</td>
+        <td style="padding:10px 14px;font-size:13px;color:#444;border-bottom:1px solid #eef0f8">${s.arl_name||'—'}</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #eef0f8">${s.cedula_url?`<a href="${s.cedula_url}" style="color:#00BCD4;font-weight:700">CC</a>`:''} ${s.arl_eps_url?`<a href="${s.arl_eps_url}" style="color:#00BCD4;font-weight:700">ARL</a>`:''}</td>
       </tr>`).join('')
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Staff Montaje — ${empresa.brand_name}</title>
-    <style>
-      *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:Arial,sans-serif;background:white;color:#333}
-      .header{background:#0D1B6E;padding:28px 40px;display:flex;align-items:center;justify-content:space-between}
-      .header img{height:48px}
-      .header-info{text-align:right;color:white}
-      .header-info h1{font-size:18px;font-weight:800;margin-bottom:4px}
-      .header-info p{font-size:12px;color:rgba(255,255,255,0.6);margin:2px 0}
-      .body{padding:32px 40px}
-      .empresa-bar{background:#f0f4ff;border-left:4px solid #0D1B6E;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:24px;display:flex;gap:24px;align-items:center}
-      .empresa-bar .name{color:#0D1B6E;font-size:16px;font-weight:800}
-      .empresa-bar .meta{color:#666;font-size:12px}
-      .aviso{background:#fff8e1;border:1px solid #FFB300;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:#e65100}
-      table{width:100%;border-collapse:collapse;margin-bottom:24px}
-      thead tr{background:#0D1B6E}
-      thead th{padding:10px 12px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
-      tbody tr:nth-child(even){background:#f8f9ff}
-      tbody td{padding:10px 12px;font-size:12px;border-bottom:1px solid #eef0f8}
-      tbody td.name{font-weight:700;color:#0D1B6E}
-      a{color:#00BCD4;text-decoration:none}
-      .footer{background:#0D1B6E;padding:20px 40px;text-align:center;margin-top:32px}
-      .footer p{color:rgba(255,255,255,0.7);font-size:11px;line-height:1.8}
-      .footer strong{color:white}
-      @media print{button{display:none}.footer{position:fixed;bottom:0;left:0;right:0}}
-    </style></head><body>
-    <div class="header">
-      <img src="${LOGO}" alt="Latido y Huella"/>
-      <div class="header-info">
-        <h1>Personal de Montaje</h1>
-        <p>${empresa.brand_name}${empresa.stand_id?' · Stand '+empresa.stand_id:''}</p>
-        <p>Latido y Huella 2026 · 26 Jul · Llanogrande</p>
-      </div>
-    </div>
-    <div class="body">
-      <div class="empresa-bar">
-        <div>
-          <div class="name">${empresa.brand_name}</div>
-          <div class="meta">${empresa.tipo==='expositor'?'Expositor':'Patrocinador'}${empresa.stand_id?' · Stand: '+empresa.stand_id:''} · ${existingMontaje.length} empleado${existingMontaje.length>1?'s':''}</div>
-        </div>
-        <div style="margin-left:auto;text-align:right">
-          <div class="meta">Fecha de registro</div>
-          <div style="font-size:13px;font-weight:700;color:#0D1B6E">${new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</div>
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Staff Montaje — ${empresa.brand_name}</title></head>
+    <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:white">
+      
+      <!-- HEADER NAVY -->
+      <div style="background:#0D1B6E;padding:28px 40px;display:flex;align-items:center;justify-content:space-between">
+        <img src="${LOGO}" style="height:52px" alt="Latido y Huella"/>
+        <div style="text-align:right">
+          <div style="color:white;font-size:18px;font-weight:800;margin-bottom:4px">Personal de Montaje</div>
+          <div style="color:rgba(255,255,255,0.7);font-size:12px">${empresa.brand_name}${empresa.stand_id?' · Stand '+empresa.stand_id:''}</div>
+          <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px">Latido y Huella 2026 · 26 Jul · Llanogrande</div>
         </div>
       </div>
-      <div class="aviso">
-        ⚠️ <strong>Importante:</strong> Este documento autoriza el ingreso del personal al Parque COMFAMA Llanogrande durante las labores de montaje y desmontaje. Debe presentarse en la entrada el día del montaje previo al evento.
+
+      <!-- BARRA CYAN -->
+      <div style="background:#00BCD4;padding:8px 40px;display:flex;gap:32px">
+        <span style="color:white;font-size:12px;font-weight:700">${empresa.brand_name}</span>
+        ${empresa.stand_id?`<span style="color:rgba(255,255,255,0.8);font-size:12px">Stand: ${empresa.stand_id}</span>`:''}
+        <span style="color:rgba(255,255,255,0.8);font-size:12px">${existingMontaje.length} empleado${existingMontaje.length>1?'s':''}</span>
+        <span style="color:rgba(255,255,255,0.8);font-size:12px;margin-left:auto">${new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</span>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>Nombre completo</th><th>Cédula</th><th>Teléfono</th><th>EPS</th><th>ARL</th><th>Documentos</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${existingMontaje.map((s,i) => `
-          <tr>
-            <td>${i+1}</td>
-            <td class="name">${s.full_name}</td>
-            <td>${s.cedula}</td>
-            <td>${s.phone}</td>
-            <td>${s.eps_name||'—'}</td>
-            <td>${s.arl_name||'—'}</td>
-            <td>${s.cedula_url?`<a href="${s.cedula_url}">📋 CC</a>`:''} ${s.arl_eps_url?`<a href="${s.arl_eps_url}">📋 ARL</a>`:''}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div class="footer">
-      <p>🐾 <strong>¡Gracias por ser parte de Latido y Huella 2026!</strong></p>
-      <p>Este documento certifica el registro de su personal de montaje y autoriza su ingreso al Parque COMFAMA Llanogrande el día del montaje previo al evento.</p>
-      <p>Por favor imprímalo y preséntelo en la entrada · <strong>eventos@latidoyhuella.co</strong> · WhatsApp +57 333 277 7912</p>
-    </div>
-    <script>window.print()</script>
+
+      <!-- BODY -->
+      <div style="padding:28px 40px">
+        
+        <div style="background:#fff8e1;border-left:4px solid #FFB300;padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:24px">
+          <strong style="color:#e65100;font-size:13px">⚠️ Importante:</strong>
+          <span style="color:#555;font-size:12px"> Este documento autoriza el ingreso del personal al Parque COMFAMA Llanogrande durante las labores de montaje y desmontaje. Preséntelo en la entrada el día del montaje.</span>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#0D1B6E">
+              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">#</th>
+              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Nombre completo</th>
+              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Cédula</th>
+              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Teléfono</th>
+              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">EPS</th>
+              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">ARL</th>
+              <th style="padding:11px 14px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Docs</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- FOOTER NAVY -->
+      <div style="background:#0D1B6E;padding:20px 40px;text-align:center;margin-top:20px">
+        <p style="color:white;font-size:13px;font-weight:700;margin:0 0 6px">🐾 ¡Gracias por ser parte de Latido y Huella 2026!</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:11px;margin:0 0 4px">Este documento certifica el registro de su personal de montaje y autoriza su ingreso al Parque COMFAMA Llanogrande.</p>
+        <p style="color:rgba(255,255,255,0.4);font-size:11px;margin:0">26 de julio de 2026 · Llanogrande, Antioquia · eventos@latidoyhuella.co · WhatsApp +57 333 277 7912</p>
+      </div>
     </body></html>`
-    const w = window.open('','_blank')
-    if (w) { w.document.write(html); w.document.close() }
+
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Staff-Montaje-${empresa.brand_name.replace(/\s+/g,'-')}.html`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   if (loading) return (
