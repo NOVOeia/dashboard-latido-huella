@@ -173,11 +173,13 @@ export function StaffRegisterPage() {
 
   const refresh = async () => {
     if (!empresa) return
+    setLoading(true)
     const list = await loadEmpresas()
     setEmpresas(list)
     const updated = list.find(e => e.id === empresa.id)
     if (updated) setEmpresa(updated)
     await loadExistingStaff(empresa.id)
+    setLoading(false)
   }
 
   const selectEmpresa = (emp: Empresa) => {
@@ -350,38 +352,76 @@ export function StaffRegisterPage() {
       </tr>`).join('')
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Staff Montaje — ${empresa.brand_name}</title>
     <style>
-      body{font-family:Arial,sans-serif;padding:32px;color:#333}
-      .header{text-align:center;margin-bottom:28px}
-      .header img{height:55px;margin-bottom:10px}
-      .header h1{color:#0D1B6E;font-size:20px;margin:0 0 4px}
-      .header p{color:#666;font-size:13px;margin:0}
-      .info{background:#f0f4ff;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px}
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:Arial,sans-serif;background:white;color:#333}
+      .header{background:#0D1B6E;padding:28px 40px;display:flex;align-items:center;justify-content:space-between}
+      .header img{height:48px}
+      .header-info{text-align:right;color:white}
+      .header-info h1{font-size:18px;font-weight:800;margin-bottom:4px}
+      .header-info p{font-size:12px;color:rgba(255,255,255,0.6);margin:2px 0}
+      .body{padding:32px 40px}
+      .empresa-bar{background:#f0f4ff;border-left:4px solid #0D1B6E;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:24px;display:flex;gap:24px;align-items:center}
+      .empresa-bar .name{color:#0D1B6E;font-size:16px;font-weight:800}
+      .empresa-bar .meta{color:#666;font-size:12px}
+      .aviso{background:#fff8e1;border:1px solid #FFB300;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:12px;color:#e65100}
       table{width:100%;border-collapse:collapse;margin-bottom:24px}
-      th{background:#0D1B6E;color:white;padding:10px 12px;text-align:left;font-size:12px}
-      td{padding:9px 12px;font-size:12px;border-bottom:1px solid #eee}
-      tr:nth-child(even) td{background:#f9f9f9}
-      .footer{text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid #eee;color:#888;font-size:12px}
-      a{color:#00BCD4}
-      @media print{button{display:none}}
+      thead tr{background:#0D1B6E}
+      thead th{padding:10px 12px;text-align:left;font-size:11px;color:white;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+      tbody tr:nth-child(even){background:#f8f9ff}
+      tbody td{padding:10px 12px;font-size:12px;border-bottom:1px solid #eef0f8}
+      tbody td.name{font-weight:700;color:#0D1B6E}
+      a{color:#00BCD4;text-decoration:none}
+      .footer{background:#0D1B6E;padding:20px 40px;text-align:center;margin-top:32px}
+      .footer p{color:rgba(255,255,255,0.7);font-size:11px;line-height:1.8}
+      .footer strong{color:white}
+      @media print{button{display:none}.footer{position:fixed;bottom:0;left:0;right:0}}
     </style></head><body>
     <div class="header">
       <img src="${LOGO}" alt="Latido y Huella"/>
-      <h1>Staff de Montaje — ${empresa.brand_name}</h1>
-      <p>${empresa.stand_id?'Stand: '+empresa.stand_id+' · ':''} ${existingMontaje.length} empleado${existingMontaje.length>1?'s':''} registrados</p>
+      <div class="header-info">
+        <h1>Personal de Montaje</h1>
+        <p>${empresa.brand_name}${empresa.stand_id?' · Stand '+empresa.stand_id:''}</p>
+        <p>Latido y Huella 2026 · 26 Jul · Llanogrande</p>
+      </div>
     </div>
-    <div class="info">
-      <strong>Fecha límite de entrega:</strong> 20 de julio de 2026 &nbsp;·&nbsp;
-      <strong>Evento:</strong> Latido y Huella 2026 &nbsp;·&nbsp;
-      <strong>Lugar:</strong> Parque COMFAMA Llanogrande
+    <div class="body">
+      <div class="empresa-bar">
+        <div>
+          <div class="name">${empresa.brand_name}</div>
+          <div class="meta">${empresa.tipo==='expositor'?'Expositor':'Patrocinador'}${empresa.stand_id?' · Stand: '+empresa.stand_id:''} · ${existingMontaje.length} empleado${existingMontaje.length>1?'s':''}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="meta">Fecha de registro</div>
+          <div style="font-size:13px;font-weight:700;color:#0D1B6E">${new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})}</div>
+        </div>
+      </div>
+      <div class="aviso">
+        ⚠️ <strong>Importante:</strong> Este documento autoriza el ingreso del personal al Parque COMFAMA Llanogrande durante las labores de montaje y desmontaje. Debe presentarse en la entrada el día del montaje previo al evento.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Nombre completo</th><th>Cédula</th><th>Teléfono</th><th>EPS</th><th>ARL</th><th>Documentos</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${existingMontaje.map((s,i) => `
+          <tr>
+            <td>${i+1}</td>
+            <td class="name">${s.full_name}</td>
+            <td>${s.cedula}</td>
+            <td>${s.phone}</td>
+            <td>${s.eps_name||'—'}</td>
+            <td>${s.arl_name||'—'}</td>
+            <td>${s.cedula_url?`<a href="${s.cedula_url}">📋 CC</a>`:''} ${s.arl_eps_url?`<a href="${s.arl_eps_url}">📋 ARL</a>`:''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
     </div>
-    <table>
-      <thead><tr><th>#</th><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>EPS</th><th>ARL</th><th>Documentos</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
     <div class="footer">
-      <p>¡Gracias por ser parte de Latido y Huella 2026! 🐾 Este documento certifica el registro de su personal de montaje.</p>
-      <p>Preséntelo en la entrada del Parque COMFAMA Llanogrande el día del montaje previo al evento.</p>
-      <p>26 de julio de 2026 · Llanogrande, Antioquia · eventos@latidoyhuella.co</p>
+      <p>🐾 <strong>¡Gracias por ser parte de Latido y Huella 2026!</strong></p>
+      <p>Este documento certifica el registro de su personal de montaje y autoriza su ingreso al Parque COMFAMA Llanogrande el día del montaje previo al evento.</p>
+      <p>Por favor imprímalo y preséntelo en la entrada · <strong>eventos@latidoyhuella.co</strong> · WhatsApp +57 333 277 7912</p>
     </div>
     <script>window.print()</script>
     </body></html>`
@@ -398,10 +438,21 @@ export function StaffRegisterPage() {
   return (
     <div style={{minHeight:'100vh',background:'#080d22',paddingBottom:60}}>
       {/* Header */}
-      <div style={{background:NAVY,padding:'28px 24px',textAlign:'center'}}>
-        <img src={LOGO} style={{height:50,marginBottom:14}} alt="Latido y Huella"/>
-        <h1 style={{color:'white',fontSize:20,fontWeight:700,margin:'0 0 4px'}}>Registro Administrativo</h1>
-        <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>Latido y Huella 2026 · Llanogrande · 26 de julio</p>
+      <div style={{background:`linear-gradient(135deg, #0D1B6E 0%, #0a1550 60%, #051030 100%)`,padding:'36px 24px 28px',textAlign:'center',position:'relative'as const,overflow:'hidden'}}>
+        <div style={{position:'absolute',top:-40,right:-40,width:160,height:160,borderRadius:'50%',background:'rgba(0,188,212,0.06)'}}/>
+        <div style={{position:'absolute',bottom:-30,left:-30,width:120,height:120,borderRadius:'50%',background:'rgba(0,188,212,0.04)'}}/>
+        <img src={LOGO} style={{height:52,marginBottom:16,position:'relative'}} alt="Latido y Huella"/>
+        <div style={{position:'relative'}}>
+          <h1 style={{color:'white',fontSize:22,fontWeight:800,margin:'0 0 6px',letterSpacing:'-0.3px'}}>Registro Administrativo</h1>
+          <p style={{color:'rgba(255,255,255,0.45)',fontSize:12,margin:'0 0 16px'}}>Latido y Huella 2026 · Llanogrande, Antioquia</p>
+          <div style={{display:'inline-flex',alignItems:'center',gap:16,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:30,padding:'8px 20px'}}>
+            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12}}>📅 <strong style={{color:'white'}}>26 Jul 2026</strong></span>
+            <span style={{width:1,height:14,background:'rgba(255,255,255,0.15)'}}/>
+            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12}}>📍 <strong style={{color:'white'}}>COMFAMA Llanogrande</strong></span>
+            <span style={{width:1,height:14,background:'rgba(255,255,255,0.15)'}}/>
+            <span style={{color:CYAN,fontSize:12,fontWeight:700}}>🔧 Montaje · 📄 Contrato</span>
+          </div>
+        </div>
       </div>
 
       <div style={{maxWidth:900,margin:'0 auto',padding:'24px 16px'}}>
@@ -684,7 +735,7 @@ export function StaffRegisterPage() {
                 </div>
               ))}
 
-              <div style={{marginTop:16,marginBottom:8,color:'rgba(255,255,255,0.5)',fontSize:12,fontWeight:600}}>Documentos (opcionales)</div>
+              <div style={{marginTop:16,marginBottom:8,color:'rgba(255,255,255,0.5)',fontSize:12,fontWeight:600}}>Documentos</div>
               <div style={{display:'flex',flexDirection:'column'as const,gap:10,marginBottom:20}}>
                 {[
                   {key:'cedula_url',label:'📋 Cédula del representante'},
