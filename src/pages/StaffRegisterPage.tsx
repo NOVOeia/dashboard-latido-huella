@@ -77,6 +77,9 @@ function MemberRow({ m, idx, total, onChange, onRemove, onUpload, uploadingKey }
 export function StaffRegisterPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [showList, setShowList] = useState(false)
+  const filteredEmpresas = empresas.filter(e => e.brand_name.toLowerCase().includes(search.toLowerCase()))
   const [selectedId, setSelectedId] = useState('')
   const [empresa, setEmpresa] = useState<Empresa|null>(null)
   const [nitInput, setNitInput] = useState('')
@@ -108,25 +111,41 @@ export function StaffRegisterPage() {
     load()
   }, [])
 
-  const handleSelect = (id: string) => {
-    setSelectedId(id)
+  const [search, setSearch] = useState('')
+  const [showList, setShowList] = useState(false)
+  const filteredEmpresas = empresas.filter(e => e.brand_name.toLowerCase().includes(search.toLowerCase()))
+
+  const selectEmpresa = (emp: Empresa) => {
+    setSelectedId(emp.id)
+    setSearch(emp.brand_name)
+    setShowList(false)
     setVerified(false)
     setNitInput('')
     setVerifyError('')
     setActiveTab(null)
-    const emp = empresas.find(e => e.id === id) || null
     setEmpresa(emp)
   }
 
   const handleVerify = () => {
     if (!empresa) return
-    const stored = (empresa.nit || '').trim().replace(/[.\-\s]/g, '')
-    const input = nitInput.trim().replace(/[.\-\s]/g, '')
-    if (stored && input === stored) {
+    const input = nitInput.trim().replace(/[.\-\s]/g, '').toLowerCase()
+    const nit = (empresa.nit || '').trim().replace(/[.\-\s]/g, '').toLowerCase()
+    const email = (empresa.email || '').trim().toLowerCase()
+    const phone = (empresa.tipo === 'expositor'
+      ? (empresa as any).phone || ''
+      : (empresa as any).phone || ''
+    ).trim().replace(/[.\-\s+]/g, '')
+    const inputPhone = nitInput.trim().replace(/[.\-\s+]/g, '')
+
+    if (
+      (nit && input === nit) ||
+      (email && nitInput.trim().toLowerCase() === email) ||
+      (phone && inputPhone === phone)
+    ) {
       setVerified(true)
       setVerifyError('')
     } else {
-      setVerifyError('NIT/Cédula incorrecto. Verifica el dato registrado.')
+      setVerifyError('Dato incorrecto. Verifica el NIT, email o teléfono registrado.')
     }
   }
 
@@ -202,15 +221,31 @@ export function StaffRegisterPage() {
 
         {/* PASO 1: Selector empresa */}
         <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:16,marginBottom:16}}>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:6}}>Selecciona tu empresa</div>
-          <select value={selectedId} onChange={e=>handleSelect(e.target.value)}
-            style={{width:'100%',fontSize:14,padding:'9px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.15)',background:'#1a2050',color:'white',outline:'none'}}>
-            <option value="">-- Selecciona tu empresa --</option>
-            {empresas.map(e=><option key={e.id} value={e.id}>{e.brand_name} {e.tipo==='expositor'?'🏪':'⭐'}</option>)}
-          </select>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:6}}>Busca tu empresa o stand</div>
+          <div style={{position:'relative'}}>
+            <input
+              style={{...inp,fontSize:14,padding:'9px 12px'}}
+              placeholder="Escribe el nombre de tu empresa..."
+              value={search}
+              onChange={e=>{setSearch(e.target.value);setShowList(true);if(!e.target.value){setSelectedId('');setEmpresa(null);setVerified(false)}}}
+              onFocus={()=>setShowList(true)}
+            />
+            {showList&&search&&filteredEmpresas.length>0&&(
+              <div style={{position:'absolute',top:'100%',left:0,right:0,background:'#1a2050',border:'1px solid rgba(255,255,255,0.15)',borderRadius:8,zIndex:100,maxHeight:200,overflowY:'auto'as const,marginTop:4}}>
+                {filteredEmpresas.map(e=>(
+                  <div key={e.id} onClick={()=>selectEmpresa(e)}
+                    style={{padding:'10px 14px',cursor:'pointer',color:'white',fontSize:13,borderBottom:'1px solid rgba(255,255,255,0.06)'}}
+                    onMouseOver={el=>(el.currentTarget.style.background='rgba(255,255,255,0.08)')}
+                    onMouseOut={el=>(el.currentTarget.style.background='transparent')}>
+                    {e.brand_name} {e.tipo==='expositor'?'🏪':'⭐'}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* No está en la lista */}
-          {!selectedId&&(
+          {search&&filteredEmpresas.length===0&&(
             <div style={{marginTop:12,padding:12,background:'rgba(0,188,212,0.06)',border:'1px solid rgba(0,188,212,0.15)',borderRadius:10,textAlign:'center'}}>
               <p style={{color:'rgba(255,255,255,0.4)',fontSize:12,margin:'0 0 10px'}}>¿Tu empresa no aparece en la lista?</p>
               <div style={{display:'flex',gap:8,justifyContent:'center',flexWrap:'wrap'as const}}>
@@ -226,12 +261,11 @@ export function StaffRegisterPage() {
             </div>
           )}
 
-          {/* Info empresa seleccionada */}
+          {/* Info empresa seleccionada — solo nombre y stand, sin datos privados */}
           {empresa&&(
             <div style={{marginTop:10,display:'flex',gap:8,flexWrap:'wrap'as const,alignItems:'center'}}>
               <span style={{background:'rgba(0,188,212,0.15)',color:CYAN,fontSize:11,padding:'3px 10px',borderRadius:20}}>{empresa.tipo==='expositor'?'🏪 Expositor':'⭐ Patrocinador'}</span>
               {empresa.stand_id&&<span style={{background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.6)',fontSize:11,padding:'3px 10px',borderRadius:20}}>Stand {empresa.stand_id}</span>}
-              <span style={{background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.6)',fontSize:11,padding:'3px 10px',borderRadius:20}}>{empresa.responsible_name}</span>
             </div>
           )}
         </div>
@@ -240,9 +274,9 @@ export function StaffRegisterPage() {
         {empresa&&!verified&&(
           <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:14,padding:16,marginBottom:16}}>
             <div style={{color:'#fbbf24',fontSize:13,fontWeight:600,marginBottom:4}}>🔐 Verificación de identidad</div>
-            <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:12}}>Ingresa el NIT o cédula con el que se registró tu empresa para continuar</div>
+            <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:12}}>Ingresa el NIT de la empresa, email o número de celular registrado para continuar</div>
             <div style={{display:'flex',gap:8}}>
-              <input style={{...inp,flex:1}} placeholder="NIT o cédula de la empresa" value={nitInput} onChange={e=>setNitInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleVerify()}/>
+              <input style={{...inp,flex:1}} placeholder="NIT, email o celular" value={nitInput} onChange={e=>setNitInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleVerify()}/>
               <button onClick={handleVerify} style={{padding:'7px 16px',borderRadius:8,background:CYAN,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:13,whiteSpace:'nowrap'as const}}>Verificar</button>
             </div>
             {verifyError&&<div style={{color:'#f87171',fontSize:12,marginTop:8}}>{verifyError}</div>}
