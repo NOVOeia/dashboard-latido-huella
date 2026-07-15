@@ -129,11 +129,11 @@ export function StaffRegisterPage() {
   const loadEmpresas = async () => {
     const [{ data: exps }, { data: spons }] = await Promise.all([
       supabase.from('expositor_reservations').select('id,brand_name,responsible_name,email,phone,stand_id,contract_token,contract_signed_at,document_id').in('status',['paid','approved','pending_payment']),
-      supabase.from('sponsor_inquiries').select('id,company_name,contact_name,email,contract_token,contract_signed_at,document_id').in('status',['paid','approved','pending_payment'])
+      supabase.from('sponsor_inquiries').select('id,company_name,contact_name,email,phone,contract_token,contract_signed_at,document_id').in('status',['paid','approved','pending_payment'])
     ])
     const list: Empresa[] = [
       ...(exps||[]).map((e:any) => ({ id:e.id, brand_name:e.brand_name, responsible_name:e.responsible_name, email:e.email, phone:e.phone, tipo:'expositor'as const, stand_id:e.stand_id, contract_token:e.contract_token, contract_signed_at:e.contract_signed_at, nit:e.document_id })),
-      ...(spons||[]).map((s:any) => ({ id:s.id, brand_name:s.company_name, responsible_name:s.contact_name, email:s.email, tipo:'patrocinador'as const, contract_token:s.contract_token, contract_signed_at:s.contract_signed_at, nit:s.document_id }))
+      ...(spons||[]).map((s:any) => ({ id:s.id, brand_name:s.company_name, responsible_name:s.contact_name, email:s.email, phone:s.phone, tipo:'patrocinador'as const, contract_token:s.contract_token, contract_signed_at:s.contract_signed_at, nit:s.document_id }))
     ]
     return list
   }
