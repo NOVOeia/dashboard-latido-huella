@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import jsPDF from 'jspdf'
+import { jsPDF } from 'jspdf'
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
