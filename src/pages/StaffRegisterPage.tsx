@@ -111,9 +111,6 @@ export function StaffRegisterPage() {
     load()
   }, [])
 
-  const [search, setSearch] = useState('')
-  const [showList, setShowList] = useState(false)
-  const filteredEmpresas = empresas.filter(e => e.brand_name.toLowerCase().includes(search.toLowerCase()))
 
   const selectEmpresa = (emp: Empresa) => {
     setSelectedId(emp.id)
