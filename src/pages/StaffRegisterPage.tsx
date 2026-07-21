@@ -293,7 +293,7 @@ export function StaffRegisterPage() {
             <p style="color:#555;font-size:14px;margin:0 0 6px">Empresa: <strong>${empresa?.brand_name}</strong>${empresa?.stand_id?' · Stand: '+empresa.stand_id:''}</p>
             <p style="color:#555;font-size:14px;margin:0 0 24px">${montaje.length} empleado${montaje.length>1?'s':''} registrado${montaje.length>1?'s':''}</p>
             <div style="background:#fff3e0;border-left:4px solid #FFB300;padding:14px 16px;border-radius:0 10px 10px 0;margin:0 0 24px">
-              <p style="color:#e65100;font-weight:700;margin:0 0 4px;font-size:14px">⚠️ Fecha límite: 20 de julio de 2026</p>
+              <p style="color:#e65100;font-weight:700;margin:0 0 4px;font-size:14px">⚠️ Fecha límite: 22 de julio de 2026</p>
               <p style="color:#666;font-size:13px;margin:0">Esta lista no podrá modificarse después de esta fecha. Para cambios: WhatsApp +57 333 277 7912</p>
             </div>
             <table style="width:100%;border-collapse:collapse;margin:0 0 24px">
@@ -500,7 +500,7 @@ export function StaffRegisterPage() {
               <div style={{flex:1,background:'rgba(255,179,0,0.08)',border:'1px solid rgba(255,179,0,0.25)',borderRadius:12,padding:'12px 16px'}}>
                 <p style={{color:'#fbbf24',fontSize:13,fontWeight:700,margin:'0 0 4px'}}>⚠️ Información importante</p>
                 <p style={{color:'rgba(255,255,255,0.55)',fontSize:12,margin:0}}>
-                  Las listas de personal serán entregadas a COMFAMA el <strong style={{color:'white'}}>20 de julio</strong>. Una vez enviadas no podrán modificarse.
+                  Las listas de personal serán entregadas a COMFAMA el <strong style={{color:'white'}}>22 de julio</strong>. Una vez enviadas no podrán modificarse.
                   Para cambios: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a>
                 </p>
               </div>
@@ -519,7 +519,7 @@ export function StaffRegisterPage() {
                   <div>
                     <div style={{color:'white',fontSize:14,fontWeight:700}}>🔧 Staff de montaje</div>
                     <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Personal de montaje y desmontaje · ilimitado</div>
-                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>📅 Límite: 20 de julio de 2026</div>
+                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>📅 Límite: 22 de julio de 2026</div>
                   </div>
                   <span style={{background:montajeSaved?'rgba(76,175,80,0.2)':'rgba(239,68,68,0.15)',color:montajeSaved?'#4ade80':'#f87171',fontSize:11,padding:'3px 8px',borderRadius:20,flexShrink:0}}>
                     {montajeSaved?`✅ ${existingMontaje.length} registrados`:'🔴 Pendiente'}
@@ -566,7 +566,7 @@ export function StaffRegisterPage() {
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
                   <div>
                     <div style={{color:'#4ade80',fontSize:14,fontWeight:700}}>✅ Personal de montaje registrado</div>
-                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:12,marginTop:2}}>{existingMontaje.length} empleado{existingMontaje.length>1?'s':''} · {isPastDeadline()?'Solo lectura — registro cerrado':'Puedes editar hasta el 20 de julio'}</div>
+                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:12,marginTop:2}}>{existingMontaje.length} empleado{existingMontaje.length>1?'s':''} · {isPastDeadline()?'Solo lectura — registro cerrado':'Puedes editar hasta el 22 de julio'}</div>
                   </div>
                   <div style={{display:'flex',gap:8}}>
                     {!isPastDeadline()&&<button onClick={()=>setMontajeSaved(false)}
@@ -621,7 +621,7 @@ export function StaffRegisterPage() {
                 {isPastDeadline()&&(
                   <div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.4)',borderRadius:10,padding:'12px 16px',marginBottom:16,textAlign:'center'}}>
                     <p style={{color:'#f87171',fontSize:14,fontWeight:700,margin:'0 0 4px'}}>🔒 Registro cerrado</p>
-                    <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>La fecha límite de registro fue el 20 de julio de 2026. Para modificaciones contacta: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
+                    <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>La fecha límite de registro fue el 22 de julio de 2026. Para modificaciones contacta: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
                   </div>
                 )}
                 {montaje.map((m,idx)=>(
@@ -642,7 +642,7 @@ export function StaffRegisterPage() {
                   <div style={{background:'rgba(255,179,0,0.1)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:8,padding:'10px 12px',marginBottom:12}}>
                     <p style={{color:'#fbbf24',fontSize:12,margin:'0 0 4px',fontWeight:700}}>⚠️ Solo se permite 1 vehículo por empresa dentro del Parque COMFAMA.</p>
                     <p style={{color:'rgba(255,255,255,0.55)',fontSize:11,margin:'0 0 4px'}}>Los demás vehículos deben estacionarse en los parqueaderos cercanos al parque.</p>
-                    <p style={{color:'#f87171',fontSize:11,margin:0,fontWeight:700}}>🗓️ Fecha límite de registro: 20 de julio de 2026. Después de esta fecha no se podrán hacer cambios.</p>
+                    <p style={{color:'#f87171',fontSize:11,margin:0,fontWeight:700}}>🗓️ Fecha límite de registro: 22 de julio de 2026. Después de esta fecha no se podrán hacer cambios.</p>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
                     <div>
