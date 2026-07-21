@@ -100,7 +100,7 @@ function MemberRow({ m, idx, total, onChange, onRemove, onUpload, uploadingKey }
   )
 }
 
-const DEADLINE_MONTAJE = new Date('2026-07-20T23:59:59-05:00')
+const DEADLINE_MONTAJE = new Date('2026-07-22T23:59:59-05:00')
 const isPastDeadline = () => new Date() > DEADLINE_MONTAJE
 
 export function StaffRegisterPage() {
