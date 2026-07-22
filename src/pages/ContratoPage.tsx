@@ -310,7 +310,14 @@ export function ContratoPage() {
         contract_checks: checks,
         signature_name: signatureName,
       }
-      if (nombre) updates[table === 'sports_team_registrations' ? 'captain_name' : table === 'sports_team_players' ? 'name' : 'full_name'] = nombre
+      if (nombre) updates[
+        table === 'sports_team_registrations' ? 'captain_name' : 
+        table === 'sports_team_players' ? 'name' : 
+        table === 'expositor_reservations' ? 'responsible_name' :
+        table === 'toldos_reservations' ? 'responsible_name' :
+        table === 'sponsor_inquiries' ? 'contact_name' :
+        'full_name'
+      ] = nombre
       if (documento) updates[table === 'sports_team_registrations' ? 'captain_cedula' : table === 'registrations_5k' ? 'document_id' : 'cedula'] = documento
       if (telefono) updates[table === 'sports_team_registrations' ? 'captain_phone' : 'phone'] = telefono
       if (email) updates[table === 'sports_team_registrations' ? 'captain_email' : 'email'] = email
