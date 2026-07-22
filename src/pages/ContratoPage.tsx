@@ -288,6 +288,9 @@ export function ContratoPage() {
     if ((isCaminata || isJugador) && !docUrl && !cedulaUrl) errs.push('Documento de identidad (cédula o TI)')
     if (isMinor && !docUrl) errs.push('Documento del menor (TI o cédula)')
     setErrors(errs)
+    if (errs.length > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
     return errs.length === 0
   }
 
@@ -323,7 +326,13 @@ export function ContratoPage() {
       if (camaraUrl && ['expositor_reservations','toldos_reservations'].includes(table)) updates.camara_comercio_url = camaraUrl
       if (docUrl) updates.cedula_url = docUrl
 
-      await supabase.from(table).update(updates).eq('id', record.id)
+      const { error: updateError } = await supabase.from(table).update(updates).eq('id', record.id)
+      if (updateError) {
+        console.error('Error guardando firma:', updateError)
+        setErrors([`Error al guardar la firma: ${updateError.message}. Por favor intenta de nuevo.`])
+        setSubmitting(false)
+        return
+      }
 
       if (isComercial && !isToldo) {
         const staffToSave = staff.filter(s => s.full_name.trim())
