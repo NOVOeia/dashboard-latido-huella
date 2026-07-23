@@ -18,6 +18,7 @@ import { ContratoPage } from './pages/ContratoPage';
 import { ECardPage } from './pages/ECardPage';
 import { KitPage } from './pages/KitPage';
 import { StaffRegisterPage } from './pages/StaffRegisterPage';
+import { DejaTuHuellaPage } from './pages/DejaTuHuellaPage'
 
 export function App() {
   return (
@@ -27,6 +28,8 @@ export function App() {
       <Route path="/contrato/:token" element={<ContratoPage />} />
       <Route path="/ecard/:id" element={<ECardPage />} />
       <Route path="/kit/:id/:location" element={<KitPage />} />
+      <Route path="/deja-tu-huella" element={<DejaTuHuellaPage />} />
+      <Route path="/comparte" element={<Navigate to="/deja-tu-huella" replace />} />
       <Route path="/registro-staff" element={<StaffRegisterPage />} />
       <Route path="/registro-staff/:id" element={<StaffRegisterPage />} />
       <Route path="/" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><HomePage /></main><Footer /><WhatsAppButton /><NovoeiaModal /><DiverxoModal /></div>} />
