@@ -3123,5 +3123,4 @@ export function Dashboard() {
       </AnimatePresence>
     </div>
   )
-  )
 }
