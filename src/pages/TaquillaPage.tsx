@@ -125,7 +125,7 @@ export function TaquillaPage() {
     <div style={{minHeight:'100vh',background:NAVY,padding:'20px 16px'}}>
       {/* Header */}
       <div style={{textAlign:'center',marginBottom:24}}>
-        <img src={LOGO} style={{height:52,marginBottom:12}} alt="Latido y Huella"/>
+        <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a62b35ff7d31b0eb4534474.png" style={{width:'100%',maxWidth:480,borderRadius:16,marginBottom:16,display:'block',margin:'0 auto 16px'}} alt="Latido y Huella"/>
         <h1 style={{color:'white',fontSize:22,fontWeight:800,margin:'0 0 4px'}}>Registro de Ingreso</h1>
         <p style={{color:'rgba(255,255,255,0.5)',fontSize:13,margin:0}}>Taquilla · Latido y Huella 2026</p>
       </div>

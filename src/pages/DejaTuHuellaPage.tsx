@@ -116,7 +116,7 @@ export function DejaTuHuellaPage() {
       <header className="relative overflow-hidden bg-[#0D1B6E] px-5 pb-16 pt-8 text-center text-white">
         <div className="absolute inset-0 bg-[url('/PATRON_HUELLAS_fondo.png')] bg-cover bg-center opacity-20" />
         <div className="relative mx-auto max-w-2xl">
-          <img src="/Logo_latido_y_huella_en_blanco.png" alt="Latido y Huella" className="mx-auto h-20 w-auto" />
+          <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a62b3e923b7828d3562f13f.png" alt="Latido y Huella" className="mx-auto h-20 w-auto" />
           <p className="mt-8 text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Comparte este momento</p>
           <h1 className="mt-3 text-5xl font-extrabold leading-none">Lo que vivimos<br /><span className="text-[#55E5F2]">deja huella</span></h1>
           <p className="mx-auto mt-5 max-w-xl text-white/85">Sube hasta 3 fotos y cuéntanos cómo estás viviendo Latido y Huella.</p>
