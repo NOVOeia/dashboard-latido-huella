@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { Camera, CheckCircle2, Heart, Loader2, PawPrint, Send, Trash2, UploadCloud } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
@@ -113,7 +113,7 @@ export function DejaTuHuellaPage() {
   return (
     <div className="min-h-screen bg-[#F2FBFD] text-[#0D1B6E]">
       <Toaster richColors position="top-center" />
-      <header className="relative overflow-hidden bg-[#0D1B6E]"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a62b3e923b7828d3562f13f.png" alt="Latido y Huella" style={{display:"block",width:"100%",objectFit:"cover"}} /></header>
+      <header className="relative overflow-hidden bg-[#0D1B6E]"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a62b3e923b7828d3562f13f.png" alt="Latido y Huella" style={{display:'block',width:'100%',objectFit:'cover'}} /></header>
 
       <main className="relative z-10 mx-auto -mt-7 max-w-2xl px-4 pb-16">
         <form onSubmit={submit} className="rounded-[30px] bg-white p-5 shadow-[0_25px_80px_rgba(13,27,110,.15)] sm:p-8">
@@ -166,5 +166,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Consent({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) {
   return <label className="mb-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-gray-200 p-4 text-sm leading-relaxed text-gray-600"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-5 w-5 accent-[#00BCD4]" />{children}</label>;
 }
+
 
 
