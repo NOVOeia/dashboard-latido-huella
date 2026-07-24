@@ -174,3 +174,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Consent({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) {
   return <label className="mb-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-gray-200 p-4 text-sm leading-relaxed text-gray-600"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-5 w-5 accent-[#00BCD4]" />{children}</label>;
 }
+
