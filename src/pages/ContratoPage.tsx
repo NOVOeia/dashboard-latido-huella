@@ -343,11 +343,11 @@ export function ContratoPage() {
 
       if (isComercial && !isToldo) {
         const staffToSave = staff.filter(s => s.full_name.trim())
-        if (staffToSave.length > 0) await supabase.from('stand_staff').insert(staffToSave.map(s => ({ ...s, expositor_id: record.id })))
+        if (staffToSave.length > 0) await supabase.from('stand_staff').insert(staffToSave.map(s => ({ ...s, expositor_id: record.id, staff_type: 'servicio' })))
       }
       if (isToldo) {
         const staffToSave = staffToldo.filter(s => s.full_name.trim())
-        if (staffToSave.length > 0) await supabase.from('stand_staff').insert(staffToSave.map(s => ({ ...s, expositor_id: record.id })))
+        if (staffToSave.length > 0) await supabase.from('stand_staff').insert(staffToSave.map(s => ({ ...s, expositor_id: record.id, staff_type: 'servicio' })))
       }
 
       // Generar PDF y enviar emails
@@ -969,7 +969,7 @@ export function ContratoPage() {
               <p>El evento se llevará a cabo el día domingo 26 de julio de 2026, en el Parque del Bienestar COMFAMA Llanogrande, Km 8.5, diagonal al Mall Llanogrande, entre las 8:00 a.m. y las 5:00 p.m., organizado por LATIDO y HUELLA.</p>
               <p className="font-bold" style={{ color: NAVY }}>3. OBLIGACIONES DEL FOOD TRUCK</p>
               {[
-                ['pagoFT', '3.1. Realizar el pago correspondiente al valor total del espacio: 50% al momento de la reserva y el 50% restante máximo quince (15) días antes del evento.'],
+                ['pagoFT', '3.1. Pagar a EL ORGANIZADOR un Fee de Operación equivalente al 15% sobre el total de las ventas brutas realizadas durante el evento, antes de IVA. Dicho valor deberá ser liquidado y cancelado al finalizar el evento el mismo día 26 de julio de 2026, mediante los medios de pago acordados con EL ORGANIZADOR.'],
                 ['montajeFT', '3.2. Realizar el montaje el día 25 de julio de 2026 entre las 10:00 a.m. y las 6:00 p.m. El desmontaje el 26 de julio de 2026 a partir de las 5:00 p.m.'],
                 ['productosFT', '3.3. Abstenernos de comercializar productos diferentes a los declarados. No se permite la venta de bebidas alcohólicas, tabaco o sustancias psicoactivas.'],
                 ['permisosFT', '3.4. Garantizar contar con todos los permisos sanitarios vigentes, certificados de manipulación de alimentos, permisos INVIMA y demás autorizaciones exigidas por la normatividad colombiana.'],
