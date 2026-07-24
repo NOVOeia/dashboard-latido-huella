@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { WhatsAppButton } from './components/WhatsAppButton';
@@ -20,28 +20,67 @@ import { KitPage } from './pages/KitPage';
 import { StaffRegisterPage } from './pages/StaffRegisterPage';
 import { DejaTuHuellaPage } from './pages/DejaTuHuellaPage'
 import { TaquillaPage } from './pages/TaquillaPage'
+import { MuroPage } from './pages/MuroPage'
+import { WebANavbar } from './web-a/components/WebANavbar'
+import { WebAFooter } from './web-a/components/WebAFooter'
+import { MovementHomePage } from './web-a/pages/MovementHomePage'
+import { LivedExperiencePage } from './web-a/pages/LivedExperiencePage'
+import { GalleryPage } from './web-a/pages/GalleryPage'
+import { AliasPage } from './web-a/pages/AliasPage'
 
 export function App() {
+  const location = useLocation()
+  const immersive = ['/deja-tu-huella','/comparte','/taquilla'].includes(location.pathname)
+    || location.pathname.startsWith('/admin')
+    || location.pathname.startsWith('/contrato')
+    || location.pathname.startsWith('/ecard')
+    || location.pathname.startsWith('/kit')
+    || location.pathname.startsWith('/registro-staff')
+  const webA = location.pathname === '/'
+    || location.pathname.startsWith('/movimiento')
+    || location.pathname === '/muro'
+
   return (
-    <Routes>
-      <Route path="/admin" element={<Dashboard />} />
-      <Route path="/admin/*" element={<Dashboard />} />
-      <Route path="/contrato/:token" element={<ContratoPage />} />
-      <Route path="/ecard/:id" element={<ECardPage />} />
-      <Route path="/kit/:id/:location" element={<KitPage />} />
-      <Route path="/deja-tu-huella" element={<DejaTuHuellaPage />} />
-      <Route path="/comparte" element={<Navigate to="/deja-tu-huella" replace />} />
-      <Route path="/registro-staff" element={<StaffRegisterPage />} />
-      <Route path="/registro-staff/:id" element={<StaffRegisterPage />} />
-      <Route path="/taquilla" element={<TaquillaPage />} />
-      <Route path="/" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><HomePage /></main><Footer /><WhatsAppButton /><NovoeiaModal /><DiverxoModal /></div>} />
-      <Route path="/caminata-5k" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><Caminata5KPage /></main><Footer /><WhatsAppButton /></div>} />
-      <Route path="/deportes" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><DeportesPage /></main><Footer /><WhatsAppButton /></div>} />
-      <Route path="/expositores" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><ExpositoresPage /></main><Footer /><WhatsAppButton /></div>} />
-      <Route path="/patrocinadores" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><PatrocinadoresPage /></main><Footer /><WhatsAppButton /></div>} />
-      <Route path="/gracias" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><GraciasPage /></main><Footer /><WhatsAppButton /></div>} />
-      <Route path="/subir-documento" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><SubirDocumentoPage /></main><Footer /><WhatsAppButton /></div>} />
-      <Route path="/terminos" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><TerminosPage /></main><Footer /><WhatsAppButton /></div>} />
-    </Routes>
-  );
+    <div className="min-h-screen bg-white overflow-x-hidden">
+      {!immersive && (webA ? <WebANavbar /> : <Navbar />)}
+      <main>
+        <Routes>
+          {/* ADMIN */}
+          <Route path="/admin" element={<Dashboard />} />
+          <Route path="/admin/*" element={<Dashboard />} />
+          <Route path="/contrato/:token" element={<ContratoPage />} />
+          <Route path="/ecard/:id" element={<ECardPage />} />
+          <Route path="/kit/:id/:location" element={<KitPage />} />
+          <Route path="/registro-staff" element={<StaffRegisterPage />} />
+          <Route path="/registro-staff/:id" element={<StaffRegisterPage />} />
+          <Route path="/taquilla" element={<TaquillaPage />} />
+          <Route path="/deja-tu-huella" element={<DejaTuHuellaPage />} />
+          <Route path="/comparte" element={<Navigate to="/deja-tu-huella" replace />} />
+
+          {/* WEB A */}
+          <Route path="/" element={<MovementHomePage />} />
+          <Route path="/movimiento" element={<Navigate to="/" replace />} />
+          <Route path="/movimiento/lo-que-vivimos" element={<LivedExperiencePage />} />
+          <Route path="/movimiento/galeria" element={<GalleryPage />} />
+          <Route path="/movimiento/aliados" element={<AliasPage />} />
+          <Route path="/muro" element={<MuroPage />} />
+
+          {/* WEB B */}
+          <Route path="/evento" element={<HomePage />} />
+          <Route path="/caminata-canina" element={<Caminata5KPage />} />
+          <Route path="/caminata-5k" element={<Navigate to="/caminata-canina" replace />} />
+          <Route path="/deportes" element={<DeportesPage />} />
+          <Route path="/expositores" element={<ExpositoresPage />} />
+          <Route path="/patrocinadores" element={<PatrocinadoresPage />} />
+          <Route path="/gracias" element={<GraciasPage />} />
+          <Route path="/subir-documento" element={<SubirDocumentoPage />} />
+          <Route path="/terminos" element={<TerminosPage />} />
+        </Routes>
+      </main>
+      {!immersive && (webA ? <WebAFooter /> : <Footer />)}
+      {!immersive && !webA && <WhatsAppButton />}
+      {!immersive && !webA && <NovoeiaModal />}
+      {!immersive && !webA && <DiverxoModal />}
+    </div>
+  )
 }

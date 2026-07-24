@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+﻿import React, { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -37,13 +37,13 @@ function UploadBtn({ label, value, uploading, onFile }: {
 }) {
   if (value) return (
     <div style={{display:'flex',alignItems:'center',gap:6}}>
-      <span style={{fontSize:11,color:'#4ade80'}}>✅ Subido</span>
+      <span style={{fontSize:11,color:'#4ade80'}}>âœ… Subido</span>
       <a href={value} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:CYAN}}>Ver</a>
     </div>
   )
   return (
     <label style={{cursor:'pointer',padding:'7px 12px',background:'rgba(0,188,212,0.1)',border:'1px solid rgba(0,188,212,0.3)',borderRadius:8,display:'inline-flex',alignItems:'center',gap:6,fontSize:12,color:CYAN}}>
-      {uploading ? '⏳ Subiendo...' : label}
+      {uploading ? 'â³ Subiendo...' : label}
       <input type="file" accept="image/*,.pdf" style={{display:'none'}} onChange={e=>e.target.files?.[0]&&onFile(e.target.files[0])}/>
     </label>
   )
@@ -60,27 +60,27 @@ function MemberRow({ m, idx, total, onChange, onRemove, onUpload, uploadingKey }
     <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:'14px',marginBottom:10}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
         <span style={{color:'white',fontSize:13,fontWeight:700}}>Empleado {idx+1}</span>
-        {total>1&&<button onClick={onRemove} style={{background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#f87171',borderRadius:6,padding:'3px 10px',cursor:'pointer',fontSize:12}}>✕ Eliminar</button>}
+        {total>1&&<button onClick={onRemove} style={{background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#f87171',borderRadius:6,padding:'3px 10px',cursor:'pointer',fontSize:12}}>âœ• Eliminar</button>}
       </div>
-      {/* Fila 1: Nombre · Cédula · Foto CC */}
+      {/* Fila 1: Nombre Â· CÃ©dula Â· Foto CC */}
       <div style={{display:'grid',gridTemplateColumns:'2fr 1.5fr 1fr',gap:10,marginBottom:10,alignItems:'end'}}>
         <div>
           <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Nombre completo *</div>
           <input style={inp} placeholder="Nombre y apellidos" value={m.full_name} onChange={e=>onChange('full_name',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Cédula *</div>
-          <input style={inp} placeholder="Número de cédula" value={m.cedula} onChange={e=>onChange('cedula',e.target.value)}/>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>CÃ©dula *</div>
+          <input style={inp} placeholder="NÃºmero de cÃ©dula" value={m.cedula} onChange={e=>onChange('cedula',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>📷 Foto cédula</div>
-          <UploadBtn label="📷 Subir CC" value={m.cedula_url} uploading={uploadingKey===`${idx}-cc`} onFile={f=>onUpload(f,'cedula_url')}/>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>ðŸ“· Foto cÃ©dula</div>
+          <UploadBtn label="ðŸ“· Subir CC" value={m.cedula_url} uploading={uploadingKey===`${idx}-cc`} onFile={f=>onUpload(f,'cedula_url')}/>
         </div>
       </div>
-      {/* Fila 2: Teléfono · EPS · ARL · Doc seguro */}
+      {/* Fila 2: TelÃ©fono Â· EPS Â· ARL Â· Doc seguro */}
       <div style={{display:'grid',gridTemplateColumns:'1.5fr 1.5fr 1.5fr 1fr',gap:10,alignItems:'end'}}>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Teléfono *</div>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>TelÃ©fono *</div>
           <input style={inp} placeholder="300 000 0000" value={m.phone} onChange={e=>onChange('phone',e.target.value)}/>
         </div>
         <div>
@@ -92,15 +92,15 @@ function MemberRow({ m, idx, total, onChange, onRemove, onUpload, uploadingKey }
           <input style={inp} placeholder="Nombre ARL" value={m.arl_name} onChange={e=>onChange('arl_name',e.target.value)}/>
         </div>
         <div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>📄 Doc seguro</div>
-          <UploadBtn label="📄 Subir ARL/EPS" value={m.arl_eps_url} uploading={uploadingKey===`${idx}-arl`} onFile={f=>onUpload(f,'arl_eps_url')}/>
+          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>ðŸ“„ Doc seguro</div>
+          <UploadBtn label="ðŸ“„ Subir ARL/EPS" value={m.arl_eps_url} uploading={uploadingKey===`${idx}-arl`} onFile={f=>onUpload(f,'arl_eps_url')}/>
         </div>
       </div>
     </div>
   )
 }
 
-const DEADLINE_MONTAJE = new Date('2026-07-23T23:59:59-05:00')
+const DEADLINE_MONTAJE = new Date('2026-07-24T23:59:59-05:00')
 const isPastDeadline = () => new Date() > DEADLINE_MONTAJE
 
 export function StaffRegisterPage() {
@@ -215,7 +215,7 @@ export function StaffRegisterPage() {
       sessionStorage.setItem('staff_verified_id', empresa.id)
       await loadExistingStaff(empresa.id)
     } else {
-      setVerifyError('Dato incorrecto. Verifica el NIT, email o número de celular registrado.')
+      setVerifyError('Dato incorrecto. Verifica el NIT, email o nÃºmero de celular registrado.')
     }
   }
 
@@ -248,10 +248,10 @@ export function StaffRegisterPage() {
     setSaveError('')
     for (let i=0; i<montaje.length; i++) {
       if (!montaje[i].full_name||!montaje[i].cedula||!montaje[i].phone) {
-        setSaveError(`Empleado ${i+1}: nombre, cédula y teléfono son obligatorios`); return
+        setSaveError(`Empleado ${i+1}: nombre, cÃ©dula y telÃ©fono son obligatorios`); return
       }
     }
-    if (!terms) { setSaveError('Debes aceptar los términos'); return }
+    if (!terms) { setSaveError('Debes aceptar los tÃ©rminos'); return }
     setSaving(true)
     // Eliminar registros anteriores antes de guardar los nuevos
     await supabase.from('stand_staff')
@@ -276,11 +276,11 @@ export function StaffRegisterPage() {
           <td style="padding:10px 12px;font-size:13px;font-weight:600;color:#0D1B6E">${m.full_name}</td>
           <td style="padding:10px 12px;font-size:13px;color:#555">${m.cedula}</td>
           <td style="padding:10px 12px;font-size:13px;color:#555">${m.phone}</td>
-          <td style="padding:10px 12px;font-size:13px;color:#555">${m.eps_name||'—'}</td>
-          <td style="padding:10px 12px;font-size:13px;color:#555">${m.arl_name||'—'}</td>
+          <td style="padding:10px 12px;font-size:13px;color:#555">${m.eps_name||'â€”'}</td>
+          <td style="padding:10px 12px;font-size:13px;color:#555">${m.arl_name||'â€”'}</td>
           <td style="padding:10px 12px;font-size:13px">
-            ${m.cedula_url?`<a href="${m.cedula_url}" style="color:#00BCD4;font-size:12px">📋 CC</a>`:'—'}
-            ${m.arl_eps_url?` · <a href="${m.arl_eps_url}" style="color:#00BCD4;font-size:12px">📋 ARL</a>`:''}
+            ${m.cedula_url?`<a href="${m.cedula_url}" style="color:#00BCD4;font-size:12px">ðŸ“‹ CC</a>`:'â€”'}
+            ${m.arl_eps_url?` Â· <a href="${m.arl_eps_url}" style="color:#00BCD4;font-size:12px">ðŸ“‹ ARL</a>`:''}
           </td>
         </tr>`).join('')
       const html = `
@@ -289,20 +289,20 @@ export function StaffRegisterPage() {
             <img src="${LOGO}" style="height:55px"/>
           </div>
           <div style="background:white;padding:32px;border-radius:0 0 16px 16px">
-            <h2 style="color:#0D1B6E;margin:0 0 6px">✅ Staff de montaje registrado</h2>
-            <p style="color:#555;font-size:14px;margin:0 0 6px">Empresa: <strong>${empresa?.brand_name}</strong>${empresa?.stand_id?' · Stand: '+empresa.stand_id:''}</p>
+            <h2 style="color:#0D1B6E;margin:0 0 6px">âœ… Staff de montaje registrado</h2>
+            <p style="color:#555;font-size:14px;margin:0 0 6px">Empresa: <strong>${empresa?.brand_name}</strong>${empresa?.stand_id?' Â· Stand: '+empresa.stand_id:''}</p>
             <p style="color:#555;font-size:14px;margin:0 0 24px">${montaje.length} empleado${montaje.length>1?'s':''} registrado${montaje.length>1?'s':''}</p>
             <div style="background:#fff3e0;border-left:4px solid #FFB300;padding:14px 16px;border-radius:0 10px 10px 0;margin:0 0 24px">
-              <p style="color:#e65100;font-weight:700;margin:0 0 4px;font-size:14px">⚠️ Fecha límite: 23 de julio de 2026</p>
-              <p style="color:#666;font-size:13px;margin:0">Esta lista no podrá modificarse después de esta fecha. Para cambios: WhatsApp +57 333 277 7912</p>
+              <p style="color:#e65100;font-weight:700;margin:0 0 4px;font-size:14px">âš ï¸ Fecha lÃ­mite: 23 de julio de 2026</p>
+              <p style="color:#666;font-size:13px;margin:0">Esta lista no podrÃ¡ modificarse despuÃ©s de esta fecha. Para cambios: WhatsApp +57 333 277 7912</p>
             </div>
             <table style="width:100%;border-collapse:collapse;margin:0 0 24px">
               <thead>
                 <tr style="background:#0D1B6E">
                   <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">#</th>
                   <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Nombre</th>
-                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Cédula</th>
-                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Teléfono</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">CÃ©dula</th>
+                  <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">TelÃ©fono</th>
                   <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">EPS</th>
                   <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">ARL</th>
                   <th style="padding:10px 12px;text-align:left;font-size:12px;color:white;font-weight:600">Docs</th>
@@ -310,17 +310,17 @@ export function StaffRegisterPage() {
               </thead>
               <tbody>${rows}</tbody>
             </table>
-            <p style="color:#888;font-size:12px;text-align:center;margin:0">Latido y Huella 2026 · 26 de julio · Llanogrande, Antioquia · eventos@latidoyhuella.co</p>
+            <p style="color:#888;font-size:12px;text-align:center;margin:0">Latido y Huella 2026 Â· 26 de julio Â· Llanogrande, Antioquia Â· eventos@latidoyhuella.co</p>
           </div>
         </div>`
       await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
         method:'POST',
         headers:{'Authorization':`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,'Content-Type':'application/json'},
-        body: JSON.stringify({ to:empresa?.email, subject:`✅ Staff de montaje registrado — ${empresa?.brand_name} — Latido y Huella 2026`, html, from:'eventos@latidoyhuella.co', type:'staff' })
+        body: JSON.stringify({ to:empresa?.email, subject:`âœ… Staff de montaje registrado â€” ${empresa?.brand_name} â€” Latido y Huella 2026`, html, from:'eventos@latidoyhuella.co', type:'staff' })
       })
     } catch(_e){}
 
-    // Guardar vehículo si se ingresó
+    // Guardar vehÃ­culo si se ingresÃ³
     if (vehicle.placa && vehicle.tipo_vehiculo && vehicle.marca) {
       await supabase.from('stand_vehicles').insert({
         expositor_id: empresa?.tipo==='expositor' ? empresa.id : null,
@@ -380,7 +380,7 @@ export function StaffRegisterPage() {
 
   if (loading) return (
     <div style={{minHeight:'100vh',background:NAVY,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{color:'white',textAlign:'center'}}><div style={{fontSize:40,marginBottom:12}}>⏳</div><p>Cargando...</p></div>
+      <div style={{color:'white',textAlign:'center'}}><div style={{fontSize:40,marginBottom:12}}>â³</div><p>Cargando...</p></div>
     </div>
   )
 
@@ -393,13 +393,13 @@ export function StaffRegisterPage() {
         <img src={LOGO} style={{height:52,marginBottom:16,position:'relative'}} alt="Latido y Huella"/>
         <div style={{position:'relative'}}>
           <h1 style={{color:'white',fontSize:22,fontWeight:800,margin:'0 0 6px',letterSpacing:'-0.3px'}}>Registro Administrativo</h1>
-          <p style={{color:'rgba(255,255,255,0.45)',fontSize:12,margin:'0 0 16px'}}>Latido y Huella 2026 · Llanogrande, Antioquia</p>
+          <p style={{color:'rgba(255,255,255,0.45)',fontSize:12,margin:'0 0 16px'}}>Latido y Huella 2026 Â· Llanogrande, Antioquia</p>
           <div style={{display:'inline-flex',alignItems:'center',gap:16,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:30,padding:'8px 20px'}}>
-            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12}}>📅 <strong style={{color:'white'}}>26 Jul 2026</strong></span>
+            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12}}>ðŸ“… <strong style={{color:'white'}}>26 Jul 2026</strong></span>
             <span style={{width:1,height:14,background:'rgba(255,255,255,0.15)'}}/>
-            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12}}>📍 <strong style={{color:'white'}}>COMFAMA Llanogrande</strong></span>
+            <span style={{color:'rgba(255,255,255,0.7)',fontSize:12}}>ðŸ“ <strong style={{color:'white'}}>COMFAMA Llanogrande</strong></span>
             <span style={{width:1,height:14,background:'rgba(255,255,255,0.15)'}}/>
-            <span style={{color:CYAN,fontSize:12,fontWeight:700}}>🔧 Montaje · 📄 Contrato</span>
+            <span style={{color:CYAN,fontSize:12,fontWeight:700}}>ðŸ”§ Montaje Â· ðŸ“„ Contrato</span>
           </div>
         </div>
       </div>
@@ -409,9 +409,9 @@ export function StaffRegisterPage() {
         {/* 3 Pasos */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:20}}>
           {[
-            { num:'①', title:'Busca tu empresa', desc:'Escribe el nombre de tu stand o empresa en el buscador para encontrarla', color:'#00BCD4' },
-            { num:'②', title:'¿No apareces?', desc:'Regístrate aquí como Expositor o Patrocinador — el proceso es rápido', color:'#4ade80' },
-            { num:'③', title:'Completa cada sección', desc:'Staff de montaje · Contrato · Puedes volver cuando quieras a revisar tu información', color:'#fbbf24' },
+            { num:'â‘ ', title:'Busca tu empresa', desc:'Escribe el nombre de tu stand o empresa en el buscador para encontrarla', color:'#00BCD4' },
+            { num:'â‘¡', title:'Â¿No apareces?', desc:'RegÃ­strate aquÃ­ como Expositor o Patrocinador â€” el proceso es rÃ¡pido', color:'#4ade80' },
+            { num:'â‘¢', title:'Completa cada secciÃ³n', desc:'Staff de montaje Â· Contrato Â· Puedes volver cuando quieras a revisar tu informaciÃ³n', color:'#fbbf24' },
           ].map(s=>(
             <div key={s.num} style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${s.color}25`,borderRadius:12,padding:'14px 16px',display:'flex',gap:12,alignItems:'flex-start'}}>
               <div style={{background:`${s.color}20`,border:`1px solid ${s.color}40`,borderRadius:10,width:36,height:36,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0,color:s.color,fontWeight:800}}>{s.num}</div>
@@ -440,7 +440,7 @@ export function StaffRegisterPage() {
                     onMouseOver={el=>(el.currentTarget.style.background='rgba(255,255,255,0.08)')}
                     onMouseOut={el=>(el.currentTarget.style.background='transparent')}>
                     <span style={{fontWeight:600}}>{e.brand_name}</span>
-                    <span style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginLeft:8}}>{e.tipo==='expositor'?'🏪 Expositor':'⭐ Patrocinador'}{e.stand_id?' · Stand '+e.stand_id:''}</span>
+                    <span style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginLeft:8}}>{e.tipo==='expositor'?'ðŸª Expositor':'â­ Patrocinador'}{e.stand_id?' Â· Stand '+e.stand_id:''}</span>
                   </div>
                 ))}
               </div>
@@ -450,15 +450,15 @@ export function StaffRegisterPage() {
           {/* No encontrada */}
           {search&&filteredEmpresas.length===0&&(
             <div style={{marginTop:14,padding:14,background:'rgba(0,188,212,0.06)',border:'1px solid rgba(0,188,212,0.2)',borderRadius:10,textAlign:'center'}}>
-              <p style={{color:'rgba(255,255,255,0.5)',fontSize:13,margin:'0 0 12px'}}>¿Tu empresa no aparece? Regístrate aquí</p>
+              <p style={{color:'rgba(255,255,255,0.5)',fontSize:13,margin:'0 0 12px'}}>Â¿Tu empresa no aparece? RegÃ­strate aquÃ­</p>
               <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'as const}}>
                 <button onClick={()=>{setRegTipo('expositor');setShowRegisterModal(true)}}
                   style={{padding:'10px 20px',borderRadius:10,background:CYAN,color:'white',border:'none',cursor:'pointer',fontSize:13,fontWeight:700}}>
-                  🏪 Registrarme como Expositor
+                  ðŸª Registrarme como Expositor
                 </button>
                 <button onClick={()=>{setRegTipo('patrocinador');setShowRegisterModal(true)}}
                   style={{padding:'10px 20px',borderRadius:10,background:'rgba(255,255,255,0.1)',color:'white',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:13,fontWeight:700}}>
-                  ⭐ Registrarme como Patrocinador
+                  â­ Registrarme como Patrocinador
                 </button>
               </div>
             </div>
@@ -466,18 +466,18 @@ export function StaffRegisterPage() {
 
           {empresa&&(
             <div style={{marginTop:10,display:'flex',gap:8,flexWrap:'wrap'as const,alignItems:'center'}}>
-              <span style={{background:'rgba(0,188,212,0.15)',color:CYAN,fontSize:11,padding:'3px 10px',borderRadius:20}}>{empresa.tipo==='expositor'?'🏪 Expositor':'⭐ Patrocinador'}</span>
+              <span style={{background:'rgba(0,188,212,0.15)',color:CYAN,fontSize:11,padding:'3px 10px',borderRadius:20}}>{empresa.tipo==='expositor'?'ðŸª Expositor':'â­ Patrocinador'}</span>
               {empresa.stand_id&&<span style={{background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.6)',fontSize:11,padding:'3px 10px',borderRadius:20}}>Stand {empresa.stand_id}</span>}
             </div>
           )}
         </div>
 
-        {/* Verificación */}
+        {/* VerificaciÃ³n */}
         {empresa&&!verified&&(
           <div style={{background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:14,padding:16,marginBottom:16}}>
-            <div style={{color:'#fbbf24',fontSize:14,fontWeight:700,marginBottom:6}}>🔐 Verificación de identidad</div>
+            <div style={{color:'#fbbf24',fontSize:14,fontWeight:700,marginBottom:6}}>ðŸ” VerificaciÃ³n de identidad</div>
             <div style={{color:'rgba(255,255,255,0.5)',fontSize:12,marginBottom:12}}>
-              Ingresa el NIT de la empresa, email o número de celular registrado para acceder
+              Ingresa el NIT de la empresa, email o nÃºmero de celular registrado para acceder
             </div>
             <div style={{display:'flex',gap:8}}>
               <input style={{...inp,flex:1}} placeholder="NIT, email o celular"
@@ -488,7 +488,7 @@ export function StaffRegisterPage() {
                 Verificar
               </button>
             </div>
-            {verifyError&&<div style={{color:'#f87171',fontSize:12,marginTop:8}}>⚠️ {verifyError}</div>}
+            {verifyError&&<div style={{color:'#f87171',fontSize:12,marginTop:8}}>âš ï¸ {verifyError}</div>}
           </div>
         )}
 
@@ -498,37 +498,37 @@ export function StaffRegisterPage() {
             {/* Aviso + Refrescar */}
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12,marginBottom:16,flexWrap:'wrap'as const}}>
               <div style={{flex:1,background:'rgba(255,179,0,0.08)',border:'1px solid rgba(255,179,0,0.25)',borderRadius:12,padding:'12px 16px'}}>
-                <p style={{color:'#fbbf24',fontSize:13,fontWeight:700,margin:'0 0 4px'}}>⚠️ Información importante</p>
+                <p style={{color:'#fbbf24',fontSize:13,fontWeight:700,margin:'0 0 4px'}}>âš ï¸ InformaciÃ³n importante</p>
                 <p style={{color:'rgba(255,255,255,0.55)',fontSize:12,margin:0}}>
-                  Las listas de personal serán entregadas a COMFAMA el <strong style={{color:'white'}}>23 de julio</strong>. Una vez enviadas no podrán modificarse.
+                  Las listas de personal serÃ¡n entregadas a COMFAMA el <strong style={{color:'white'}}>23 de julio</strong>. Una vez enviadas no podrÃ¡n modificarse.
                   Para cambios: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a>
                 </p>
               </div>
               <button onClick={refresh}
                 style={{padding:'10px 16px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.15)',color:'white',cursor:'pointer',fontSize:13,whiteSpace:'nowrap'as const,flexShrink:0}}>
-                🔄 Actualizar
+                ðŸ”„ Actualizar
               </button>
             </div>
 
-            {/* Botones de acción */}
+            {/* Botones de acciÃ³n */}
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:12,marginBottom:20}}>
 
               {/* Staff montaje */}
               <div style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${montajeSaved?'#4CAF50':'rgba(239,68,68,0.4)'}`,borderRadius:12,padding:14}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                   <div>
-                    <div style={{color:'white',fontSize:14,fontWeight:700}}>🔧 Staff de montaje</div>
-                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Personal de montaje y desmontaje · ilimitado</div>
-                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>📅 Límite: 23 de julio de 2026</div>
+                    <div style={{color:'white',fontSize:14,fontWeight:700}}>ðŸ”§ Staff de montaje</div>
+                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Personal de montaje y desmontaje Â· ilimitado</div>
+                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>ðŸ“… LÃ­mite: 23 de julio de 2026</div>
                   </div>
                   <span style={{background:montajeSaved?'rgba(76,175,80,0.2)':'rgba(239,68,68,0.15)',color:montajeSaved?'#4ade80':'#f87171',fontSize:11,padding:'3px 8px',borderRadius:20,flexShrink:0}}>
-                    {montajeSaved?`✅ ${existingMontaje.length} registrados`:'🔴 Pendiente'}
+                    {montajeSaved?`âœ… ${existingMontaje.length} registrados`:'ðŸ”´ Pendiente'}
                   </span>
                 </div>
                 {montajeSaved&&(
                   <button onClick={printPDF}
                     style={{width:'100%',padding:'7px',borderRadius:8,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',color:'white',cursor:'pointer',fontSize:12,marginTop:4}}>
-                    📥 Descargar / Imprimir PDF
+                    ðŸ“¥ Descargar / Imprimir PDF
                   </button>
                 )}
               </div>
@@ -537,24 +537,24 @@ export function StaffRegisterPage() {
               <div style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${empresa.contract_signed_at?'#4CAF50':'rgba(239,68,68,0.4)'}`,borderRadius:12,padding:14}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                   <div>
-                    <div style={{color:'white',fontSize:14,fontWeight:700}}>📄 Contrato + Staff de servicio</div>
-                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Consentimiento y personal del día del evento</div>
-                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>📅 Límite: 23 de julio de 2026</div>
+                    <div style={{color:'white',fontSize:14,fontWeight:700}}>ðŸ“„ Contrato + Staff de servicio</div>
+                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:11,marginTop:2}}>Consentimiento y personal del dÃ­a del evento</div>
+                    <div style={{color:'#fbbf24',fontSize:11,marginTop:4}}>ðŸ“… LÃ­mite: 23 de julio de 2026</div>
                   </div>
                   <span style={{background:empresa.contract_signed_at?'rgba(76,175,80,0.2)':'rgba(239,68,68,0.15)',color:empresa.contract_signed_at?'#4ade80':'#f87171',fontSize:11,padding:'3px 8px',borderRadius:20,flexShrink:0}}>
-                    {empresa.contract_signed_at?'✅ Firmado':'🔴 Pendiente'}
+                    {empresa.contract_signed_at?'âœ… Firmado':'ðŸ”´ Pendiente'}
                   </span>
                 </div>
                 {empresa.contract_token&&!empresa.contract_signed_at&&(
                   <button onClick={()=>setShowContractModal(true)}
                     style={{width:'100%',padding:'7px',borderRadius:8,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontSize:13,fontWeight:700,marginTop:4}}>
-                    ✍️ Firmar contrato
+                    âœï¸ Firmar contrato
                   </button>
                 )}
                 {empresa.contract_signed_at&&(
                   <a href={`${window.location.origin}/ecard/${empresa.id}`} target="_blank" rel="noopener noreferrer"
                     style={{display:'block',textAlign:'center',padding:'7px',borderRadius:8,background:'rgba(255,255,255,0.08)',color:'white',textDecoration:'none',fontSize:12,marginTop:4,border:'1px solid rgba(255,255,255,0.15)'}}>
-                    🎟️ Ver E-Card de ingreso
+                    ðŸŽŸï¸ Ver E-Card de ingreso
                   </a>
                 )}
               </div>
@@ -565,16 +565,16 @@ export function StaffRegisterPage() {
               <div style={{background:'rgba(76,175,80,0.05)',border:'1px solid rgba(76,175,80,0.2)',borderRadius:14,padding:16,marginBottom:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
                   <div>
-                    <div style={{color:'#4ade80',fontSize:14,fontWeight:700}}>✅ Personal de montaje registrado</div>
-                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:12,marginTop:2}}>{existingMontaje.length} empleado{existingMontaje.length>1?'s':''} · {isPastDeadline()?'Solo lectura — registro cerrado':'Puedes editar hasta el 23 de julio'}</div>
+                    <div style={{color:'#4ade80',fontSize:14,fontWeight:700}}>âœ… Personal de montaje registrado</div>
+                    <div style={{color:'rgba(255,255,255,0.4)',fontSize:12,marginTop:2}}>{existingMontaje.length} empleado{existingMontaje.length>1?'s':''} Â· {isPastDeadline()?'Solo lectura â€” registro cerrado':'Puedes editar hasta el 23 de julio'}</div>
                   </div>
                   <div style={{display:'flex',gap:8}}>
                     {!isPastDeadline()&&<button onClick={()=>setMontajeSaved(false)}
                       style={{padding:'8px 14px',borderRadius:8,background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.2)',color:'white',cursor:'pointer',fontSize:12,fontWeight:600}}>
-                      ✏️ Editar
+                      âœï¸ Editar
                     </button>}
                     <button onClick={printPDF} style={{padding:'8px 14px',borderRadius:8,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontSize:12,fontWeight:700}}>
-                      📥 PDF
+                      ðŸ“¥ PDF
                     </button>
                   </div>
                 </div>
@@ -582,7 +582,7 @@ export function StaffRegisterPage() {
                   <table style={{width:'100%',borderCollapse:'collapse'as const,fontSize:12}}>
                     <thead>
                       <tr style={{background:'rgba(255,255,255,0.06)'}}>
-                        {['#','Nombre','Cédula','Teléfono','EPS','ARL','Docs'].map(h=>(
+                        {['#','Nombre','CÃ©dula','TelÃ©fono','EPS','ARL','Docs'].map(h=>(
                           <th key={h} style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',textAlign:'left'as const,fontWeight:600,fontSize:11}}>{h}</th>
                         ))}
                       </tr>
@@ -594,13 +594,13 @@ export function StaffRegisterPage() {
                           <td style={{padding:'9px 10px',color:'white',fontWeight:600}}>{s.full_name}</td>
                           <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.7)'}}>{s.cedula}</td>
                           <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.7)'}}>{s.phone}</td>
-                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.6)'}}>{s.eps_name||'—'}</td>
-                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.6)'}}>{s.arl_name||'—'}</td>
+                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.6)'}}>{s.eps_name||'â€”'}</td>
+                          <td style={{padding:'9px 10px',color:'rgba(255,255,255,0.6)'}}>{s.arl_name||'â€”'}</td>
                           <td style={{padding:'9px 10px'}}>
                             <div style={{display:'flex',gap:6}}>
                               {s.cedula_url&&<a href={s.cedula_url} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:CYAN,background:'rgba(0,188,212,0.1)',padding:'2px 6px',borderRadius:4}}>CC</a>}
                               {s.arl_eps_url&&<a href={s.arl_eps_url} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:CYAN,background:'rgba(0,188,212,0.1)',padding:'2px 6px',borderRadius:4}}>ARL</a>}
-                              {!s.cedula_url&&!s.arl_eps_url&&<span style={{color:'rgba(255,255,255,0.3)',fontSize:11}}>—</span>}
+                              {!s.cedula_url&&!s.arl_eps_url&&<span style={{color:'rgba(255,255,255,0.3)',fontSize:11}}>â€”</span>}
                             </div>
                           </td>
                         </tr>
@@ -609,7 +609,7 @@ export function StaffRegisterPage() {
                   </table>
                 </div>
                 <div style={{marginTop:10,padding:'10px 14px',background:'rgba(255,179,0,0.08)',border:'1px solid rgba(255,179,0,0.2)',borderRadius:8}}>
-                  <p style={{color:'#fbbf24',fontSize:11,margin:0}}>⚠️ Lista enviada. Para cambios: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
+                  <p style={{color:'#fbbf24',fontSize:11,margin:0}}>âš ï¸ Lista enviada. Para cambios: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
                 </div>
               </div>
             )}
@@ -617,11 +617,11 @@ export function StaffRegisterPage() {
             {/* Formulario montaje */}
             {!montajeSaved&&(
               <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:20,marginBottom:16}}>
-                <h3 style={{color:'white',fontSize:15,fontWeight:700,margin:'0 0 16px'}}>🔧 Registrar staff de montaje</h3>
+                <h3 style={{color:'white',fontSize:15,fontWeight:700,margin:'0 0 16px'}}>ðŸ”§ Registrar staff de montaje</h3>
                 {isPastDeadline()&&(
                   <div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.4)',borderRadius:10,padding:'12px 16px',marginBottom:16,textAlign:'center'}}>
-                    <p style={{color:'#f87171',fontSize:14,fontWeight:700,margin:'0 0 4px'}}>🔒 Registro cerrado</p>
-                    <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>La fecha límite de registro fue el 23 de julio de 2026. Para modificaciones contacta: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
+                    <p style={{color:'#f87171',fontSize:14,fontWeight:700,margin:'0 0 4px'}}>ðŸ”’ Registro cerrado</p>
+                    <p style={{color:'rgba(255,255,255,0.5)',fontSize:12,margin:0}}>La fecha lÃ­mite de registro fue el 23 de julio de 2026. Para modificaciones contacta: <a href={`https://wa.me/${WA}`} style={{color:CYAN}}>WhatsApp {WA}</a></p>
                   </div>
                 )}
                 {montaje.map((m,idx)=>(
@@ -636,13 +636,13 @@ export function StaffRegisterPage() {
                   style={{width:'100%',padding:'9px',borderRadius:8,background:'transparent',border:`1px dashed rgba(0,188,212,0.4)`,color:CYAN,cursor:'pointer',fontSize:13,marginBottom:14}}>
                   + Agregar empleado
                 </button>
-                {/* Sección vehículo */}
+                {/* SecciÃ³n vehÃ­culo */}
                 <div style={{background:'rgba(0,188,212,0.06)',border:'1px solid rgba(0,188,212,0.2)',borderRadius:12,padding:16,marginBottom:14}}>
-                  <div style={{color:CYAN,fontSize:13,fontWeight:700,marginBottom:4}}>🚗 Vehículo de ingreso al parque</div>
+                  <div style={{color:CYAN,fontSize:13,fontWeight:700,marginBottom:4}}>ðŸš— VehÃ­culo de ingreso al parque</div>
                   <div style={{background:'rgba(255,179,0,0.1)',border:'1px solid rgba(255,179,0,0.3)',borderRadius:8,padding:'10px 12px',marginBottom:12}}>
-                    <p style={{color:'#fbbf24',fontSize:12,margin:'0 0 4px',fontWeight:700}}>⚠️ Solo se permite 1 vehículo por empresa dentro del Parque COMFAMA.</p>
-                    <p style={{color:'rgba(255,255,255,0.55)',fontSize:11,margin:'0 0 4px'}}>Los demás vehículos deben estacionarse en los parqueaderos cercanos al parque.</p>
-                    <p style={{color:'#f87171',fontSize:11,margin:0,fontWeight:700}}>🗓️ Fecha límite de registro: 23 de julio de 2026. Después de esta fecha no se podrán hacer cambios.</p>
+                    <p style={{color:'#fbbf24',fontSize:12,margin:'0 0 4px',fontWeight:700}}>âš ï¸ Solo se permite 1 vehÃ­culo por empresa dentro del Parque COMFAMA.</p>
+                    <p style={{color:'rgba(255,255,255,0.55)',fontSize:11,margin:'0 0 4px'}}>Los demÃ¡s vehÃ­culos deben estacionarse en los parqueaderos cercanos al parque.</p>
+                    <p style={{color:'#f87171',fontSize:11,margin:0,fontWeight:700}}>ðŸ—“ï¸ Fecha lÃ­mite de registro: 23 de julio de 2026. DespuÃ©s de esta fecha no se podrÃ¡n hacer cambios.</p>
                   </div>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
                     <div>
@@ -650,14 +650,14 @@ export function StaffRegisterPage() {
                       <input style={inp} placeholder="AAA000" value={vehicle.placa} onChange={e=>setVehicle(v=>({...v,placa:e.target.value.toUpperCase()}))}/>
                     </div>
                     <div>
-                      <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Tipo de vehículo *</div>
+                      <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>Tipo de vehÃ­culo *</div>
                       <select value={vehicle.tipo_vehiculo} onChange={e=>setVehicle(v=>({...v,tipo_vehiculo:e.target.value}))}
                         style={{...inp,background:'#1a2050',color:'white'}}>
                         <option value="" style={{background:'#1a2050',color:'white'}}>Selecciona...</option>
                         <option value="Carro" style={{background:'#1a2050',color:'white'}}>Carro</option>
                         <option value="Camioneta" style={{background:'#1a2050',color:'white'}}>Camioneta</option>
                         <option value="Van" style={{background:'#1a2050',color:'white'}}>Van</option>
-                        <option value="Camión" style={{background:'#1a2050',color:'white'}}>Camión</option>
+                        <option value="CamiÃ³n" style={{background:'#1a2050',color:'white'}}>CamiÃ³n</option>
                       </select>
                     </div>
                     <div>
@@ -670,13 +670,13 @@ export function StaffRegisterPage() {
                 <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}}>
                   <input type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)} style={{marginTop:2,flexShrink:0}}/>
                   <span style={{color:'rgba(255,255,255,0.6)',fontSize:12}}>
-                    Certifico que la información es correcta. Una vez enviada <strong style={{color:'white'}}>no podrá modificarse</strong>. Esta lista será utilizada para el control de acceso al montaje.
+                    Certifico que la informaciÃ³n es correcta. Una vez enviada <strong style={{color:'white'}}>no podrÃ¡ modificarse</strong>. Esta lista serÃ¡ utilizada para el control de acceso al montaje.
                   </span>
                 </div>
-                {saveError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>⚠️ {saveError}</div>}
+                {saveError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',color:'#f87171',fontSize:12,marginBottom:12}}>âš ï¸ {saveError}</div>}
                 <button onClick={saveMontaje} disabled={saving||isPastDeadline()}
                   style={{width:'100%',padding:14,borderRadius:10,background:isPastDeadline()?'rgba(255,255,255,0.1)':`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:isPastDeadline()?'not-allowed':'pointer',fontWeight:700,fontSize:15,opacity:saving?0.7:1}}>
-                {saving?'⏳ Guardando...':'✅ Confirmar registro'}
+                {saving?'â³ Guardando...':'âœ… Confirmar registro'}
                 </button>
               </div>
             )}
@@ -684,7 +684,7 @@ export function StaffRegisterPage() {
         )}
 
         <p style={{color:'rgba(255,255,255,0.2)',fontSize:11,textAlign:'center',marginTop:24}}>
-          Latido y Huella 2026 · eventos@latidoyhuella.co · WhatsApp +57 333 277 7912
+          Latido y Huella 2026 Â· eventos@latidoyhuella.co Â· WhatsApp +57 333 277 7912
         </p>
       </div>
 
@@ -693,10 +693,10 @@ export function StaffRegisterPage() {
         <div style={{position:'fixed',inset:0,zIndex:999,background:'rgba(0,0,0,0.92)',display:'flex',flexDirection:'column'as const,alignItems:'center',justifyContent:'center',padding:16}}>
           <div style={{width:'100%',maxWidth:720,background:'white',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column'as const,height:'90vh'}}>
             <div style={{background:NAVY,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-              <span style={{color:'white',fontWeight:700,fontSize:14}}>📄 Contrato — {empresa.brand_name}</span>
+              <span style={{color:'white',fontWeight:700,fontSize:14}}>ðŸ“„ Contrato â€” {empresa.brand_name}</span>
               <button onClick={()=>{setShowContractModal(false);refresh()}}
                 style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'5px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>
-                ✕ Cerrar
+                âœ• Cerrar
               </button>
             </div>
             <iframe
@@ -716,25 +716,25 @@ export function StaffRegisterPage() {
           <div style={{width:'100%',maxWidth:580,background:'#0f1535',border:'1px solid rgba(255,255,255,0.1)',borderRadius:16,overflow:'hidden',maxHeight:'90vh',overflowY:'auto'as const}}>
             <div style={{background:NAVY,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky'as const,top:0}}>
               <span style={{color:'white',fontWeight:700,fontSize:14}}>
-                {regTipo==='expositor'?'🏪 Registro como Expositor':'⭐ Registro como Patrocinador'}
+                {regTipo==='expositor'?'ðŸª Registro como Expositor':'â­ Registro como Patrocinador'}
               </span>
               <button onClick={()=>setShowRegisterModal(false)}
                 style={{background:'rgba(255,255,255,0.15)',border:'none',color:'white',borderRadius:8,padding:'5px 14px',cursor:'pointer',fontSize:13,fontWeight:600}}>
-                ✕
+                âœ•
               </button>
             </div>
             <div style={{padding:24}}>
               <div style={{display:'flex',gap:8,marginBottom:20}}>
-                <button onClick={()=>setRegTipo('expositor')} style={{flex:1,padding:'9px',borderRadius:8,background:regTipo==='expositor'?CYAN:'rgba(255,255,255,0.06)',color:'white',border:`1px solid ${regTipo==='expositor'?CYAN:'rgba(255,255,255,0.15)'}`,cursor:'pointer',fontSize:13,fontWeight:700}}>🏪 Expositor</button>
-                <button onClick={()=>setRegTipo('patrocinador')} style={{flex:1,padding:'9px',borderRadius:8,background:regTipo==='patrocinador'?CYAN:'rgba(255,255,255,0.06)',color:'white',border:`1px solid ${regTipo==='patrocinador'?CYAN:'rgba(255,255,255,0.15)'}`,cursor:'pointer',fontSize:13,fontWeight:700}}>⭐ Patrocinador</button>
+                <button onClick={()=>setRegTipo('expositor')} style={{flex:1,padding:'9px',borderRadius:8,background:regTipo==='expositor'?CYAN:'rgba(255,255,255,0.06)',color:'white',border:`1px solid ${regTipo==='expositor'?CYAN:'rgba(255,255,255,0.15)'}`,cursor:'pointer',fontSize:13,fontWeight:700}}>ðŸª Expositor</button>
+                <button onClick={()=>setRegTipo('patrocinador')} style={{flex:1,padding:'9px',borderRadius:8,background:regTipo==='patrocinador'?CYAN:'rgba(255,255,255,0.06)',color:'white',border:`1px solid ${regTipo==='patrocinador'?CYAN:'rgba(255,255,255,0.15)'}`,cursor:'pointer',fontSize:13,fontWeight:700}}>â­ Patrocinador</button>
               </div>
 
               {[
                 {key:'brand_name',label:'Nombre de la empresa *',placeholder:'Nombre comercial'},
                 {key:'responsible_name',label:'Responsable *',placeholder:'Nombre y apellidos'},
-                {key:'document_id',label:'NIT o cédula',placeholder:'Número sin puntos'},
+                {key:'document_id',label:'NIT o cÃ©dula',placeholder:'NÃºmero sin puntos'},
                 {key:'email',label:'Email *',placeholder:'correo@empresa.com'},
-                {key:'phone',label:'Teléfono',placeholder:'300 000 0000'},
+                {key:'phone',label:'TelÃ©fono',placeholder:'300 000 0000'},
               ].map(f=>(
                 <div key={f.key} style={{marginBottom:12}}>
                   <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginBottom:4}}>{f.label}</div>
@@ -747,9 +747,9 @@ export function StaffRegisterPage() {
               <div style={{marginTop:16,marginBottom:8,color:'rgba(255,255,255,0.5)',fontSize:12,fontWeight:600}}>Documentos</div>
               <div style={{display:'flex',flexDirection:'column'as const,gap:10,marginBottom:20}}>
                 {[
-                  {key:'cedula_url',label:'📋 Cédula del representante'},
-                  {key:'rut_url',label:'📄 RUT de la empresa'},
-                  {key:'camara_url',label:'🏢 Cámara de Comercio'},
+                  {key:'cedula_url',label:'ðŸ“‹ CÃ©dula del representante'},
+                  {key:'rut_url',label:'ðŸ“„ RUT de la empresa'},
+                  {key:'camara_url',label:'ðŸ¢ CÃ¡mara de Comercio'},
                 ].map(d=>(
                   <div key={d.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:8,padding:'10px 14px'}}>
                     <span style={{color:'rgba(255,255,255,0.7)',fontSize:13}}>{d.label}</span>
@@ -758,11 +758,11 @@ export function StaffRegisterPage() {
                 ))}
               </div>
 
-              {regError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'10px 14px',color:'#f87171',fontSize:12,marginBottom:14}}>⚠️ {regError}</div>}
+              {regError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'10px 14px',color:'#f87171',fontSize:12,marginBottom:14}}>âš ï¸ {regError}</div>}
 
               <button onClick={registerNewEmpresa} disabled={regSaving}
                 style={{width:'100%',padding:14,borderRadius:10,background:`linear-gradient(135deg,${CYAN},#0097A7)`,color:'white',border:'none',cursor:'pointer',fontWeight:700,fontSize:15,opacity:regSaving?0.7:1}}>
-                {regSaving?'⏳ Registrando...':'✅ Completar registro'}
+                {regSaving?'â³ Registrando...':'âœ… Completar registro'}
               </button>
             </div>
           </div>
