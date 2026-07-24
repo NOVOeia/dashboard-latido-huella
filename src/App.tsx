@@ -19,6 +19,7 @@ import { ECardPage } from './pages/ECardPage';
 import { KitPage } from './pages/KitPage';
 import { StaffRegisterPage } from './pages/StaffRegisterPage';
 import { DejaTuHuellaPage } from './pages/DejaTuHuellaPage'
+import { TaquillaPage } from './pages/TaquillaPage'
 
 export function App() {
   return (
@@ -32,6 +33,7 @@ export function App() {
       <Route path="/comparte" element={<Navigate to="/deja-tu-huella" replace />} />
       <Route path="/registro-staff" element={<StaffRegisterPage />} />
       <Route path="/registro-staff/:id" element={<StaffRegisterPage />} />
+      <Route path="/taquilla" element={<TaquillaPage />} />
       <Route path="/" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><HomePage /></main><Footer /><WhatsAppButton /><NovoeiaModal /><DiverxoModal /></div>} />
       <Route path="/caminata-5k" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><Caminata5KPage /></main><Footer /><WhatsAppButton /></div>} />
       <Route path="/deportes" element={<div className="min-h-screen bg-white overflow-x-hidden"><Navbar /><main><DeportesPage /></main><Footer /><WhatsAppButton /></div>} />
