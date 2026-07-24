@@ -1,4 +1,10 @@
 [[redirects]]
+  from = "https://comparte.latidoyhuella.co/"
+  to = "/deja-tu-huella"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "https://comparte.latidoyhuella.co/*"
   to = "/deja-tu-huella"
   status = 200
