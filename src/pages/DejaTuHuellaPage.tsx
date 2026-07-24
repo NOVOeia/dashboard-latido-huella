@@ -113,15 +113,7 @@ export function DejaTuHuellaPage() {
   return (
     <div className="min-h-screen bg-[#F2FBFD] text-[#0D1B6E]">
       <Toaster richColors position="top-center" />
-      <header className="relative overflow-hidden bg-[#0D1B6E] px-5 pb-16 pt-8 text-center text-white">
-        <div className="absolute inset-0 bg-[url('/PATRON_HUELLAS_fondo.png')] bg-cover bg-center opacity-20" />
-        <div className="relative mx-auto max-w-2xl">
-          <img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a62b3e923b7828d3562f13f.png" alt="Latido y Huella" className="mx-auto h-20 w-auto" />
-          <p className="mt-8 text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Comparte este momento</p>
-          <h1 className="mt-3 text-5xl font-extrabold leading-none">Lo que vivimos<br /><span className="text-[#55E5F2]">deja huella</span></h1>
-          <p className="mx-auto mt-5 max-w-xl text-white/85">Sube hasta 3 fotos y cuéntanos cómo estás viviendo Latido y Huella.</p>
-        </div>
-      </header>
+      <header className="relative overflow-hidden bg-[#0D1B6E]"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a62b3e923b7828d3562f13f.png" alt="Latido y Huella" style={{display:"block",width:"100%",objectFit:"cover"}} /></header>
 
       <main className="relative z-10 mx-auto -mt-7 max-w-2xl px-4 pb-16">
         <form onSubmit={submit} className="rounded-[30px] bg-white p-5 shadow-[0_25px_80px_rgba(13,27,110,.15)] sm:p-8">
@@ -174,4 +166,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Consent({ checked, onChange, children }: { checked: boolean; onChange: (value: boolean) => void; children: React.ReactNode }) {
   return <label className="mb-3 flex cursor-pointer items-start gap-3 rounded-2xl border border-gray-200 p-4 text-sm leading-relaxed text-gray-600"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-5 w-5 accent-[#00BCD4]" />{children}</label>;
 }
+
 
