@@ -9,7 +9,8 @@
   to = "/taquilla"
   status = 200
   force = true
-  [[redirects]]
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
