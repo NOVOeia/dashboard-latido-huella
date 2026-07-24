@@ -1,7 +1,11 @@
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "https://comparte.latidoyhuella.co/*"
+  to = "/deja-tu-huella"
   status = 200
+  force = true
 
-[functions]
-  directory = "functions"
+[[redirects]]
+  from = "https://taquilla.latidoyhuella.co/*"
+  to = "/taquilla"
+  status = 200
+  force = true
