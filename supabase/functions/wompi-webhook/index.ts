@@ -53,7 +53,6 @@ function fmtCOP(cents: number) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format((cents || 0) / 100)
 }
 
-// Mapeo de tabla → categoría de email
 function getCategoryForTable(table: string, record: any): string {
   if (table === 'registrations_5k') return '5k'
   if (table === 'toldos_reservations') return 'toldo'
@@ -65,7 +64,6 @@ function getCategoryForTable(table: string, record: any): string {
   return 'general'
 }
 
-// Obtener nombre y email del registro
 function getContactInfo(table: string, record: any): { nombre: string; email: string; vars: Record<string, string> } {
   const baseVars = {
     '{{fecha_evento}}': '26 de julio de 2026',
@@ -151,7 +149,6 @@ async function sendWelcomeEmail(table: string, record: any) {
       return
     }
 
-    // Buscar plantilla activa para esta categoría
     const { data: templates } = await supabase
       .from('email_templates')
       .select('*')
@@ -166,7 +163,6 @@ async function sendWelcomeEmail(table: string, record: any) {
 
     const template = templates[0]
 
-    // Reemplazar variables en el HTML y asunto
     let html = template.body_html
     let subject = template.subject
     Object.entries(vars).forEach(([k, v]) => {
@@ -174,7 +170,6 @@ async function sendWelcomeEmail(table: string, record: any) {
       subject = subject.replace(new RegExp(k.replace(/[{}]/g, '\\$&'), 'g'), v || '')
     })
 
-    // Enviar email via send-email Edge Function
     const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
@@ -191,7 +186,6 @@ async function sendWelcomeEmail(table: string, record: any) {
     })
 
     if (res.ok) {
-      // Guardar log
       await supabase.from('email_logs').insert({
         template_id: template.id,
         template_name: template.name,
@@ -201,7 +195,14 @@ async function sendWelcomeEmail(table: string, record: any) {
         subject,
         body_html: html,
       })
-      console.log(`✅ Email enviado a ${email} (${category})`)
+      // Marcar email1_sent_at en registrations_5k
+      if (table === 'registrations_5k') {
+        await supabase
+          .from('registrations_5k')
+          .update({ email1_sent_at: new Date().toISOString() })
+          .eq('id', record.id)
+      }
+      console.log(`Email enviado a ${email} (${category})`)
     } else {
       const err = await res.text()
       console.error('Error sending email:', err)
@@ -263,17 +264,19 @@ serve(async (req) => {
     return new Response('DB error', { status: 500 })
   }
 
-  console.log(`✅ ${route.table} ${route.id} → ${newStatus}`)
+  console.log(`${route.table} ${route.id} -> ${newStatus}`)
 
-  // Enviar email de bienvenida automáticamente cuando el pago es confirmado
-  if (newStatus === 'paid') {
-    const { data: updatedRecord } = await supabase
-      .from(route.table)
-      .select('*')
-      .eq('id', route.id)
-      .maybeSingle()
+  // ✅ ENVIAR EMAIL SIEMPRE — tanto si pago como si no
+  const { data: updatedRecord } = await supabase
+    .from(route.table)
+    .select('*')
+    .eq('id', route.id)
+    .maybeSingle()
 
-    if (updatedRecord) {
+  if (updatedRecord) {
+    // Solo enviar si no se ha enviado antes
+    const alreadySent = route.table === 'registrations_5k' && updatedRecord.email1_sent_at
+    if (!alreadySent) {
       await sendWelcomeEmail(route.table, updatedRecord)
     }
   }
