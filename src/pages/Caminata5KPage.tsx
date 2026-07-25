@@ -314,7 +314,7 @@ export function Caminata5KPage() {
       const totalHumanos = (titulares || 0) + (acompanantes || 0)
       const nuevosHumanos = 1 + attendees.filter(a => !a.isPet).length
       if (totalHumanos + nuevosHumanos > 190) {
-        toast.error('Lo sentimos, hemos alcanzado el cupo maximo de 190 participantes.')
+        toast.error('Lo sentimos, hemos alcanzado el cupo maximo de participantes.')
         setIsSubmitting(false)
         return
       }
