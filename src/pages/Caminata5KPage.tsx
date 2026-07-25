@@ -384,6 +384,18 @@ export function Caminata5KPage() {
         }
       }
       toast.success('¡Inscripción registrada! Redirigiendo al pago…');
+      // Enviar email inmediatamente sin esperar confirmacion de pago
+      try {
+        const contractToken = crypto.randomUUID()
+        await supabase.from('registrations_5k').update({ contract_token: contractToken }).eq('id', registrationId)
+        const emailHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto"><div style="background:#0D1B6E;padding:32px;text-align:center;border-radius:16px 16px 0 0"><img src="https://assets.cdn.filesafe.space/fSGKFAskjzH7pBxfOSIj/media/6a0b45bdc474827cc4087698.png" style="height:60px" alt="Latido y Huella"/><p style="color:rgba(255,255,255,0.7);font-size:13px;margin:12px 0 0">26 de julio de 2026 - Parque COMFAMA Llanogrande</p></div><div style="background:white;padding:32px;border-radius:0 0 16px 16px"><h1 style="color:#0D1B6E;font-size:24px;margin:0 0 8px">Hola ${userData.name}!</h1><p style="color:#444;font-size:15px;line-height:1.7">Tu registro para la <strong>Caminata Canina 6.5K Pet Lovers - Latido y Huella 2026</strong> esta siendo procesado.</p><div style="background:#f0f4ff;border-radius:14px;padding:20px;margin:16px 0"><p style="margin:0 0 8px;color:#333"><strong>Fecha:</strong> Domingo 26 de julio de 2026</p><p style="margin:0 0 8px;color:#333"><strong>Hora:</strong> 7:00 AM</p><p style="margin:0;color:#333"><strong>Lugar:</strong> Parque del Bienestar COMFAMA Llanogrande</p></div><div style="background:#fff8e1;border-left:4px solid #FFB300;padding:16px;margin:16px 0"><p style="color:#e65100;font-weight:700;margin:0 0 8px">Firma tu consentimiento</p><div style="text-align:center"><a href="https://admin-latidoyhuella.netlify.app/contrato/${contractToken}" style="background:#00BCD4;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;display:inline-block">Firmar consentimiento</a></div></div><p style="color:#888;font-size:12px;text-align:center;margin:16px 0 0">eventos@latidoyhuella.co - WhatsApp +57 333 277 7912</p></div></div>`
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: userData.email, subject: 'Tu registro en Latido y Huella 2026', html: emailHtml, type: '5k' })
+        })
+        await supabase.from('registrations_5k').update({ email1_sent_at: new Date().toISOString() }).eq('id', registrationId)
+      } catch(emailErr) { console.error('Email error:', emailErr) }
       await redirectToWompi({
         reference: registrationId,
         amountInCents,
