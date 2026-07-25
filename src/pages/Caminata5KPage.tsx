@@ -307,6 +307,18 @@ export function Caminata5KPage() {
           });
         }
       }
+      // Verificar capacidad maxima 190 personas
+      const { data: countData } = await supabase.rpc('count_all', {}).single().catch(() => ({ data: null }))
+      const { count: titulares } = await supabase.from('registrations_5k').select('*', { count: 'exact', head: true }).eq('status', 'paid')
+      const { count: acompanantes } = await supabase.from('registration_attendees').select('registration_id', { count: 'exact', head: true }).eq('is_primary', false)
+      const totalHumanos = (titulares || 0) + (acompanantes || 0)
+      const nuevosHumanos = 1 + attendees.filter(a => !a.isPet).length
+      if (totalHumanos + nuevosHumanos > 190) {
+        toast.error('Lo sentimos, hemos alcanzado el cupo maximo de 190 participantes.')
+        setIsSubmitting(false)
+        return
+      }
+
       let registrationId = '';
       if (ticketType === 'extra_pet') {
         const { data, error } = await supabase.
