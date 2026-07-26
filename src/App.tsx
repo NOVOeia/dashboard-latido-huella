@@ -27,6 +27,7 @@ import { MovementHomePage } from './web-a/pages/MovementHomePage'
 import { LivedExperiencePage } from './web-a/pages/LivedExperiencePage'
 import { GalleryPage } from './web-a/pages/GalleryPage'
 import { AliasPage } from './web-a/pages/AliasPage'
+import { CertificadoPage } from './pages/CertificadoPage'
 
 export function App() {
   const location = useLocation()
@@ -75,6 +76,7 @@ export function App() {
           <Route path="/gracias" element={<GraciasPage />} />
           <Route path="/subir-documento" element={<SubirDocumentoPage />} />
           <Route path="/terminos" element={<TerminosPage />} />
+          <Route path="/certificado/:nombre" element={<CertificadoPage />} />
         </Routes>
       </main>
       {!immersive && (webA ? <WebAFooter /> : <Footer />)}
