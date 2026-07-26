@@ -28,11 +28,7 @@ export function CertificadoPage() {
     return () => window.removeEventListener('resize', updateFontSize)
   }, [decodedName])
 
-  const handleDownload = async () => {
-    if (!cardRef.current) return
-    setDownloading(true)
-    try {
-      const { default: html2canvas } = await import('https://esm.sh/html2canvas@1.4.1' as any)
+  const handleDownload = () => { window.open('https://adkqijensfxzzftylktm.supabase.co/functions/v1/generate-certificate?nombre=' + encodeURIComponent(decodedName), '_blank') } = await import('https://esm.sh/html2canvas@1.4.1' as any)
       const canvas = await html2canvas(cardRef.current, {
         useCORS: true,
         scale: 2,
@@ -92,6 +88,7 @@ export function CertificadoPage() {
     </div>
   )
 }
+
 
 
 
