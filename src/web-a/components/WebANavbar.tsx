@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 const links = [
   ['Inicio', '/movimiento'],
   ['Lo que vivimos', '/movimiento/lo-que-vivimos'],
-  ['Galería', '/movimiento/galeria'],
+  ['GalerÃ­a', '/movimiento/galeria'],
   ['Muro de Huellas', '/muro'],
-  ['Aliados', '/movimiento#aliados'],
+  ['Aliados', '/movimiento/aliados'],
 ];
 
 export function WebANavbar() {
@@ -24,7 +24,7 @@ export function WebANavbar() {
         )}
       </nav>
       <Link to="/deja-tu-huella" className="hidden rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-[#09145b] shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 lg:inline-flex">Deja tu huella</Link>
-      <button onClick={() => setOpen(!open)} className="rounded-xl p-2 text-white lg:hidden" aria-label="Abrir menú">{open ? <X/> : <Menu/>}</button>
+      <button onClick={() => setOpen(!open)} className="rounded-xl p-2 text-white lg:hidden" aria-label="Abrir menÃº">{open ? <X/> : <Menu/>}</button>
     </div>
     {open && <div className="border-t border-white/10 bg-[#09145b] px-4 py-5 lg:hidden">
       <div className="flex flex-col gap-4">{links.map(([label, href]) => <a key={label} href={href} onClick={() => setOpen(false)} className="font-semibold text-white">{label}</a>)}
@@ -32,3 +32,4 @@ export function WebANavbar() {
     </div>}
   </header>
 }
+
