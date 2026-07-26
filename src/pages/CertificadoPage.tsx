@@ -1,52 +1,66 @@
 ﻿import React, { useRef, useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
-const CERT_IMG = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/expositor-documents/Certificado%20LyH.png'
-
 export function CertificadoPage() {
   const { nombre } = useParams<{ nombre: string }>()
   const decodedName = decodeURIComponent(nombre || '').replace(/-/g, ' ')
-  const cardRef = useRef<HTMLDivElement>(null)
-  const nameRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [ready, setReady] = useState(false)
   const [downloading, setDownloading] = useState(false)
-  const [nameFontSize, setNameFontSize] = useState(28)
 
   useEffect(() => {
-    const updateFontSize = () => {
-      if (!containerRef.current) return
-      const containerWidth = containerRef.current.offsetWidth
-      const availableWidth = containerWidth * 0.52
-      const charCount = decodedName.length
-      let size = Math.floor(availableWidth / (charCount * 0.55))
-      size = Math.min(size, 32)
-      size = Math.max(size, 12)
-      setNameFontSize(size)
+    const img = new window.Image()
+    img.onload = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      // Dynamic font size
+      const availableWidth = img.width * 0.52
+      let fontSize = Math.floor(availableWidth / (decodedName.length * 0.55))
+      fontSize = Math.min(fontSize, 130)
+      fontSize = Math.max(fontSize, 50)
+      ctx.font = `900 ${fontSize}px Arial`
+      ctx.fillStyle = '#0D1B6E'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(decodedName, img.width / 2, img.height * 0.54)
+      setReady(true)
     }
-    updateFontSize()
-    window.addEventListener('resize', updateFontSize)
-    return () => window.removeEventListener('resize', updateFontSize)
+    // Load from same domain - no CORS issues
+    img.src = '/Certificado_LyH.png'
   }, [decodedName])
 
   const handleDownload = async () => {
-    if (!cardRef.current) return
+    const canvas = canvasRef.current
+    if (!canvas || !ready) return
     setDownloading(true)
     try {
-      const { default: html2canvas } = await import('https://esm.sh/html2canvas@1.4.1' as any)
-      const canvas = await html2canvas(cardRef.current, {
-        useCORS: true,
-        scale: 2,
-        backgroundColor: null,
-        logging: false,
-      })
-      const link = document.createElement('a')
-      link.download = `Certificado-Latido-y-Huella-${decodedName.replace(/ /g, '-')}.png`
-      link.href = canvas.toDataURL('image/png')
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } catch (e) { console.error(e) }
-    setDownloading(false)
+      canvas.toBlob(async (blob) => {
+        if (!blob) return
+        const file = new File([blob], `Certificado-Latido-y-Huella-${decodedName.replace(/ /g, '-')}.png`, { type: 'image/png' })
+        // Try Web Share API first (works on mobile)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'Mi Certificado Latido y Huella 2026' })
+        } else {
+          // Fallback for desktop
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = file.name
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+        }
+        setDownloading(false)
+      }, 'image/png')
+    } catch (e) {
+      console.error(e)
+      setDownloading(false)
+    }
   }
 
   return (
@@ -55,39 +69,16 @@ export function CertificadoPage() {
       <h1 style={{ color: 'white', fontSize: 20, fontWeight: 800, margin: '0 0 6px', textAlign: 'center' }}>Tu Certificado de Participacion</h1>
       <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, margin: '0 0 20px', textAlign: 'center' }}>Caminata Pet Lovers · Latido y Huella 2026</p>
 
-      <div ref={cardRef} style={{ maxWidth: 700, width: '100%', position: 'relative', borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', marginBottom: 20 }}>
-        <img ref={containerRef as any} src={CERT_IMG} style={{ width: '100%', display: 'block' }} alt="Certificado" crossOrigin="anonymous" onLoad={() => {
-          if (!containerRef.current) return
-          const w = (containerRef.current as any).offsetWidth
-          const charCount = decodedName.length
-          let size = Math.floor((w * 0.52) / (charCount * 0.55))
-          size = Math.min(size, 32)
-          size = Math.max(size, 12)
-          setNameFontSize(size)
-        }}/>
-        <div ref={nameRef} style={{
-          position: 'absolute',
-          top: '53%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '52%',
-          textAlign: 'center',
-          fontSize: `${nameFontSize}px`,
-          fontWeight: 900,
-          color: '#0D1B6E',
-          fontFamily: 'Arial, sans-serif',
-          lineHeight: 1.2,
-          whiteSpace: 'nowrap',
-        }}>
-          {decodedName}
-        </div>
+      <div style={{ maxWidth: 700, width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', marginBottom: 20 }}>
+        <canvas ref={canvasRef} style={{ width: '100%', display: 'block' }} />
       </div>
 
-      <button onClick={handleDownload} disabled={downloading}
-        style={{ background: '#00BCD4', color: '#0D1B6E', border: 'none', borderRadius: 50, padding: '14px 36px', fontSize: 16, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 24px rgba(0,188,212,0.3)', marginBottom: 10, opacity: downloading ? 0.7 : 1 }}>
-        {downloading ? 'Descargando...' : 'Descargar certificado'}
-      </button>
-
+      {ready && (
+        <button onClick={handleDownload} disabled={downloading}
+          style={{ background: '#00BCD4', color: '#0D1B6E', border: 'none', borderRadius: 50, padding: '16px 40px', fontSize: 17, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 24px rgba(0,188,212,0.3)', marginBottom: 10, opacity: downloading ? 0.7 : 1 }}>
+          {downloading ? 'Procesando...' : 'Descargar certificado'}
+        </button>
+      )}
       <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 10, textAlign: 'center' }}>eventos@latidoyhuella.co · WhatsApp +57 333 277 7912</p>
     </div>
   )
