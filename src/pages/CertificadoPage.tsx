@@ -57,7 +57,7 @@ export function CertificadoPage() {
           color: '#0D1B6E',
           fontFamily: 'Arial, sans-serif',
           lineHeight: 1.2,
-          whiteSpace: 'nowrap',
+          whiteSpace: 'normal',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}>

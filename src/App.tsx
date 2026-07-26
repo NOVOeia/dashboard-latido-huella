@@ -36,7 +36,7 @@ export function App() {
     || location.pathname.startsWith('/contrato')
     || location.pathname.startsWith('/ecard')
     || location.pathname.startsWith('/kit')
-    || location.pathname.startsWith('/registro-staff')
+    || location.pathname.startsWith('/registro-staff') || location.pathname.startsWith('/certificado')
   const webA = location.pathname === '/'
     || location.pathname.startsWith('/movimiento')
     || location.pathname === '/muro'
@@ -86,3 +86,4 @@ export function App() {
     </div>
   )
 }
+
