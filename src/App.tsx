@@ -64,6 +64,8 @@ export function App() {
           <Route path="/" element={<MovementHomePage />} />
           <Route path="/movimiento" element={<Navigate to="/" replace />} />
           <Route path="/movimiento/lo-que-vivimos" element={<LivedExperiencePage />} />
+          <Route path="/movimiento/aliados" element={<AliasPage />} />
+          <Route path="/movimiento/galeria" element={<GalleryPage />} />
           <Route path="/movimiento/galeria" element={<GalleryPage />} />
           <Route path="/movimiento/aliados" element={<AliasPage />} />
           <Route path="/muro" element={<MuroPage />} />
