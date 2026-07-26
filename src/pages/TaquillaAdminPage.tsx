@@ -35,26 +35,26 @@ export function TaquillaAdminPage() {
     setLoading(true)
     Promise.all([
       supabase.from('taquilla_registrations').select('*').order('created_at', { ascending: false }),
-      supabase.from('registrations_5k').select('full_name, email, phone, status, created_at').eq('status', 'paid').not('email', 'ilike', '%novoeia%'),
-      supabase.from('registration_attendees').select('full_name, email, phone, created_at, registration_id').eq('is_primary', false),
-      supabase.from('sports_team_registrations').select('captain_name, captain_email, captain_phone, sport, created_at, id').eq('status', 'paid'),
-      supabase.from('sports_team_players').select('name, email, phone, created_at, team_id').eq('is_captain', false).is('deleted_at', null),
+      supabase.from('registrations_5k').select('full_name, email, phone, document_id, status, created_at').eq('status', 'paid').not('email', 'ilike', '%novoeia%'),
+      supabase.from('registration_attendees').select('full_name, email, phone, document_id, created_at, registration_id').eq('is_primary', false),
+      supabase.from('sports_team_registrations').select('captain_name, captain_email, captain_phone, captain_cedula, sport, created_at, id').eq('status', 'paid'),
+      supabase.from('sports_team_players').select('name, email, phone, cedula, created_at, team_id').eq('is_captain', false).is('deleted_at', null),
     ]).then(([taquilla, caminata, acompanantes, deportes, jugadores]) => {
       const all: any[] = []
       for (const r of taquilla.data || []) {
         all.push({ ...r, source: 'taquilla' })
       }
       for (const r of caminata.data || []) {
-        all.push({ full_name: r.full_name, email: r.email, phone: r.phone, entry_type: 'caminata', created_at: r.created_at, source: 'caminata' })
+        all.push({ full_name: r.full_name, email: r.email, phone: r.phone, cedula: r.document_id, entry_type: 'caminata', created_at: r.created_at, source: 'caminata' })
       }
       for (const r of acompanantes.data || []) {
-        all.push({ full_name: r.full_name, email: r.email, phone: r.phone, entry_type: 'caminata', created_at: r.created_at, source: 'caminata' })
+        all.push({ full_name: r.full_name, email: r.email, phone: r.phone, cedula: r.document_id, entry_type: 'caminata', created_at: r.created_at, source: 'caminata' })
       }
       for (const r of deportes.data || []) {
-        all.push({ full_name: r.captain_name, email: r.captain_email, phone: r.captain_phone, entry_type: 'deportes', created_at: r.created_at, source: 'deportes' })
+        all.push({ full_name: r.captain_name, email: r.captain_email, phone: r.captain_phone, cedula: r.captain_cedula, entry_type: 'deportes', created_at: r.created_at, source: 'deportes' })
       }
       for (const r of (jugadores.data || [])) {
-        all.push({ full_name: r.name, email: r.email, phone: r.phone, entry_type: 'deportes', created_at: r.created_at, source: 'deportes' })
+        all.push({ full_name: r.name, email: r.email, phone: r.phone, cedula: r.cedula, entry_type: 'deportes', created_at: r.created_at, source: 'deportes' })
       }
       setRegistros(all)
       setLoading(false)
@@ -134,9 +134,9 @@ export function TaquillaAdminPage() {
             <option value="deportes">Deportes</option>
           </select>
           <button onClick={() => {
-            const headers = ['Nombre', 'Email', 'Telefono', 'Tipo', 'Hora']
+            const headers = ['Nombre', 'Cedula', 'Email', 'Telefono', 'Tipo', 'Hora']
             const rows = filtered.map(r => [
-              r.full_name, r.email, r.phone,
+              r.full_name, r.cedula || '', r.email, r.phone,
               ENTRY_LABELS[r.entry_type] || r.entry_type,
               new Date(r.created_at).toLocaleString('es-CO')
             ])
@@ -162,7 +162,7 @@ export function TaquillaAdminPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: NAVY }}>
-                    {['#', 'Nombre', 'Email', 'Telefono', 'Tipo', 'Hora'].map(h => (
+                    {['#', 'Nombre', 'Cedula', 'Email', 'Telefono', 'Tipo', 'Hora'].map(h => (
                       <th key={h} style={{ padding: '12px 16px', color: 'white', fontWeight: 700, fontSize: 12, textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -172,6 +172,7 @@ export function TaquillaAdminPage() {
                     <tr key={r.id} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? 'white' : '#fafbff' }}>
                       <td style={{ padding: '10px 16px', fontSize: 13, color: '#999' }}>{i + 1}</td>
                       <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, color: NAVY, whiteSpace: 'nowrap' }}>{r.full_name}</td>
+                      <td style={{ padding: '10px 16px', fontSize: 13, color: '#555', whiteSpace: 'nowrap' }}>{r.cedula || '—'}</td>
                       <td style={{ padding: '10px 16px', fontSize: 13, color: '#555' }}>{r.email}</td>
                       <td style={{ padding: '10px 16px', fontSize: 13, color: '#555', whiteSpace: 'nowrap' }}>{r.phone}</td>
                       <td style={{ padding: '10px 16px' }}>
