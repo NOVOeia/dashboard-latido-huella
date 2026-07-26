@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -31,7 +31,7 @@ import { CertificadoPage } from './pages/CertificadoPage'
 
 export function App() {
   const location = useLocation()
-  const immersive = ['/deja-tu-huella','/comparte','/taquilla'].includes(location.pathname)
+  const immersive = ['/deja-tu-huella','/comparte','/taquilla','/certificado'].includes(location.pathname)
     || location.pathname.startsWith('/admin')
     || location.pathname.startsWith('/contrato')
     || location.pathname.startsWith('/ecard')
