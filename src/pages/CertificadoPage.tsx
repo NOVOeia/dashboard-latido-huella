@@ -1,7 +1,7 @@
 ﻿import React, { useRef, useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
-const CERT_IMG = '/Certificado-LyH.png'
+const CERT_IMG = '/Certificado_LyH.png'
 
 export function CertificadoPage() {
   const { nombre } = useParams<{ nombre: string }>()
@@ -92,5 +92,6 @@ export function CertificadoPage() {
     </div>
   )
 }
+
 
 
