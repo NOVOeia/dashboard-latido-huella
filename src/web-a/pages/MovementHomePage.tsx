@@ -104,14 +104,14 @@ function WebAPetWall() {
   )
 }
 
-// ── CONOCE EL MOVIMIENTO (cards interactivas) ──────────────
+const BASE = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/community-event-photos/Fotos_para_Secciones'
 const MOVEMENT_CARDS = [
-  { title:'La Caminata Canina', badge:'5K · 26 Julio 2026', desc:'6.5 km de naturaleza, conexión y amor por las mascotas. Una experiencia diseñada para familias y sus peludos compañeros.', image:'/caminata5kimagen.png', color:'from-cyan-500 to-blue-600', link:'/caminata-canina', cta:'Conoce la caminata' },
-  { title:'Feria & Bazar', badge:'Stands · Gastronomía · Arte', desc:'80+ marcas, emprendimientos y experiencias gastronómicas reunidas en un solo lugar. El espacio donde el comercio se fusiona con el propósito.', image:'/ChatGPT_Image_5_may_2026,_16_12_14.png', color:'from-purple-500 to-pink-600', link:'/evento', cta:'Ver expositores' },
-  { title:'Deportes con Causa', badge:'Fútbol · Pádel · Más', desc:'Torneos y competencias para todos los niveles. El deporte como vehículo de comunidad y conexión.', image:'/Foto-3-La-Morelia-se-transformo-en-el-Parque-del-Bienestar-1-1024x683.jpg', color:'from-green-500 to-emerald-600', link:'/deportes', cta:'Ver deportes' },
-  { title:'Muro de Huellas', badge:'Comunidad · Votaciones', desc:'El espacio donde las mascotas son las protagonistas. Vota por tu favorita y ayúdala a convertirse en la Mascota Influencer 2026.', image:'/mascota1.png', color:'from-orange-500 to-amber-600', link:'/muro', cta:'Ir al muro' },
-  { title:'El Movimiento Continúa', badge:'Comunidad · Todo el año', desc:'Latido y Huella no es solo un evento. Es un movimiento activo de personas que transforman el amor por los animales en acción.', image:'/full-shot-friends-sitting-outdoors.jpg', color:'from-[#0D1B6E] to-[#08155f]', link:'/deja-tu-huella', cta:'Deja tu huella' },
-  { title:'Vincula tu Marca', badge:'Alianzas · B2B', desc:'Conecta tu empresa con una comunidad apasionada. Diseñamos juntos la forma perfecta de participar y generar impacto real.', image:'/full-shot-people-garage-sale.jpg', color:'from-slate-700 to-slate-900', link:'/movimiento/aliados', cta:'Ser aliado' },
+  { title:'La Caminata Canina', badge:'5K · 26 Julio 2026', desc:'6.5 km de naturaleza, conexión y amor por las mascotas. Una experiencia diseñada para familias y sus peludos compañeros.', image:`${BASE}/4.La%20Caminata%20Canina.jpeg`, color:'from-cyan-500 to-blue-600', link:'/caminata-canina', cta:'Conoce la caminata' },
+  { title:'Feria & Bazar', badge:'Stands · Gastronomía · Arte', desc:'80+ marcas, emprendimientos y experiencias gastronómicas reunidas en un solo lugar. El espacio donde el comercio se fusiona con el propósito.', image:`${BASE}/5.Feria%20%26%20Bazar.jpeg`, color:'from-purple-500 to-pink-600', link:'/evento', cta:'Ver expositores' },
+  { title:'Deportes con Causa', badge:'Fútbol · Pádel · Más', desc:'Torneos y competencias para todos los niveles. El deporte como vehículo de comunidad y conexión.', image:`${BASE}/6.Deportes%20con%20Causa.jpg`, color:'from-green-500 to-emerald-600', link:'/deportes', cta:'Ver deportes' },
+  { title:'Muro de Huellas', badge:'Comunidad · Votaciones', desc:'El espacio donde las mascotas son las protagonistas. Vota por tu favorita y ayúdala a convertirse en la Mascota Influencer 2026.', image:`${BASE}/1.muro%20de%20las%20huellas.jpeg`, color:'from-orange-500 to-amber-600', link:'/muro', cta:'Ir al muro' },
+  { title:'El Movimiento Continúa', badge:'Comunidad · Todo el año', desc:'Latido y Huella no es solo un evento. Es un movimiento activo de personas que transforman el amor por los animales en acción.', image:`${BASE}/2.El%20Movimiento%20Continua.jpeg`, color:'from-[#0D1B6E] to-[#08155f]', link:'/deja-tu-huella', cta:'Deja tu huella' },
+  { title:'Vincula tu Marca', badge:'Alianzas · B2B', desc:'Conecta tu empresa con una comunidad apasionada. Diseñamos juntos la forma perfecta de participar y generar impacto real.', image:`${BASE}/3.Vincula%20tu%20Marca.jpeg`, color:'from-slate-700 to-slate-900', link:'/movimiento/aliados', cta:'Ser aliado' },
 ]
 
 function MovementCards() {
@@ -264,20 +264,22 @@ export function MovementHomePage() {
             <SectionHeading eyebrow="El evento está vivo en nuestra memoria" title="Una experiencia que dejó huella"
               text="Familias, mascotas, emprendimientos y marcas compartieron una jornada creada para celebrar el bienestar."/>
           </motion.div>
-          <motion.div variants={fadeUp} className="mx-auto mt-14 grid max-w-7xl gap-5 md:grid-cols-12">
-            <div className="relative overflow-hidden rounded-[2rem] md:col-span-7 md:row-span-2 group">
-              <img src={eventPhotos[0]} className="h-full min-h-[430px] w-full object-cover transition duration-700 group-hover:scale-105" alt="Lo que vivimos"/>
+          <motion.div variants={fadeUp} className="mx-auto mt-14 grid max-w-7xl gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            <div className="relative overflow-hidden rounded-[2rem] lg:col-span-2 group">
+              <img src={eventPhotos[0]} className="h-[400px] w-full object-cover transition duration-700 group-hover:scale-105" alt="Lo que vivimos"/>
               <div className="absolute inset-0 bg-gradient-to-t from-[#07104a]/90 via-transparent to-transparent"/>
               <div className="absolute bottom-0 p-7 text-white">
                 <p className="text-sm font-bold uppercase tracking-[.2em] text-cyan-300">Latido y Huella 2026</p>
                 <h3 className="mt-2 text-3xl font-extrabold">Una jornada para recordar</h3>
               </div>
             </div>
-            {eventPhotos.slice(1,3).map((p) => (
-              <div key={p} className="overflow-hidden rounded-[2rem] md:col-span-5">
-                <img src={p} className="h-[205px] w-full object-cover transition duration-500 hover:scale-105" alt="Momento del evento"/>
-              </div>
-            ))}
+            <div className="flex flex-col gap-5">
+              {eventPhotos.slice(1,3).map((p) => (
+                <div key={p} className="overflow-hidden rounded-[2rem] flex-1">
+                  <img src={p} className="h-[190px] w-full object-cover transition duration-500 hover:scale-105" alt="Momento del evento"/>
+                </div>
+              ))}
+            </div>
           </motion.div>
           <motion.div variants={fadeUp} className="mt-10 text-center">
             <Link to="/movimiento/lo-que-vivimos" className="inline-flex items-center gap-2 rounded-full bg-[#0D1B6E] px-7 py-4 font-bold text-white hover:-translate-y-1 transition shadow-lg">
@@ -301,11 +303,22 @@ export function MovementHomePage() {
               text="Fotografías y momentos compartidos por las personas que hicieron parte de esta experiencia."/>
           </motion.div>
           <motion.div variants={fadeUp} className="mx-auto mt-14 max-w-7xl">
-            <CommunityGallery limit={8}/>
+            <div className="columns-2 md:columns-3 lg:columns-4 gap-3">
+              {eventPhotos.slice(0,12).map((photo, i) => (
+                <motion.div key={photo} initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}}
+                  transition={{duration:0.5,delay:i*0.05}}
+                  className="break-inside-avoid mb-3 overflow-hidden rounded-2xl cursor-pointer group relative">
+                  <img src={photo} alt="" className="w-full object-cover transition duration-500 group-hover:scale-105 group-hover:brightness-75"/>
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                    <span className="bg-white/20 backdrop-blur rounded-full px-4 py-2 text-white text-sm font-bold">Ver</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap justify-center gap-4">
             <Link to="/movimiento/galeria" className="rounded-full bg-cyan-400 px-7 py-4 font-bold text-[#08155f] hover:-translate-y-1 transition">
-              Ver toda la galería
+              Ver toda la galeria
             </Link>
             <Link to="/deja-tu-huella" className="inline-flex items-center gap-2 rounded-full border border-white/25 px-7 py-4 font-bold text-white hover:-translate-y-1 transition">
               <Camera size={19}/> Subir mis fotos
