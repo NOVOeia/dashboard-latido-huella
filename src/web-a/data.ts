@@ -9,17 +9,8 @@ export const eventPhotos = [
   'https://drive.google.com/uc?export=view&id=1AuGCiAtOAqOJUdmDPM2S1625FXD_WEty',
   'https://drive.google.com/uc?export=view&id=1uNEI34_F3PZ22wsL_-CLDZprVQ-dm9-x',
   'https://drive.google.com/uc?export=view&id=13CaDIdZaeob2AH9OwZ67rv9YTpriOwtI',
-  'https://drive.google.com/uc?export=view&id=1YqTRFlwyhZHgBldxbKGby_00--XsuUmG',
-  'https://drive.google.com/uc?export=view&id=1JYvzWkNbwywzZBWnOB4nPyE-QzE_KH3g',
-  'https://drive.google.com/uc?export=view&id=1HEJ-r-Z1hSLFUZQu-T5H1323PVKXWTpl',
-  'https://drive.google.com/uc?export=view&id=1C9Np4y4PJMrKUphyO9YHXma2oLV3l6Zf',
-  'https://drive.google.com/uc?export=view&id=1g4459hC3Ud6BZN5O6LzZDVfNzILO-Ykx',
-  'https://drive.google.com/uc?export=view&id=1WUBQ-oJixxto3_wxcF7wkI_Yt1TT6v8I',
-  'https://drive.google.com/uc?export=view&id=1d3fezl6S3EKUTJy9DDQbFJJUcpvitcNv',
-  'https://drive.google.com/uc?export=view&id=1iK1HQDWeVTp2EuY70tMsRu46u38pkcZH',
-  'https://drive.google.com/uc?export=view&id=1fTcBHqxwUZBEyWYkZDJHFOjkz7Kn6Kor',
-  'https://drive.google.com/uc?export=view&id=1j8XISvTSrRcBpO9YMw3DBFK646QR3-63',
 ];
+
 export const activities = [
   { title: 'Caminata canina', text: 'Un recorrido para compartir, moverse y celebrar el vinculo con nuestras mascotas.', image: 'https://drive.google.com/uc?export=view&id=1VVUo410vy3RyBUlBpTVKhMLatg_duVx3' },
   { title: 'Deporte y bienestar', text: 'Clinicas, movimiento y experiencias para disfrutar en familia.', image: 'https://drive.google.com/uc?export=view&id=1AuGCiAtOAqOJUdmDPM2S1625FXD_WEty' },
