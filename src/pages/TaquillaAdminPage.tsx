@@ -37,27 +37,25 @@ export function TaquillaAdminPage() {
       supabase.from('taquilla_registrations').select('*').order('created_at', { ascending: false }),
       supabase.from('registrations_5k').select('full_name, email, phone, status, created_at').eq('status', 'paid').not('email', 'ilike', '%novoeia%'),
       supabase.from('registration_attendees').select('full_name, email, phone, created_at, registration_id').eq('is_primary', false),
-      supabase.from('sports_team_registrations').select('captain_name, captain_email, captain_phone, sport, created_at').eq('status', 'paid'),
-    ]).then(([taquilla, caminata, acompanantes, deportes]) => {
+      supabase.from('sports_team_registrations').select('captain_name, captain_email, captain_phone, sport, created_at, id').eq('status', 'paid'),
+      supabase.from('sports_team_players').select('name, email, phone, created_at, team_id').eq('is_captain', false).is('deleted_at', null),
+    ]).then(([taquilla, caminata, acompanantes, deportes, jugadores]) => {
       const all: any[] = []
-      
-      // Taquilla
       for (const r of taquilla.data || []) {
         all.push({ ...r, source: 'taquilla' })
       }
-      // Caminata titulares
       for (const r of caminata.data || []) {
         all.push({ full_name: r.full_name, email: r.email, phone: r.phone, entry_type: 'caminata', created_at: r.created_at, source: 'caminata' })
       }
-      // Acompanantes caminata
       for (const r of acompanantes.data || []) {
         all.push({ full_name: r.full_name, email: r.email, phone: r.phone, entry_type: 'caminata', created_at: r.created_at, source: 'caminata' })
       }
-      // Deportes
       for (const r of deportes.data || []) {
         all.push({ full_name: r.captain_name, email: r.captain_email, phone: r.captain_phone, entry_type: 'deportes', created_at: r.created_at, source: 'deportes' })
       }
-
+      for (const r of (jugadores.data || [])) {
+        all.push({ full_name: r.name, email: r.email, phone: r.phone, entry_type: 'deportes', created_at: r.created_at, source: 'deportes' })
+      }
       setRegistros(all)
       setLoading(false)
     })
