@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react'
+﻿import React, { useRef, useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
 const CERT_IMG = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/expositor-documents/Certificado%20LyH.png'
@@ -7,10 +7,26 @@ export function CertificadoPage() {
   const { nombre } = useParams<{ nombre: string }>()
   const decodedName = decodeURIComponent(nombre || '').replace(/-/g, ' ')
   const cardRef = useRef<HTMLDivElement>(null)
+  const nameRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
+  const [nameFontSize, setNameFontSize] = useState(28)
 
-  // Dynamic font size based on name length
-  const fontSize = decodedName.length > 30 ? 18 : decodedName.length > 20 ? 22 : 28
+  useEffect(() => {
+    const updateFontSize = () => {
+      if (!containerRef.current) return
+      const containerWidth = containerRef.current.offsetWidth
+      const availableWidth = containerWidth * 0.52
+      const charCount = decodedName.length
+      let size = Math.floor(availableWidth / (charCount * 0.55))
+      size = Math.min(size, 32)
+      size = Math.max(size, 12)
+      setNameFontSize(size)
+    }
+    updateFontSize()
+    window.addEventListener('resize', updateFontSize)
+    return () => window.removeEventListener('resize', updateFontSize)
+  }, [decodedName])
 
   const handleDownload = async () => {
     if (!cardRef.current) return
@@ -29,9 +45,7 @@ export function CertificadoPage() {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) { console.error(e) }
     setDownloading(false)
   }
 
@@ -41,25 +55,29 @@ export function CertificadoPage() {
       <h1 style={{ color: 'white', fontSize: 20, fontWeight: 800, margin: '0 0 6px', textAlign: 'center' }}>Tu Certificado de Participacion</h1>
       <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, margin: '0 0 20px', textAlign: 'center' }}>Caminata Pet Lovers · Latido y Huella 2026</p>
 
-      {/* Certificate card - captured by html2canvas */}
       <div ref={cardRef} style={{ maxWidth: 700, width: '100%', position: 'relative', borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', marginBottom: 20 }}>
-        <img src={CERT_IMG} style={{ width: '100%', display: 'block' }} alt="Certificado" crossOrigin="anonymous"/>
-        {/* Name overlay positioned at the line */}
-        <div style={{
+        <img ref={containerRef as any} src={CERT_IMG} style={{ width: '100%', display: 'block' }} alt="Certificado" crossOrigin="anonymous" onLoad={() => {
+          if (!containerRef.current) return
+          const w = (containerRef.current as any).offsetWidth
+          const charCount = decodedName.length
+          let size = Math.floor((w * 0.52) / (charCount * 0.55))
+          size = Math.min(size, 32)
+          size = Math.max(size, 12)
+          setNameFontSize(size)
+        }}/>
+        <div ref={nameRef} style={{
           position: 'absolute',
-          top: '54%',
+          top: '53%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '55%',
+          width: '52%',
           textAlign: 'center',
-          fontSize: `${fontSize}px`,
+          fontSize: `${nameFontSize}px`,
           fontWeight: 900,
           color: '#0D1B6E',
           fontFamily: 'Arial, sans-serif',
           lineHeight: 1.2,
-          whiteSpace: 'normal',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}>
           {decodedName}
         </div>
@@ -74,4 +92,3 @@ export function CertificadoPage() {
     </div>
   )
 }
-
