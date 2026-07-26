@@ -28,10 +28,11 @@ import { LivedExperiencePage } from './web-a/pages/LivedExperiencePage'
 import { GalleryPage } from './web-a/pages/GalleryPage'
 import { AliasPage } from './web-a/pages/AliasPage'
 import { CertificadoPage } from './pages/CertificadoPage'
+import { TaquillaAdminPage } from './pages/TaquillaAdminPage'
 
 export function App() {
   const location = useLocation()
-  const immersive = ['/deja-tu-huella','/comparte','/taquilla','/certificado'].includes(location.pathname)
+  const immersive = ['/deja-tu-huella','/comparte','/taquilla','/taquilla-admin','/certificado'].includes(location.pathname)
     || location.pathname.startsWith('/admin')
     || location.pathname.startsWith('/contrato')
     || location.pathname.startsWith('/ecard')
@@ -57,6 +58,7 @@ export function App() {
           <Route path="/taquilla" element={<TaquillaPage />} />
           <Route path="/deja-tu-huella" element={<DejaTuHuellaPage />} />
           <Route path="/comparte" element={<Navigate to="/deja-tu-huella" replace />} />
+          <Route path="/taquilla-admin" element={<TaquillaAdminPage />} />
 
           {/* WEB A */}
           <Route path="/" element={<MovementHomePage />} />
@@ -77,6 +79,7 @@ export function App() {
           <Route path="/subir-documento" element={<SubirDocumentoPage />} />
           <Route path="/terminos" element={<TerminosPage />} />
           <Route path="/certificado/:nombre" element={<CertificadoPage />} />
+          <Route path="/taquilla/admin" element={<TaquillaAdminPage />} />
         </Routes>
       </main>
       {!immersive && (webA ? <WebAFooter /> : <Footer />)}
@@ -86,4 +89,5 @@ export function App() {
     </div>
   )
 }
+
 
