@@ -181,11 +181,15 @@ export function MovementHomePage() {
     <>
       {/* ── HERO ────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-[#08155f] pt-20">
-        <div className="absolute inset-0">
-          <img src="/full-shot-friends-sitting-outdoors.jpg" className="h-full w-full object-cover opacity-50" alt=""/>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#08155f] via-[#08155f]/80 to-[#08155f]/20"/>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08155f] via-transparent to-transparent"/>
-        </div>
+        {/* Background slideshow */}
+        {eventPhotos.map((photo, i) => (
+          <div key={photo} className="absolute inset-0 transition-opacity duration-1000"
+            style={{ opacity: phraseIndex % eventPhotos.length === i ? 1 : 0, zIndex: 0 }}>
+            <img src={photo} className="h-full w-full object-cover" alt=""/>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#08155f] via-[#08155f]/80 to-[#08155f]/40"/>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#08155f] via-transparent to-transparent"/>
+          </div>
+        ))}
         <motion.div animate={{scale:[1,1.15,1],opacity:[0.3,0.5,0.3]}} transition={{duration:5,repeat:Infinity}}
           className="absolute top-32 right-20 w-72 h-72 rounded-full bg-cyan-400/20 blur-3xl pointer-events-none"/>
 
