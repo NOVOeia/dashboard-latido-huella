@@ -172,8 +172,15 @@ function MovementCards() {
 
 export function MovementHomePage() {
   const [phraseIndex, setPhraseIndex] = useState(0)
+  const [photoIndex, setPhotoIndex] = useState(0)
+
   useEffect(() => {
-    const t = setInterval(() => setPhraseIndex(i => (i+1) % ROTATING_PHRASES.length), 3200)
+    const t = setInterval(() => setPhraseIndex(i => (i + 1) % ROTATING_PHRASES.length), 3200)
+    return () => clearInterval(t)
+  }, [])
+
+  useEffect(() => {
+    const t = setInterval(() => setPhotoIndex(i => (i + 1) % eventPhotos.length), 4000)
     return () => clearInterval(t)
   }, [])
 
@@ -184,7 +191,7 @@ export function MovementHomePage() {
         {/* Background slideshow */}
         {eventPhotos.map((photo, i) => (
           <div key={photo} className="absolute inset-0 transition-opacity duration-1000"
-            style={{ opacity: phraseIndex % eventPhotos.length === i ? 1 : 0, zIndex: 0 }}>
+            style={{ opacity: photoIndex === i ? 1 : 0, zIndex: 0 }}>
             <img src={photo} className="h-full w-full object-cover" alt=""/>
             <div className="absolute inset-0 bg-gradient-to-r from-[#08155f] via-[#08155f]/80 to-[#08155f]/40"/>
             <div className="absolute inset-0 bg-gradient-to-t from-[#08155f] via-transparent to-transparent"/>
