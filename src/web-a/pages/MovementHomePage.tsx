@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Camera, HeartHandshake, PawPrint, ShoppingBag, Sparkles, Users, Star, Building2, Trophy, ClipboardEdit, Heart, X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -9,12 +9,12 @@ import { activities, eventPhotos } from '../data'
 import { supabase } from '../../utils/supabase'
 import { PetRegistrationModal } from '../../components/PetRegistrationModal'
 
-const ROTATING_PHRASES = ['el amor por las mascotas','la protección animal','experiencias en familia','comunidad con propósito']
+const ROTATING_PHRASES = ['el amor por las mascotas','la protecciÃ³n animal','experiencias en familia','comunidad con propÃ³sito']
 const fadeUp = { hidden:{opacity:0,y:40}, show:{opacity:1,y:0,transition:{duration:0.7,ease:'easeOut'}} }
 const stagger = { hidden:{}, show:{transition:{staggerChildren:0.12}} }
 const STATS = [{value:'2,000+',label:'Asistentes'},{value:'300+',label:'Mascotas'},{value:'80+',label:'Stands'},{value:'6.5km',label:'Caminata'}]
 
-// ── WEB A PET WALL ─────────────────────────────────────────
+// â”€â”€ WEB A PET WALL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function WebAPetWall() {
   const [pets, setPets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,7 +25,7 @@ function WebAPetWall() {
     ;(async () => {
       const { data } = await supabase
         .from('registration_pets')
-        .select('id, pet_name, breed, photo_url, registration_id')
+        .select('id, name, breed, photo_url, registration_id')
         .limit(12)
         .order('created_at', { ascending: false })
       if (data && data.length > 0) {
@@ -55,12 +55,12 @@ function WebAPetWall() {
   const sorted = [...pets].sort((a, b) => b.huellas - a.huellas)
 
   if (loading) return (
-    <div className="text-center py-12 text-white/60">Cargando mascotas... 🐾</div>
+    <div className="text-center py-12 text-white/60">Cargando mascotas... ðŸ¾</div>
   )
 
   if (pets.length === 0) return (
     <div className="text-center py-12">
-      <p className="text-white/60 mb-4">Aún no hay mascotas registradas en el muro.</p>
+      <p className="text-white/60 mb-4">AÃºn no hay mascotas registradas en el muro.</p>
       <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-full bg-cyan-400 px-6 py-3 font-bold text-[#08155f]">
         <ClipboardEdit size={18}/> Registra tu mascota
       </button>
@@ -79,17 +79,17 @@ function WebAPetWall() {
             className="bg-white/10 backdrop-blur rounded-2xl overflow-hidden border border-white/10 group hover:bg-white/15 transition">
             <div className="aspect-square overflow-hidden bg-white/5">
               {pet.photo_url
-                ? <img src={pet.photo_url} alt={pet.pet_name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
-                : <div className="w-full h-full flex items-center justify-center text-4xl">🐾</div>
+                ? <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+                : <div className="w-full h-full flex items-center justify-center text-4xl">ðŸ¾</div>
               }
             </div>
             <div className="p-3">
-              <h4 className="font-bold text-white text-sm truncate">{pet.pet_name}</h4>
+              <h4 className="font-bold text-white text-sm truncate">{pet.name}</h4>
               {pet.breed && <p className="text-white/40 text-xs truncate">{pet.breed}</p>}
               <button onClick={() => darHuella(pet.id)} disabled={voted.has(pet.id)}
                 className={`mt-2 w-full py-1.5 rounded-lg border-2 font-bold text-xs flex items-center justify-center gap-1.5 transition
                   ${voted.has(pet.id) ? 'border-cyan-300/30 text-cyan-300/50 cursor-default' : 'border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-[#08155f]'}`}>
-                <PawPrint size={13} className="fill-current"/> {pet.huellas} {voted.has(pet.id) ? '✓' : 'Huella'}
+                <PawPrint size={13} className="fill-current"/> {pet.huellas} {voted.has(pet.id) ? 'âœ“' : 'Huella'}
               </button>
             </div>
           </motion.div>
@@ -106,12 +106,12 @@ function WebAPetWall() {
 
 const BASE = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/community-event-photos/Fotos_para_Secciones'
 const MOVEMENT_CARDS = [
-  { title:'La Caminata Canina', badge:'5K · 26 Julio 2026', desc:'6.5 km de naturaleza, conexión y amor por las mascotas. Una experiencia diseñada para familias y sus peludos compañeros.', image:`${BASE}/4.La%20Caminata%20Canina.jpeg`, color:'from-cyan-500 to-blue-600', link:'/caminata-canina', cta:'Conoce la caminata' },
-  { title:'Feria & Bazar', badge:'Stands · Gastronomía · Arte', desc:'80+ marcas, emprendimientos y experiencias gastronómicas reunidas en un solo lugar. El espacio donde el comercio se fusiona con el propósito.', image:`${BASE}/5.Feria%20%26%20Bazar.jpeg`, color:'from-purple-500 to-pink-600', link:'/evento', cta:'Ver expositores' },
-  { title:'Deportes con Causa', badge:'Fútbol · Pádel · Más', desc:'Torneos y competencias para todos los niveles. El deporte como vehículo de comunidad y conexión.', image:`${BASE}/6.Deportes%20con%20Causa.jpg`, color:'from-green-500 to-emerald-600', link:'/deportes', cta:'Ver deportes' },
-  { title:'Muro de Huellas', badge:'Comunidad · Votaciones', desc:'El espacio donde las mascotas son las protagonistas. Vota por tu favorita y ayúdala a convertirse en la Mascota Influencer 2026.', image:`${BASE}/1.muro%20de%20las%20huellas.jpeg`, color:'from-orange-500 to-amber-600', link:'/muro', cta:'Ir al muro' },
-  { title:'El Movimiento Continúa', badge:'Comunidad · Todo el año', desc:'Latido y Huella no es solo un evento. Es un movimiento activo de personas que transforman el amor por los animales en acción.', image:`${BASE}/2.El%20Movimiento%20Continua.jpeg`, color:'from-[#0D1B6E] to-[#08155f]', link:'/deja-tu-huella', cta:'Deja tu huella' },
-  { title:'Vincula tu Marca', badge:'Alianzas · B2B', desc:'Conecta tu empresa con una comunidad apasionada. Diseñamos juntos la forma perfecta de participar y generar impacto real.', image:`${BASE}/3.Vincula%20tu%20Marca.jpeg`, color:'from-slate-700 to-slate-900', link:'/movimiento/aliados', cta:'Ser aliado' },
+  { title:'La Caminata Canina', badge:'5K Â· 26 Julio 2026', desc:'6.5 km de naturaleza, conexiÃ³n y amor por las mascotas. Una experiencia diseÃ±ada para familias y sus peludos compaÃ±eros.', image:`${BASE}/4.La%20Caminata%20Canina.jpeg`, color:'from-cyan-500 to-blue-600', link:'/caminata-canina', cta:'Conoce la caminata' },
+  { title:'Feria & Bazar', badge:'Stands Â· GastronomÃ­a Â· Arte', desc:'80+ marcas, emprendimientos y experiencias gastronÃ³micas reunidas en un solo lugar. El espacio donde el comercio se fusiona con el propÃ³sito.', image:`${BASE}/5.Feria%20%26%20Bazar.jpeg`, color:'from-purple-500 to-pink-600', link:'/evento', cta:'Ver expositores' },
+  { title:'Deportes con Causa', badge:'FÃºtbol Â· PÃ¡del Â· MÃ¡s', desc:'Torneos y competencias para todos los niveles. El deporte como vehÃ­culo de comunidad y conexiÃ³n.', image:`${BASE}/6.Deportes%20con%20Causa.jpg`, color:'from-green-500 to-emerald-600', link:'/deportes', cta:'Ver deportes' },
+  { title:'Muro de Huellas', badge:'Comunidad Â· Votaciones', desc:'El espacio donde las mascotas son las protagonistas. Vota por tu favorita y ayÃºdala a convertirse en la Mascota Influencer 2026.', image:`${BASE}/1.muro%20de%20las%20huellas.jpeg`, color:'from-orange-500 to-amber-600', link:'/muro', cta:'Ir al muro' },
+  { title:'El Movimiento ContinÃºa', badge:'Comunidad Â· Todo el aÃ±o', desc:'Latido y Huella no es solo un evento. Es un movimiento activo de personas que transforman el amor por los animales en acciÃ³n.', image:`${BASE}/2.El%20Movimiento%20Continua.jpeg`, color:'from-[#0D1B6E] to-[#08155f]', link:'/deja-tu-huella', cta:'Deja tu huella' },
+  { title:'Vincula tu Marca', badge:'Alianzas Â· B2B', desc:'Conecta tu empresa con una comunidad apasionada. DiseÃ±amos juntos la forma perfecta de participar y generar impacto real.', image:`${BASE}/3.Vincula%20tu%20Marca.jpeg`, color:'from-slate-700 to-slate-900', link:'/movimiento/aliados', cta:'Ser aliado' },
 ]
 
 function MovementCards() {
@@ -129,7 +129,7 @@ function MovementCards() {
             <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/70 mb-1">{card.badge}</span>
               <h3 className="font-extrabold text-base leading-tight">{card.title}</h3>
-              <span className="mt-2 text-xs text-white/70 group-hover:text-white transition flex items-center gap-1">Ver más <ArrowRight size={12}/></span>
+              <span className="mt-2 text-xs text-white/70 group-hover:text-white transition flex items-center gap-1">Ver mÃ¡s <ArrowRight size={12}/></span>
             </div>
           </motion.button>
         ))}
@@ -186,7 +186,7 @@ export function MovementHomePage() {
 
   return (
     <>
-      {/* ── HERO ────────────────────────────────────────────── */}
+      {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-[#08155f] pt-20">
         {/* Background slideshow */}
         {eventPhotos.map((photo, i) => (
@@ -214,10 +214,10 @@ export function MovementHomePage() {
                   </motion.span>
                 </AnimatePresence>
               </span>
-              <br/>se convierte en acción.
+              <br/>se convierte en acciÃ³n.
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-7 max-w-2xl text-lg leading-8 text-white/80">
-              Latido y Huella conecta personas, mascotas y marcas para crear comunidad, impulsar iniciativas con propósito y apoyar la protección animal.
+              Latido y Huella conecta personas, mascotas y marcas para crear comunidad, impulsar iniciativas con propÃ³sito y apoyar la protecciÃ³n animal.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-9 flex flex-wrap gap-4">
               <Link to="/movimiento/lo-que-vivimos" className="inline-flex items-center gap-2 rounded-full bg-cyan-400 px-6 py-4 font-extrabold text-[#08155f] shadow-xl hover:-translate-y-1 transition">
@@ -244,12 +244,12 @@ export function MovementHomePage() {
         </motion.div>
       </section>
 
-      {/* ── CONOCE EL MOVIMIENTO (cards con modal) ──────────── */}
+      {/* â”€â”€ CONOCE EL MOVIMIENTO (cards con modal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="bg-[#f7fbff] px-6 py-24">
         <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger}>
           <motion.div variants={fadeUp}>
             <SectionHeading eyebrow="Todo lo que somos" title="Conoce el movimiento"
-              text="Más que un evento — una comunidad que vive, crece y transforma el amor por los animales en experiencias con propósito."/>
+              text="MÃ¡s que un evento â€” una comunidad que vive, crece y transforma el amor por los animales en experiencias con propÃ³sito."/>
           </motion.div>
           <motion.div variants={fadeUp} className="mx-auto mt-14 max-w-7xl">
             <MovementCards/>
@@ -257,11 +257,11 @@ export function MovementHomePage() {
         </motion.div>
       </section>
 
-      {/* ── LO QUE VIVIMOS ──────────────────────────────────── */}
+      {/* â”€â”€ LO QUE VIVIMOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="bg-white px-6 py-24">
         <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger}>
           <motion.div variants={fadeUp}>
-            <SectionHeading eyebrow="El evento está vivo en nuestra memoria" title="Una experiencia que dejó huella"
+            <SectionHeading eyebrow="El evento estÃ¡ vivo en nuestra memoria" title="Una experiencia que dejÃ³ huella"
               text="Familias, mascotas, emprendimientos y marcas compartieron una jornada creada para celebrar el bienestar."/>
           </motion.div>
           <motion.div variants={fadeUp} className="mx-auto mt-14 grid max-w-7xl gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -289,18 +289,18 @@ export function MovementHomePage() {
         </motion.div>
       </section>
 
-      {/* ── SPONSOR RIBBON ──────────────────────────────────── */}
+      {/* â”€â”€ SPONSOR RIBBON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="bg-white pt-4 pb-16 px-6">
         <p className="text-center text-sm font-bold uppercase tracking-[.2em] text-[#0D1B6E]/40 mb-8">Las marcas que hicieron posible esta huella</p>
         <SponsorsBannerSection />
       </div>
 
-      {/* ── GALERÍA VIVA ─────────────────────────────────────── */}
+      {/* â”€â”€ GALERÃA VIVA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="bg-[#08155f] px-6 py-24">
         <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger}>
           <motion.div variants={fadeUp}>
-            <SectionHeading light eyebrow="La comunidad también cuenta la historia" title="Galería viva"
-              text="Fotografías y momentos compartidos por las personas que hicieron parte de esta experiencia."/>
+            <SectionHeading light eyebrow="La comunidad tambiÃ©n cuenta la historia" title="GalerÃ­a viva"
+              text="FotografÃ­as y momentos compartidos por las personas que hicieron parte de esta experiencia."/>
           </motion.div>
           <motion.div variants={fadeUp} className="mx-auto mt-14 max-w-7xl">
             <div className="columns-2 md:columns-3 lg:columns-4 gap-3">
@@ -327,15 +327,15 @@ export function MovementHomePage() {
         </motion.div>
       </section>
 
-      {/* ── MURO DE HUELLAS ──────────────────────────────────── */}
+      {/* â”€â”€ MURO DE HUELLAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative overflow-hidden px-6 py-24 bg-[#f7fbff]">
         <div className="absolute inset-0 pointer-events-none opacity-20">
           <img src="/PATRON_HUELLAS_fondo.png" className="w-full h-full object-cover" alt=""/>
         </div>
         <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger} className="relative z-10">
           <motion.div variants={fadeUp}>
-            <SectionHeading eyebrow="Compite por ser la más popular" title="El Muro de las Huellas"
-              text="Vota por tu mascota favorita y ayúdala a convertirse en la Mascota Influencer 2026. ¡1 like = 1 huella!"/>
+            <SectionHeading eyebrow="Compite por ser la mÃ¡s popular" title="El Muro de las Huellas"
+              text="Vota por tu mascota favorita y ayÃºdala a convertirse en la Mascota Influencer 2026. Â¡1 like = 1 huella!"/>
           </motion.div>
           <motion.div variants={fadeUp} className="mx-auto mt-14 max-w-7xl">
             <WebAPetWall/>
@@ -343,17 +343,17 @@ export function MovementHomePage() {
         </motion.div>
       </section>
 
-      {/* ── VINCULA TU MARCA ─────────────────────────────────── */}
+      {/* â”€â”€ VINCULA TU MARCA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="aliados" className="relative overflow-hidden bg-[#0D1B6E] px-6 py-24 text-white">
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl"/>
         <div className="absolute -left-24 -bottom-24 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl"/>
         <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger}
           className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
           <motion.div variants={fadeUp}>
-            <p className="text-xs font-bold uppercase tracking-[.25em] text-cyan-300">Marcas con propósito</p>
-            <h2 className="mt-4 text-4xl font-extrabold sm:text-5xl">Tu marca también puede dejar huella</h2>
+            <p className="text-xs font-bold uppercase tracking-[.25em] text-cyan-300">Marcas con propÃ³sito</p>
+            <h2 className="mt-4 text-4xl font-extrabold sm:text-5xl">Tu marca tambiÃ©n puede dejar huella</h2>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/75">
-              Conectamos empresas y emprendimientos con una comunidad apasionada por los animales, el bienestar y las experiencias con propósito.
+              Conectamos empresas y emprendimientos con una comunidad apasionada por los animales, el bienestar y las experiencias con propÃ³sito.
             </p>
             <Link to="/movimiento/aliados"
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-cyan-400 px-7 py-4 font-extrabold text-[#08155f] hover:-translate-y-1 transition shadow-xl">
@@ -361,7 +361,7 @@ export function MovementHomePage() {
             </Link>
           </motion.div>
           <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
-            {[[HeartHandshake,'Alianzas','Campañas, patrocinios y activaciones.'],[ShoppingBag,'Marketplace','Productos y marcas con propósito.'],[Users,'Comunidad','Base activa de amantes de mascotas.'],[Star,'Visibilidad','Presencia en eventos, digital y redes.']].map(([Icon,title,desc]:any) => (
+            {[[HeartHandshake,'Alianzas','CampaÃ±as, patrocinios y activaciones.'],[ShoppingBag,'Marketplace','Productos y marcas con propÃ³sito.'],[Users,'Comunidad','Base activa de amantes de mascotas.'],[Star,'Visibilidad','Presencia en eventos, digital y redes.']].map(([Icon,title,desc]:any) => (
               <div key={title} className="rounded-[2rem] bg-white/10 p-6 backdrop-blur hover:bg-white/15 transition">
                 <Icon className="text-cyan-300" size={34}/><h3 className="mt-4 text-xl font-bold">{title}</h3><p className="mt-2 text-sm leading-6 text-white/65">{desc}</p>
               </div>
@@ -370,13 +370,13 @@ export function MovementHomePage() {
         </motion.div>
       </section>
 
-      {/* ── MARKETPLACE ──────────────────────────────────────── */}
+      {/* â”€â”€ MARKETPLACE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section id="marketplace" className="px-6 py-24 bg-white">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-cyan-50 to-blue-50 p-8 sm:p-14">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
-              <span className="rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[.2em] text-cyan-700">Próximamente</span>
-              <h2 className="mt-6 text-4xl font-extrabold text-[#0D1B6E]">Comprar también podrá dejar huella</h2>
+              <span className="rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[.2em] text-cyan-700">PrÃ³ximamente</span>
+              <h2 className="mt-6 text-4xl font-extrabold text-[#0D1B6E]">Comprar tambiÃ©n podrÃ¡ dejar huella</h2>
               <p className="mt-5 text-lg leading-8 text-slate-600">Un espacio para descubrir productos de marcas aliadas y generar recursos para mantener vivo el movimiento.</p>
               <Link to="/movimiento/aliados" className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#0D1B6E] px-6 py-3 font-bold text-white hover:-translate-y-1 transition">
                 <Building2 size={18}/> Ver marcas aliadas
