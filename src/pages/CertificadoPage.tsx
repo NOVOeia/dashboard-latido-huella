@@ -1,7 +1,7 @@
 ﻿import React, { useRef, useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
-const CERT_IMG = '/Certificado_LyH.png'
+const CERT_IMG = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/expositor-documents/Certificado%20LyH.png'
 
 export function CertificadoPage() {
   const { nombre } = useParams<{ nombre: string }>()
@@ -28,7 +28,11 @@ export function CertificadoPage() {
     return () => window.removeEventListener('resize', updateFontSize)
   }, [decodedName])
 
-  const handleDownload = () => { window.open('https://adkqijensfxzzftylktm.supabase.co/functions/v1/generate-certificate?nombre=' + encodeURIComponent(decodedName), '_blank') } = await import('https://esm.sh/html2canvas@1.4.1' as any)
+  const handleDownload = async () => {
+    if (!cardRef.current) return
+    setDownloading(true)
+    try {
+      const { default: html2canvas } = await import('https://esm.sh/html2canvas@1.4.1' as any)
       const canvas = await html2canvas(cardRef.current, {
         useCORS: true,
         scale: 2,
@@ -63,7 +67,7 @@ export function CertificadoPage() {
         }}/>
         <div ref={nameRef} style={{
           position: 'absolute',
-          top: '55%',
+          top: '53%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: '52%',
@@ -88,7 +92,3 @@ export function CertificadoPage() {
     </div>
   )
 }
-
-
-
-
