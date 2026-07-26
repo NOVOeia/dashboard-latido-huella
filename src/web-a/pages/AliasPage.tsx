@@ -6,22 +6,19 @@ import { supabase } from '../../utils/supabase'
 const NAVY = '#0D1B6E'
 const CYAN = '#00BCD4'
 
-const BRANDS = [
-  'Avelana','Bendita Intencion','Catalina Mejia Cosmetologa','Chef Burger',
-  'Clarita Restrepo Fotografia','Collagelito','Comercial mas Bios','Comestibles Saboriemos',
-  'ConsuMarket','Davierxo Eventos','Deliche','Don Desgranado','Dulcedelamer',
-  'Enparresia','Fenix Punto Net','Flor del Cielo','Fluir Bonito','Fonzzo Cafe',
-  'Fresno Design','FRISBY','Fuxion','GLOW','GO RIGO GO','Import Addicts',
-  'INAAM','Juanchito Pregunton','KEVAL PET FOOD','La Morcilleria','LEGIONARIOS DEL ORIENTE',
-  'LOGUS REPRESENTACIONES','Mago Cosmetics','Maracunana','MC PETS',
-  'Medicinas Ancestrales Colombia','My Sweet Valentine','Nicolas Munoz',
-  'Organiquia','Popo','Pretty PETS','PRODUCTOS MIGUEL ANGEL LIGHT',
-  'Son un Cuento','Universo Canino Marinilla','Volvamos a lo Basico','Yamaha'
-]
-
-const COLORS = [
-  '#00BCD4','#0D1B6E','#1a237e','#006064','#00838f',
-  '#37474f','#1b5e20','#4a148c','#bf360c','#e65100'
+const BUCKET = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/sponsor-logos'
+const LOGOS = [
+  'agon-padel-1784064375953.jpeg','americanino-1781623531019.png','automotriz-1779060124682.jpg',
+  'autozen-1779060385165.png','bios-1784064413001.jpeg','club-de-tenis-winner-1780614341426.png',
+  'colanta-pets-1784064267956.png','criadero-halabi-1784064349500.png','dodo-nature-1779972510642.png',
+  'evi-1784064320488.png','fg-tenis-academy-1780614646243.jpeg','forjadores-1779908216476.jpeg',
+  'gana-1783349290808.png','go-rigo-go-1779450479898.png','grupo-estrella-1781188970353.png',
+  'hidratao-1781700388594.png','jk-1779462224362.jpeg','marca-ciudad-rionegro-1783350580564.png',
+  'mora-soccer-1779450142287.png','olimpica-1779056987668.png','olimpica-estereo-1779056956147.png',
+  'postobn-1780414091086.png','puro-padel-1783381267259.png','radiotieppo.png',
+  'rcn-radio.png','recanto-1784064289851.png','teleantioquia-1779720651583.png',
+  'tennis-1781623357501.png','universo-de-las-gorras-1783381333290.png','vagones-1780414771666.png',
+  'yamaha-1782319824670.png'
 ]
 
 const fadeUp = { hidden:{opacity:0,y:30}, show:{opacity:1,y:0,transition:{duration:0.6}} }
@@ -81,17 +78,11 @@ export function AliasPage() {
             Empresas, emprendimientos y marcas que dejaron su huella
           </motion.p>
           <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger}
-            style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-            {BRANDS.map((brand, i) => (
-              <motion.div key={brand} variants={fadeUp}
-                style={{
-                  background: 'white', borderRadius: 50, padding: '12px 22px',
-                  boxShadow: '0 4px 16px rgba(13,27,110,0.08)',
-                  border: `2px solid ${COLORS[i % COLORS.length]}20`,
-                  display: 'flex', alignItems: 'center', gap: 8
-                }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: COLORS[i % COLORS.length], flexShrink: 0 }}/>
-                <span style={{ color: NAVY, fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{brand}</span>
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 16 }}>
+            {LOGOS.map((logo, i) => (
+              <motion.div key={logo} variants={fadeUp}
+                style={{ background: 'white', borderRadius: 16, padding: 16, boxShadow: '0 4px 16px rgba(13,27,110,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 90 }}>
+                <img src={`${BUCKET}/${logo}`} alt={logo} style={{ maxHeight: 60, maxWidth: '100%', objectFit: 'contain', filter: 'grayscale(20%)' }} onError={e => (e.currentTarget.style.display='none')}/>
               </motion.div>
             ))}
           </motion.div>
