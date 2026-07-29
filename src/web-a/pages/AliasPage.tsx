@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, HeartHandshake, Send, Loader2, CheckCircle2, Heart } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, Heart } from 'lucide-react'
 import { supabase } from '../../utils/supabase'
 
 const NAVY = '#0D1B6E'
