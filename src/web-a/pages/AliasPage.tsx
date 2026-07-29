@@ -20,7 +20,8 @@ export function AliasPage() {
       .select('id, name, logo_url, display_order')
       .eq('is_active', true)
       .order('display_order')
-      .then(({ data, error }) => { console.log('sponsors:', data, error); setSponsors(data || []) })  }, [])
+      .then(({ data }) => setSponsors(data || []))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,10 +71,10 @@ export function AliasPage() {
             style={{ textAlign: 'center', color: '#666', fontSize: 14, margin: '0 0 40px' }}>
             Empresas, emprendimientos y marcas que dejaron su huella
           </motion.p>
-          <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger}
+          <motion.div initial="show" animate="show" variants={stagger}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 16 }}>
             {sponsors.map((s) => (
-              <motion.div key={s.id} variants={fadeUp}
+              <motion.div key={s.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
                 style={{ background: 'white', borderRadius: 16, padding: 16, boxShadow: '0 4px 16px rgba(13,27,110,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 90 }}>
                 <img src={s.logo_url} alt={s.name} style={{ maxHeight: 60, maxWidth: '100%', objectFit: 'contain' }} onError={e => (e.currentTarget.style.display='none')}/>
               </motion.div>
