@@ -1,37 +1,20 @@
-import React, { useState, lazy } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 type Sponsor = {
   name: string;
   src: string;
 };
-const sponsors: Sponsor[] = [{
-  name: 'Frisby',
-  src: "/1.svg"
-}, {
-  name: 'Olímpica Stereo',
-  src: "/2.svg"
-}, {
-  name: 'Chef Burger',
-  src: "/3.svg"
-}, {
-  name: 'Sandwich Qbano',
-  src: "/4.svg"
-}, {
-  name: 'Radio Tiempo',
-  src: "/5.svg"
-}, {
-  name: 'HidraT40',
-  src: "/6.svg"
-}, {
-  name: 'RCN Radio',
-  src: "/7.svg"
-}, {
-  name: 'Colanta',
-  src: "/8.svg"
-}, {
-  name: 'Autozen & Chery',
-  src: "/9.svg"
-}];
+
+export function SponsorsBannerSection() {
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+
+  useEffect(() => {
+    fetch(`https://adkqijensfxzzftylktm.supabase.co/rest/v1/public_sponsors?is_active=eq.true&order=display_order&select=name,logo_url`, {
+      headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFka3FpamVuc2Z4enpmdHlsa3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzQ1OTMsImV4cCI6MjA5Mzc1MDU5M30.Yk7hafWIWMsKQtcCZ4f03_hCVtAUgoTt4soxEgEuLrY' }
+    }).then(r => r.json()).then(data => setSponsors(data.map((s: any) => ({ name: s.name, src: s.logo_url }))))
+  }, [])
+
+  if (sponsors.length === 0) return null;
 // Shared animation config so both layers stay in sync
 const MARQUEE_ANIMATE = {
   x: ['0%', '-50%'] as [string, string]
@@ -44,7 +27,6 @@ const MARQUEE_TRANSITION = {
 // Shared track classes so both layers have identical layout
 const TRACK_CLASSES = 'flex gap-3 md:gap-4 py-2 md:py-2.5 px-3 md:px-4 w-max';
 const TILE_CLASSES = 'relative shrink-0 w-32 h-32 md:w-36 md:h-36';
-export function SponsorsBannerSection() {
   const loop = [...sponsors, ...sponsors];
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
