@@ -20,8 +20,7 @@ export function AliasPage() {
       .select('id, name, logo_url, display_order')
       .eq('is_active', true)
       .order('display_order')
-      .then(({ data }) => setSponsors(data || []))
-  }, [])
+      .then(({ data, error }) => { console.log('sponsors:', data, error); setSponsors(data || []) })  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
