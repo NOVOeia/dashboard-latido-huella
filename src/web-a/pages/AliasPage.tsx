@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight, HeartHandshake, Send, Loader2, CheckCircle2, Heart } from 'lucide-react'
 import { supabase } from '../../utils/supabase'
@@ -6,28 +6,22 @@ import { supabase } from '../../utils/supabase'
 const NAVY = '#0D1B6E'
 const CYAN = '#00BCD4'
 
-const BUCKET = 'https://adkqijensfxzzftylktm.supabase.co/storage/v1/object/public/sponsor-logos'
-const LOGOS = [
-  'agon-padel-1784064375953.jpeg','americanino-1781623531019.png','automotriz-1779060124682.jpg',
-  'autozen-1779060385165.png','bios-1784064413001.jpeg','club-de-tenis-winner-1780614341426.png',
-  'colanta-pets-1784064267956.png','criadero-halabi-1784064349500.png','dodo-nature-1779972510642.png',
-  'evi-1784064320488.png','fg-tenis-academy-1780614646243.jpeg','forjadores-1779908216476.jpeg',
-  'gana-1783349290808.png','go-rigo-go-1779450479898.png','grupo-estrella-1781188970353.png',
-  'hidratao-1781700388594.png','jk-1779462224362.jpeg','marca-ciudad-rionegro-1783350580564.png',
-  'mora-soccer-1779450142287.png','olimpica-1779056987668.png','olimpica-estereo-1779056956147.png',
-  'postobn-1780414091086.png','puro-padel-1783381267259.png','radiotieppo.png',
-  'rcn-radio.png','recanto-1784064289851.png','teleantioquia-1779720651583.png',
-  'tennis-1781623357501.png','universo-de-las-gorras-1783381333290.png','vagones-1780414771666.png',
-  'yamaha-1782319824670.png'
-]
-
 const fadeUp = { hidden:{opacity:0,y:30}, show:{opacity:1,y:0,transition:{duration:0.6}} }
 const stagger = { hidden:{}, show:{transition:{staggerChildren:0.05}} }
 
 export function AliasPage() {
+  const [sponsors, setSponsors] = useState<any[]>([])
   const [form, setForm] = useState({ company:'', contact:'', email:'', phone:'', message:'' })
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+
+  useEffect(() => {
+    supabase.from('public_sponsors')
+      .select('id, name, logo_url, display_order')
+      .eq('is_active', true)
+      .order('display_order')
+      .then(({ data }) => setSponsors(data || []))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,10 +73,10 @@ export function AliasPage() {
           </motion.p>
           <motion.div initial="hidden" whileInView="show" viewport={{once:true}} variants={stagger}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 16 }}>
-            {LOGOS.map((logo, i) => (
-              <motion.div key={logo} variants={fadeUp}
+            {sponsors.map((s) => (
+              <motion.div key={s.id} variants={fadeUp}
                 style={{ background: 'white', borderRadius: 16, padding: 16, boxShadow: '0 4px 16px rgba(13,27,110,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 90 }}>
-                <img src={`${BUCKET}/${logo}`} alt={logo} style={{ maxHeight: 60, maxWidth: '100%', objectFit: 'contain', filter: 'grayscale(20%)' }} onError={e => (e.currentTarget.style.display='none')}/>
+                <img src={s.logo_url} alt={s.name} style={{ maxHeight: 60, maxWidth: '100%', objectFit: 'contain' }} onError={e => (e.currentTarget.style.display='none')}/>
               </motion.div>
             ))}
           </motion.div>
