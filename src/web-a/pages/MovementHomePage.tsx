@@ -25,7 +25,7 @@ function WebAPetWall() {
     ;(async () => {
       const { data } = await supabase
         .from('registration_pets')
-        .select('id, pet_name, breed, photo_url, registration_id')
+        .select('id, name, breed, photo_url, registration_id')
         .limit(12)
         .order('created_at', { ascending: false })
       if (data && data.length > 0) {
@@ -79,12 +79,12 @@ function WebAPetWall() {
             className="bg-white/10 backdrop-blur rounded-2xl overflow-hidden border border-white/10 group hover:bg-white/15 transition">
             <div className="aspect-square overflow-hidden bg-white/5">
               {pet.photo_url
-                ? <img src={pet.photo_url} alt={pet.pet_name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+                ? <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
                 : <div className="w-full h-full flex items-center justify-center text-4xl">🐾</div>
               }
             </div>
             <div className="p-3">
-              <h4 className="font-bold text-white text-sm truncate">{pet.pet_name}</h4>
+              <h4 className="font-bold text-white text-sm truncate">{pet.name}</h4>
               {pet.breed && <p className="text-white/40 text-xs truncate">{pet.breed}</p>}
               <button onClick={() => darHuella(pet.id)} disabled={voted.has(pet.id)}
                 className={`mt-2 w-full py-1.5 rounded-lg border-2 font-bold text-xs flex items-center justify-center gap-1.5 transition
